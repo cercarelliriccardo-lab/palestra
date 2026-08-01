@@ -1,0 +1,2353 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Palestra">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAAA9zQYyAAACLUlEQVR42u3dsQ2DUBBEwcspxDW4JdfpviAlcWCExP67+dJrYG8yS7i213eXulRGENAS0BLQEtACWgJaAloCWgJaQEtAS0BLQEtAC2gJaAloCWgJaAEtAS0BLQEtAS2gJaAloCWgJaAFtAS0BLQEtAS0gJaAloCWgBbQhhDQEtAS0BLQAloCWgJaAloCWkBLQEtAS0BLQAtoCWgJaAloCWgBLQEtAS0BLTUGfX6OO3Or6nSYXw/gOVtV9wNBPWsroIEG2pFsBfSDB5qOetJWQAMNtCPZCmhHshXQjmSrBUFfGRLoDNBp+1byyEBngk7eutIHBjoLdPreQAMNNNBAA33zuEDbHGiggTYu0EAbF2iggbY50EDbHGiggX50XG/dB7QHNNAe0EB7QAPtAQ000EB7QAPtAQ20B7RfrfxSCDTQQAMNtM2BBhpo4wINtHGBHg/aZwx8xgBooIEGGmigfawR6Ju29zndP4cA2ud0ffAc6PZbAQ000I5kK6AdyVZAO5KthoDe/DWyrYAGGmhHAhrodX5xhLrXVtX1YADP3KocV0BLQEtAS0ALaAloCWgJaAloAS0BLQEtAS0BLaAloDN77x+dAhpksIGGGWqggQYaaKCBBlpAQw0z0GCDDLQEtAS0gJaAloCWgBbQRhDQEtAS0BLQAloCWgJaAloCWkBLQEtAS0BLQAtoCWgJaAloCWgBLQEtAS0BLQEtoCWgJaAloCWgBbQEtAS0dLEDMYlrs8G4q7EAAAAASUVORK5CYII=">
+<meta name="theme-color" content="#0A0D10">
+<title>Palestra — settimane 1-4</title>
+<style>
+  /* ============================================================
+     Palette presa da "valore" (finanza-personale/valore/stile.css), per
+     famiglia visiva fra i due progetti. Valori dal codice, non dal documento.
+     Concetto: Osservatorio — fondo notte, pannelli di vetro che ci galleggiano
+     sopra, smeraldo come firma. La notte e il default, come li.
+     REGOLA VINCOLANTE di valore: il verde-firma non coincide col verde-stato,
+     altrimenti il cervello confonde decorazione e stato.
+     Firma #16E8A0 · stato ok #97C459. Non avvicinarli.
+
+     SEMPRE NOTTE. Il tema chiaro c'era e seguiva l'impostazione del telefono:
+     ric apriva l'app e la trovava bianca. Tolto. Come l'immersiva di valore,
+     che resta notte per identita — qui vale per tutta l'app.
+     Non rimettere @media (prefers-color-scheme:light) ne [data-theme="light"]:
+     l'involucro degli Artifact imposta data-theme da solo, e vincerebbe.
+     ============================================================ */
+  :root{
+    --bg:#0A0D10; --surface:rgba(13,18,23,0.85);
+    --surface-2:rgba(255,255,255,0.04); --surface-3:rgba(255,255,255,0.09);
+    --ink:#EAF0EE; --ink-2:#B6C3C7; --ink-3:#93A4AE;
+    --line:rgba(255,255,255,0.10); --line-2:rgba(234,240,238,0.22);
+    --accent:#16E8A0; --accent-ink:#04231A; --accent-soft:rgba(22,232,160,0.14);
+    --ochre:#16E8A0; --ochre-soft:rgba(22,232,160,0.14);
+    --ok:#97C459; --ok-soft:rgba(151,196,89,0.16);
+    --warn:#EF9F27;
+    --bad:#E24B4A; --bad-soft:rgba(226,75,74,0.16);
+    --ombra:0 8px 30px rgba(0,0,0,0.4);
+    --alone:0 14px 36px rgba(0,0,0,0.28), 0 0 22px rgba(22,232,160,0.18);
+    --mono:ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI Variable Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --r:16px;
+  }
+  :root[data-theme="dark"]{
+    --bg:#0A0D10; --surface:rgba(13,18,23,0.85);
+    --surface-2:rgba(255,255,255,0.04); --surface-3:rgba(255,255,255,0.09);
+    --ink:#EAF0EE; --ink-2:#B6C3C7; --ink-3:#93A4AE;
+    --line:rgba(255,255,255,0.10); --line-2:rgba(234,240,238,0.22);
+    --accent:#16E8A0; --accent-ink:#04231A; --accent-soft:rgba(22,232,160,0.14);
+    --ochre:#16E8A0; --ochre-soft:rgba(22,232,160,0.14);
+    --ok:#97C459; --ok-soft:rgba(151,196,89,0.16);
+    --warn:#EF9F27;
+    --bad:#E24B4A; --bad-soft:rgba(226,75,74,0.16);
+    --ombra:0 8px 30px rgba(0,0,0,0.4);
+    --alone:0 14px 36px rgba(0,0,0,0.28), 0 0 22px rgba(22,232,160,0.18);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:var(--sans); font-size:16px; line-height:1.5;
+    -webkit-text-size-adjust:100%;
+    padding-bottom:calc(64px + env(safe-area-inset-bottom,0px));
+  }
+  #app{max-width:560px;margin:0 auto}
+
+  /* ---------- testata ---------- */
+  .top{
+    position:sticky; top:0; z-index:30;
+    background:var(--bg); border-bottom:1px solid var(--line);
+    padding:10px 16px 8px; display:flex; align-items:baseline; gap:10px;
+  }
+  .top h1{font-size:15px;font-weight:650;margin:0;letter-spacing:-.01em}
+  .top .wk{
+    margin-left:auto; font-family:var(--mono); font-size:12px;
+    color:var(--ink-2); letter-spacing:.04em; text-transform:uppercase;
+  }
+
+  main{padding:14px 16px 24px; display:flex; flex-direction:column; gap:14px}
+
+  /* ---------- blocchi ---------- */
+  /* I pannelli di "vetro" di valore: galleggiano sul fondo notte, si sollevano
+     di 3px e si illuminano di smeraldo quando li tocchi. Stessi valori. */
+  .card, .today, .ex, .runner{
+    box-shadow:var(--ombra);
+    transition:transform .25s ease, border-color .25s ease, box-shadow .25s ease, opacity .6s ease;
+  }
+  .card:hover, .today:hover, .ex:hover, .runner:hover{
+    transform:translateY(-3px); border-color:var(--accent-soft); box-shadow:var(--alone);
+  }
+  .card:active, .ex:active{transform:translateY(-1px)}
+  /* dissolvenza in entrata. In valore e una coppia di classi perche il DOM resta;
+     qui render() ricostruisce la vista ogni volta, quindi basta l'animazione:
+     riparte da sola a ogni cambio di scheda e non puo lasciare niente nascosto. */
+  @keyframes entra{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
+  .card, .today, .ex, .runner{animation:entra .45s ease both}
+  /* le barre si riempiono invece di saltare al valore */
+  @keyframes riempi{from{transform:scaleX(0)} to{transform:scaleX(1)}}
+  /* i grafici si tracciano da sinistra a destra */
+  @keyframes traccia{from{stroke-dashoffset:1} to{stroke-dashoffset:0}}
+  @keyframes appari{from{opacity:0} to{opacity:1}}
+
+  .card{
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:var(--r); padding:15px;
+  }
+  .card > * + *{margin-top:10px}
+  .eyebrow{
+    font-family:var(--mono); font-size:11px; letter-spacing:.09em;
+    text-transform:uppercase; color:var(--ink-3);
+    display:flex; align-items:center; gap:8px;
+  }
+  .eyebrow::after{content:"";flex:1;height:1px;background:var(--line)}
+  h2{font-size:19px;line-height:1.25;margin:0;font-weight:640;text-wrap:balance;letter-spacing:-.015em}
+  h3{font-size:15px;margin:0;font-weight:620;letter-spacing:-.01em}
+  p{margin:0;color:var(--ink-2);font-size:14px}
+  .fine{font-size:12.5px;color:var(--ink-3);line-height:1.45}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+  /* ---------- controlli ---------- */
+  button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:7px;
+    min-height:44px;padding:0 16px;border-radius:8px;
+    background:var(--surface-2);border:1px solid var(--line-2);
+    font-size:15px;font-weight:560;
+  }
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .btn.food{background:var(--ochre);border-color:var(--ochre);color:var(--bg)}
+  .btn.ghost{background:transparent}
+  .btn.wide{width:100%}
+  .btn.sm{min-height:34px;padding:0 11px;font-size:13.5px}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+  input[type=number],input[type=date],input[type=text]{
+    font:inherit;font-family:var(--mono);font-variant-numeric:tabular-nums;
+    background:var(--surface-2);color:var(--ink);
+    border:1px solid var(--line-2);border-radius:7px;
+    padding:8px 9px;min-height:42px;width:100%;
+  }
+  input[type=number]{-moz-appearance:textfield;text-align:center}
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
+  .stepper{display:flex;align-items:stretch;gap:0;border:1px solid var(--line-2);border-radius:7px;overflow:hidden;background:var(--surface-2)}
+  .stepper button{width:38px;flex:none;font-size:19px;color:var(--ink-2);background:var(--surface-3)}
+  .stepper button:active{background:var(--accent-soft);color:var(--accent)}
+  .stepper input{border:none;border-radius:0;background:transparent;min-height:42px;width:100%;padding:0}
+
+  /* ---------- pillole di stato ---------- */
+  .pill{
+    display:inline-flex;align-items:center;gap:5px;
+    font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;
+    padding:3px 8px;border-radius:999px;border:1px solid var(--line-2);color:var(--ink-2);
+  }
+  .pill.ok{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+  .pill.up{background:var(--accent-soft);border-color:transparent;color:var(--accent)}
+  .pill.alert{background:var(--bad-soft);border-color:transparent;color:var(--bad)}
+
+  /* ---------- avvisi ---------- */
+  .note{
+    border-left:3px solid var(--accent);background:var(--accent-soft);
+    padding:11px 13px;border-radius:0 8px 8px 0;font-size:13.5px;color:var(--ink-2);
+  }
+  .note strong{color:var(--ink)}
+  /* Regola di valore: il rosso e una scorciatoia all'amigdala, rosso ovunque
+     vuol dire ansia costante. Resta solo per gli allarmi veri — dolore che
+     torna tre volte, dati che non si salvano. Tutto il resto e ambra. */
+  .note.alert{border-color:var(--bad);background:var(--bad-soft)}
+  .note.warn{border-color:var(--warn);background:rgba(239,159,39,0.13)}
+  .note.food{border-color:var(--ochre);background:var(--ochre-soft)}
+
+  /* ---------- oggi ---------- */
+  .today{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+    padding:16px;display:flex;flex-direction:column;gap:12px;
+  }
+  .today .date{
+    font-family:var(--mono);font-size:11.5px;letter-spacing:.09em;
+    text-transform:uppercase;color:var(--ink-3);
+  }
+  .today h2{font-size:26px}
+  .checklist{display:flex;flex-direction:column;gap:2px}
+  .check{
+    display:flex;align-items:center;gap:11px;padding:9px 2px;
+    border-bottom:1px solid var(--line);text-align:left;width:100%;
+  }
+  .checklist .check:last-child{border-bottom:none}
+  .box{
+    width:22px;height:22px;flex:none;border:1.5px solid var(--line-2);border-radius:5px;
+    display:grid;place-items:center;font-size:13px;color:transparent;
+  }
+  .check[data-on="1"] .box{background:var(--ok);border-color:var(--ok);color:#fff}
+  .check[data-on="1"] .lbl{color:var(--ink-3);text-decoration:line-through}
+  .lbl{font-size:14.5px;flex:1}
+  .sub{font-size:12px;color:var(--ink-3);display:block;text-decoration:none!important}
+
+  /* ---------- esercizi ---------- */
+  .ex{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden}
+  .ex + .ex{margin-top:10px}
+  .ex-h{padding:12px 14px;display:flex;align-items:flex-start;gap:10px}
+  .ex-h .idx{
+    font-family:var(--mono);font-size:12px;color:var(--ink-3);
+    padding-top:2px;min-width:16px;
+  }
+  .ex-h .meta{font-size:12.5px;color:var(--ink-3);margin-top:2px}
+  .ex-body{padding:0 14px 12px;display:flex;flex-direction:column;gap:8px}
+  .set{display:grid;grid-template-columns:52px 1fr 1fr 46px;gap:7px;align-items:center}
+  .set .sn{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.05em;text-transform:uppercase}
+  .set .tick{
+    min-height:42px;border:1px solid var(--line-2);border-radius:7px;
+    background:var(--surface-2);display:grid;place-items:center;font-size:16px;color:var(--ink-3);
+  }
+  .set[data-done="1"] .tick{background:var(--ok);border-color:var(--ok);color:#fff}
+  /* proposta non ancora confermata: numero in grigio, si distingue da un dato vero */
+  .set[data-prop="1"] input{color:var(--ink-3)}
+  .set[data-prop="1"] .tick{border-color:var(--accent);color:var(--accent)}
+  .set-head{display:grid;grid-template-columns:52px 1fr 1fr 46px;gap:7px}
+  .set-head span{font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);text-align:center}
+  .set-head span:first-child{text-align:left}
+  .how{
+    font-size:13.5px;color:var(--ink-2);line-height:1.55;
+    background:var(--surface-2);border-top:1px solid var(--line);padding:12px 14px;
+  }
+  .how p + p{margin-top:8px}
+
+  /* ---------- timer riposo ---------- */
+  .rest{
+    position:fixed;left:0;right:0;z-index:40;
+    bottom:calc(60px + env(safe-area-inset-bottom,0px));
+    /* pannello di vetro con lo smeraldo sul numero, non un blocco pieno:
+       sta a schermo per minuti interi e in tinta unita e troppo rumore */
+    background:var(--surface);color:var(--ink);
+    border-top:2px solid var(--accent); box-shadow:var(--ombra);
+    padding:9px 16px;display:flex;align-items:center;gap:12px;
+    max-width:560px;margin:0 auto;
+  }
+  /* l'attributo hidden nasconde con display:none, ma il display:flex qui sopra
+     lo batteva per specificita: la barra restava a schermo con 0:00 sempre */
+  .rest[hidden]{display:none}
+  .rest .t{font-family:var(--mono);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--accent)}
+  .rest .w{flex:1;font-size:12.5px;color:var(--ink-2);line-height:1.3}
+  .rest button{
+    border:1px solid var(--line-2);border-radius:6px;padding:6px 10px;
+    font-size:12.5px;font-family:var(--mono);color:var(--ink-2);
+  }
+
+  /* ---------- timer corsa ---------- */
+  .runner{text-align:center;padding:22px 14px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface)}
+  .runner .phase{
+    font-family:var(--mono);font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);
+  }
+  .runner .big{
+    font-family:var(--mono);font-size:66px;line-height:1;font-weight:600;
+    font-variant-numeric:tabular-nums;letter-spacing:-.03em;margin:8px 0 4px;
+  }
+  /* era [data-kind="corsa"] e non corrispondeva mai: le fasi si chiamano run/walk */
+  .runner[data-kind="run"] .big, .runner[data-kind="run"] .phase{color:var(--accent)}
+  .figcorsa{max-width:200px; margin:2px auto 8px}
+  .figcorsa .stage{background:var(--surface-2); border-color:var(--line); box-shadow:none}
+  .figcorsa .stage .bone{stroke:var(--ink)}
+  .figcorsa .stage .head{fill:var(--ink)}
+  .figcorsa .stage .suolo{stroke:var(--ink-3); stroke-opacity:.6}
+  .runner[data-kind="run"] .figcorsa .stage .bone{stroke:var(--accent)}
+  .runner[data-kind="run"] .figcorsa .stage .head{fill:var(--accent)}
+  .runner .of{font-family:var(--mono);font-size:13px;color:var(--ink-3)}
+  .track{display:flex;gap:3px;margin:14px 0 4px;height:8px}
+  .track i{flex:1;background:var(--surface-3);border-radius:2px}
+  .track i[data-s="run"]{background:var(--accent);opacity:.28}
+  .track i[data-s="run"][data-p="1"]{opacity:1}
+  .track i[data-s="walk"][data-p="1"]{background:var(--line-2)}
+
+  /* ---------- barre ---------- */
+  .gauge{display:flex;flex-direction:column;gap:6px}
+  .gauge .lab{display:flex;align-items:baseline;gap:8px;font-size:13px;color:var(--ink-2)}
+  .gauge .lab b{font-family:var(--mono);font-size:17px;color:var(--ink);font-weight:600}
+  .gauge .lab .goal{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+  .bar{position:relative;height:18px;background:var(--surface-3);border-radius:4px;overflow:hidden}
+  .bar .fill{
+    position:absolute;inset:0 auto 0 0;background:var(--accent);opacity:.9;
+    transform-origin:left center; animation:riempi .6s cubic-bezier(.2,.8,.2,1);
+  }
+  /* Regola di valore: il colore dice lo STATO, non la categoria. Sotto il
+     bersaglio e sopra il bersaglio sono due stati diversi, e si vedono. */
+  .bar .fill[data-s="sotto"]{background:var(--warn)}
+  .bar .fill[data-s="dentro"]{background:var(--ok)}
+  .bar .fill[data-s="sopra"]{background:var(--warn)}
+  .bar .zone{position:absolute;top:0;bottom:0;border-left:1px solid var(--ink-3);border-right:1px solid var(--ink-3);opacity:.5}
+  .bar.blue .fill{background:var(--accent)}
+  .ticks{display:flex;height:5px;gap:0}
+  .ticks i{flex:1;border-left:1px solid var(--line-2)}
+  .ticks i:first-child{border-left:none}
+
+  /* ---------- cibo ---------- */
+  .foods{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:7px}
+  /* NB: questa classe e dei bottoni-alimento dentro la scheda Cibo. Non darla
+     ad altro: il pulsante CIBO della barra in basso l'aveva, e si ritrovava
+     addosso bordo, sfondo e padding di un bottone-alimento. */
+  .food{
+    text-align:left;border:1px solid var(--line-2);border-radius:8px;
+    background:var(--surface-2);padding:9px 10px;min-height:56px;
+  }
+  .food:active{background:var(--ochre-soft);border-color:var(--ochre)}
+  .food .fn{font-size:13.5px;line-height:1.25;display:block}
+  .food .fv{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);margin-top:3px;display:block}
+  .eaten{display:flex;flex-direction:column;gap:1px}
+  .eaten .e{display:flex;align-items:center;gap:9px;padding:7px 2px;border-bottom:1px solid var(--line);font-size:14px}
+  .eaten .e:last-child{border-bottom:none}
+  .eaten .e .v{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+  .eaten .e .x{width:30px;height:30px;flex:none;border-radius:6px;color:var(--ink-3);font-size:17px;display:grid;place-items:center}
+
+  /* ---------- tabelle e grafici ---------- */
+  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{border-collapse:collapse;width:100%;font-size:13.5px}
+  th,td{padding:7px 9px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+  th:first-child,td:first-child{text-align:left}
+  th{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;
+    text-transform:uppercase;color:var(--ink-3);font-weight:500;
+  }
+  td.n{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  svg.chart{width:100%;height:auto;display:block}
+
+  .tag{
+    display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--ink-3);
+  }
+  hr{border:none;border-top:1px solid var(--line);margin:2px 0}
+  textarea{
+    width:100%;min-height:110px;font-family:var(--mono);font-size:12px;
+    background:var(--surface-2);color:var(--ink);border:1px solid var(--line-2);
+    border-radius:7px;padding:9px;
+  }
+
+  /* ---------- navigazione ---------- */
+  .tabs{
+    position:fixed;bottom:0;left:0;right:0;z-index:50;
+    max-width:560px;margin:0 auto;
+    display:grid;grid-template-columns:repeat(5,1fr);
+    background:var(--surface);border-top:1px solid var(--line);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  .tabs button{
+    padding:9px 2px 10px;display:flex;flex-direction:column;align-items:center;gap:3px;
+    font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;
+    color:var(--ink-3);border-top:2px solid transparent;margin-top:-1px;
+  }
+  .tabs button .g{width:20px;height:20px;display:block}
+  /* L'evidenziatore restava incollato all'ultima scheda toccata: era lo stato
+     di focus che il browser lascia dopo il tocco, non la scheda corrente. */
+  .tabs button{-webkit-tap-highlight-color:transparent; background:transparent}
+  .tabs button:focus{outline:none}
+  .tabs button:focus-visible{outline:2px solid var(--accent); outline-offset:-3px}
+  .tabs button[aria-current="page"]{
+    color:var(--accent); border-top-color:var(--accent); background:var(--accent-soft);
+  }
+
+  /* ---------- tessere-dato ---------- */
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .tile{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--r);
+    padding:12px; display:flex; flex-direction:column; gap:7px; min-height:132px;
+    box-shadow:var(--ombra); animation:entra .45s ease both;
+    transition:transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+  }
+  .tile:hover{transform:translateY(-3px); border-color:var(--accent-soft); box-shadow:var(--alone)}
+  .tile .th{display:flex; align-items:center; gap:8px}
+  .tile .ico{
+    width:28px; height:28px; border-radius:9px; background:var(--accent-soft);
+    display:grid; place-items:center; flex:none;
+  }
+  .tile .ico svg{width:15px; height:15px; stroke:var(--accent); fill:none; stroke-width:1.8;
+    stroke-linecap:round; stroke-linejoin:round}
+  .tile .tl{font-size:12.5px; color:var(--ink-2); line-height:1.2}
+  .tile .tv{
+    font-family:var(--mono); font-size:27px; font-weight:600;
+    letter-spacing:-.03em; line-height:1; font-variant-numeric:tabular-nums;
+  }
+  .tile .tv small{font-size:12.5px; color:var(--ink-3); font-weight:500; margin-left:3px; letter-spacing:0}
+  .tile .tf{
+    display:flex; align-items:center; gap:6px; margin-top:auto;
+    font-size:11.5px; color:var(--ink-3);
+  }
+  .pill-sm{
+    font-family:var(--mono); font-size:10px; letter-spacing:.05em; text-transform:uppercase;
+    padding:3px 7px; border-radius:999px; background:var(--surface-3); color:var(--ink-2); flex:none;
+  }
+  .pill-sm.ok{background:var(--ok-soft); color:var(--ok)}
+  .pill-sm.warn{background:rgba(239,159,39,.16); color:var(--warn)}
+  .spark{width:100%; height:32px; display:block; overflow:visible}
+
+  /* ---------- saluto ---------- */
+  .saluto{display:flex; align-items:center; gap:10px}
+  .saluto h2{font-size:25px}
+  .oggi-cosa{font-size:16px; color:var(--ink-2); margin-top:3px}
+  .oggi-cosa strong{color:var(--accent)}
+  .figmini{width:104px; flex:none; margin-left:auto}
+  .figmini .stage{background:var(--surface-2); border-color:var(--line); box-shadow:none; border-radius:12px}
+  .figmini .stage .bone{stroke:var(--ink)}
+  .figmini .stage .head{fill:var(--ink)}
+  .figmini .stage .suolo{stroke:var(--ink-3); stroke-opacity:.5}
+  .figmini .stage .attr, .figmini .stage .macc{fill:var(--ink-3); stroke:var(--ink-3)}
+  .riga-dati{font-size:13px; color:var(--ink-3); letter-spacing:.01em}
+  .card.riga{display:flex; align-items:center; gap:12px}
+  .pallini{display:flex; align-items:center; gap:5px; margin-top:5px}
+  .pallini i{width:9px; height:9px; border-radius:50%; background:var(--surface-3)}
+  .pallini i[data-on="1"]{background:var(--ok)}
+  .pallini .num{margin-left:5px; font-size:12.5px; color:var(--ink-3)}
+
+  /* ---------- calendario del programma ---------- */
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+  .cal .dow{
+    font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--ink-3);text-align:center;padding-bottom:2px;
+  }
+  .cal .dd{
+    aspect-ratio:1/1;border-radius:7px;border:1px solid var(--line);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    font-family:var(--mono);font-size:12px;color:var(--ink-2);background:var(--surface-2);
+  }
+  .cal .dd[data-t="pesi"]{background:var(--accent-soft);border-color:transparent;color:var(--accent)}
+  .cal .dd[data-t="corsa"]{background:var(--surface-3);border-color:transparent}
+  .cal .dd[data-oggi="1"]{outline:2px solid var(--ink);outline-offset:1px}
+  .cal .dd i{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.45;font-style:normal}
+  .cal .dd[data-fatto="1"] i{background:var(--ok);opacity:1;width:8px;height:8px}
+  .calleg{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--ink-3)}
+  .calleg span{display:inline-flex;align-items:center;gap:5px}
+  .calleg b{width:11px;height:11px;border-radius:3px;display:inline-block}
+
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+  /* ============================================================
+     Seduta guidata — palette a sé, non tocca i token dell'app.
+     Contrasti calcolati: bianco su blu 9,99:1 · verde su blu 7,46:1 ·
+     nero su verde 14,70:1. WCAG chiede 4,5:1. Se cambi una tinta, ricalcola.
+     ============================================================ */
+  /* La seduta guidata resta SEMPRE notte, come l'immersiva di valore, mentre
+     le altre schede seguono il tema. Stessa logica, stessa palette.
+     Contrasti ricalcolati su questi colori: inchiostro su notte 16,9:1,
+     smeraldo su notte 12,1:1, notte su smeraldo 11,7:1. */
+  .ses{
+    --blu:#0A0D10; --pan:rgba(13,18,23,0.85); --verde:#16E8A0; --su-verde:#04231A;
+    position:fixed; inset:0; z-index:60; background:var(--blu); color:#EAF0EE;
+    display:flex; flex-direction:column; overflow:hidden;
+    padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);
+  }
+  .ses-top{display:flex; align-items:center; gap:10px; padding:10px 16px 6px; white-space:nowrap}
+  .ses-top button{
+    font-family:var(--mono); font-size:12px; letter-spacing:.06em; text-transform:uppercase;
+    color:#fff; opacity:.75; padding:8px 6px; min-height:44px;
+  }
+  .ses-top .who{
+    margin-left:auto; font-family:var(--mono); font-size:12px; opacity:.75;
+    letter-spacing:.06em; text-transform:uppercase;
+  }
+  /* barra del percorso: un segmento per serie, l'unica cosa che dice quanto manca */
+  .ses-bar{display:flex; gap:2px; padding:0 16px 12px; height:16px}
+  .ses-bar i{flex:1; background:rgba(255,255,255,.22); border-radius:2px}
+  .ses-bar i[data-f="1"]{background:var(--verde)}
+  .ses-bar i[data-f="now"]{background:#fff}
+  .ses-body{flex:1; overflow-y:auto; padding:0 16px 12px; display:flex; flex-direction:column; gap:14px}
+  .ses-foot{padding:10px 16px 14px; display:flex; flex-direction:column; gap:9px}
+
+  .ses h2{font-size:30px; line-height:1.1; letter-spacing:-.02em; margin:0; color:#fff}
+  .ses .kicker{
+    font-family:var(--mono); font-size:12px; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--verde);
+  }
+  .ses .cue{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:7px}
+  .ses .cue li{
+    font-size:15.5px; line-height:1.35; padding-left:16px; position:relative; color:rgba(255,255,255,.92);
+  }
+  .ses .cue li::before{
+    content:""; position:absolute; left:0; top:9px; width:7px; height:7px;
+    border-radius:50%; background:var(--verde);
+  }
+  .ses .pan{background:var(--pan); border-radius:12px; padding:14px}
+  .ses .pan p{color:rgba(255,255,255,.86); font-size:14px}
+  .ses .pan p + p{margin-top:9px}
+  .ses .fine2{font-size:12.5px; color:rgba(255,255,255,.6); line-height:1.45}
+
+  .stage{
+    background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08);
+    border-radius:14px; display:block; width:100%;
+    max-width:330px; margin:0 auto; aspect-ratio:1/1; box-shadow:var(--ombra);
+  }
+  .stage .bone{stroke:#EAF0EE; stroke-width:7; stroke-linecap:round; stroke-linejoin:round; fill:none}
+  .stage .head{fill:#EAF0EE}
+  /* grigio: l'attrezzo deve leggersi come una cosa diversa dal corpo */
+  .stage .attr, .stage .macc{fill:#77828F; stroke:#77828F}
+  .stage .macc{fill-opacity:.92}
+  .stage .suolo{stroke:#fff; stroke-opacity:.25; stroke-width:2}
+
+  .ses .go{
+    width:100%; min-height:74px; border-radius:14px;
+    background:var(--verde); color:var(--su-verde);
+    font-size:22px; font-weight:700; letter-spacing:-.01em;
+    display:flex; align-items:center; justify-content:center; gap:10px;
+  }
+  .ses .go:active{transform:translateY(1px)}
+  .ses .alt{
+    width:100%; min-height:48px; border-radius:10px; color:#fff;
+    border:1px solid rgba(255,255,255,.4); font-size:15px;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .ses .go.fatta{background:transparent; color:var(--verde); border:2px solid var(--verde)}
+  .ses .ind{font-size:20px; min-width:44px; opacity:.9}
+  .ses .ind[disabled]{opacity:.25}
+  .sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
+  .ses .duo{display:flex; gap:9px}
+  .ses .duo > *{flex:1}
+  .ses input[type=number]{
+    background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.35);
+    color:#fff; min-height:64px; font-size:26px; text-align:center;
+  }
+  .ses .campo{display:flex; flex-direction:column; gap:5px}
+  .ses .campo span{
+    font-family:var(--mono); font-size:11px; letter-spacing:.09em;
+    text-transform:uppercase; color:rgba(255,255,255,.65);
+  }
+  .ses .cd{
+    font-family:var(--mono); font-size:84px; line-height:1; font-weight:600;
+    font-variant-numeric:tabular-nums; letter-spacing:-.04em; text-align:center;
+    color:var(--verde); margin:6px 0;
+  }
+  .ses .dopo{text-align:center; font-size:15px; color:rgba(255,255,255,.8)}
+  .ses .zone button{
+    border:1px solid rgba(255,255,255,.4); color:#fff; background:transparent;
+    border-radius:999px; padding:9px 13px; font-size:13.5px; min-height:44px;
+  }
+  .ses .zone button[data-on="1"]{background:var(--verde); color:var(--su-verde); border-color:var(--verde)}
+  .ses table{color:#fff}
+  .ses th{color:rgba(255,255,255,.6)}
+  .ses td,.ses th{border-bottom-color:rgba(255,255,255,.16)}
+  .ses .note{background:rgba(255,255,255,.1); border-left-color:var(--verde); color:rgba(255,255,255,.9)}
+  .ses .note strong{color:#fff}
+  body.in-ses{overflow:hidden}
+  body.in-ses .tabs{display:none}
+
+  /* --- attrezzi, regolazioni, fastidi --- */
+  .how img.foto{width:100%;border-radius:var(--r);border:1px solid var(--line);margin:0 0 10px;display:block}
+  .reg{display:block;margin:10px 0 2px}
+  .reg span{display:block;font-size:12px;color:var(--ink-3);margin-bottom:4px}
+  .reg input{width:100%;padding:10px;min-height:42px;border:1px solid var(--line-2);border-radius:var(--r);
+    background:var(--surface-2);color:var(--ink);font-family:var(--sans);font-size:15px}
+  .regp{color:var(--accent);font-family:var(--mono)}
+  .zone{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px}
+  .zone button{min-height:42px;padding:0 12px;border-radius:999px;border:1px solid var(--line-2);
+    background:var(--surface-2);color:var(--ink-2);font-size:13px;font-family:var(--sans)}
+  .zone button[data-on="1"]{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+</style>
+
+<div id="app">
+  <header class="top">
+    <h1>Palestra</h1>
+    <span class="wk num" id="wkLabel"></span>
+  </header>
+  <main id="view"></main>
+</div>
+
+<div class="rest" id="rest" hidden>
+  <span class="t num" id="restT">0:00</span>
+  <span class="w" id="restW"></span>
+  <button type="button" data-act="rest-add">+30s</button>
+  <button type="button" data-act="rest-stop">Stop</button>
+</div>
+
+<nav class="tabs" id="tabs">
+  <button type="button" data-tab="oggi"><svg class="g" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.8" y="3.8" width="14.4" height="13" rx="2"/><path d="M2.8 8h14.4M6.6 2.5v2.6M13.4 2.5v2.6"/></svg>Oggi</button>
+  <button type="button" data-tab="pesi"><svg class="g" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7.5v5M5.5 5.5v9M14.5 5.5v9M17 7.5v5M5.5 10h9"/></svg>Pesi</button>
+  <button type="button" data-tab="corsa"><svg class="g" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="7.2"/><path d="M10 5.4V10l3.1 2"/></svg>Corsa</button>
+  <button type="button" data-tab="cibo"><svg class="g" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5.2 2.8v6.4M7.6 2.8v6.4M6.4 9.2v8M13.8 2.8c-1.5 1.4-1.9 3.6-1.5 6.4h3c.4-2.8 0-5-1.5-6.4zM13.8 9.2v8"/></svg>Cibo</button>
+  <button type="button" data-tab="dati"><svg class="g" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 16.5h14M4.5 13l3.6-4.2 3.2 2.6 4.2-6"/></svg>Dati</button>
+</nav>
+
+<script>
+"use strict";
+
+/* ============================================================
+   Dati di riferimento — presi da output/scheda.md (v3),
+   output/alimentazione-base.md (v2) e output/diario.md.
+   Se cambia la scheda, si cambia qui.
+   ============================================================ */
+
+var EX = [
+  { id:"goblet", n:"Goblet squat", att:"Kettlebell", rest:120, step:2, unit:"kg",
+    how:["Kettlebell contro il petto con due mani, come se abbracciassi una coppa. Piedi a larghezza spalle, punte leggermente in fuori. Scendi col petto alto e i talloni a terra, fino a portare le cosce almeno parallele al pavimento. Risali spingendo con tutto il piede.",
+         "Il peso davanti al corpo fa da contrappeso e ti mette in posizione da solo. Col bilanciere sulla schiena quella posizione la devi trovare tu, e da principiante non la trovi.",
+         "Al bilanciere si passa quando fai 3 serie da 10 a piena profondità con tecnica pulita. Di solito 2-4 settimane. Non prima."] },
+  { id:"rdl", n:"Stacco rumeno", att:"Manubri", rest:120, step:2, unit:"kg",
+    how:["In piedi, un manubrio per mano davanti alle cosce. Ginocchia leggermente piegate e ferme: non è uno squat. Spingi il bacino indietro facendo scendere i manubri lungo le gambe, schiena dritta. Scendi finché senti tirare dietro le cosce, poi risali spingendo il bacino avanti.",
+         "Il movimento è dell'anca, non della schiena. Se la schiena si arrotonda, sei sceso troppo.",
+         "Sostituisce il leg curl, ma non lo copre del tutto: allena l'estensione dell'anca, non la flessione del ginocchio. Lavora anche sulla mobilità dei femorali, quindi spinge l'obiettivo dita-terra mentre costruisci muscolo."] },
+  { id:"chest", n:"Chest press", att:"Macchina Technogym", rest:90, step:5, unit:"kg",
+    how:["Regola il sedile in modo che le maniglie stiano a metà petto. Spingi in avanti senza bloccare i gomiti, e nel ritorno non portarli indietro oltre la linea del busto.",
+         "Sta qui al posto della panca col bilanciere perché ti alleni quasi sempre da solo: è l'unica spinta da cui restare bloccati è impossibile."] },
+  { id:"lat", n:"Lat machine", att:"Macchina Technogym", rest:90, step:5, unit:"kg",
+    how:["Presa poco più larga delle spalle, cosce bloccate sotto i rulli. La barra scende davanti alla testa fino alla parte alta del petto — mai dietro il collo.",
+         "Pensa a portare i gomiti verso il basso e verso le costole, non a tirare con le mani: se pensi alle mani usi le braccia, se pensi ai gomiti usi la schiena."] },
+  { id:"row", n:"Rematore con manubrio", att:"Un manubrio, per lato", rest:90, step:1, unit:"kg",
+    how:["Ginocchio e mano dello stesso lato appoggiati sulla panca, l'altro piede a terra, schiena piatta e parallela al pavimento. Manubrio nella mano libera. Tiri verso il fianco, gomito che scorre vicino al corpo. Scendi controllando.",
+         "L'errore tipico è ruotare il busto per tirare più in alto. Le spalle restano parallele al pavimento. Sostituisce il pulley basso."] },
+  { id:"ohp", n:"Shoulder press", att:"Manubri, seduto", rest:90, step:2, unit:"kg",
+    how:["Seduto sulla panca regolabile, schienale quasi verticale. Manubri all'altezza delle orecchie, gomiti sotto i polsi. Spingi verso l'alto senza bloccare i gomiti in cima.",
+         "Manubri e non bilanciere: se ti blocchi, i manubri li lasci andare di lato. Col bilanciere sopra la testa no."] },
+  { id:"plank", n:"Plank", att:"A terra", rest:90, step:5, unit:"sec", secs:true,
+    how:["Gomiti sotto le spalle, corpo in linea retta, glutei e addome contratti, respiro normale.",
+         "Quando il bacino cede hai finito la serie, anche se sono passati 18 secondi."] }
+];
+
+var FOTO = {};  /* foto della sala tolte: l'app sta su un indirizzo pubblico */
+var ZONE = ["Spalla dx","Spalla sx","Gomito","Polso","Schiena bassa","Anca","Ginocchio dx","Ginocchio sx","Caviglia / tendine","Collo"];
+
+var RUN_WEEKS = [
+  { run:60,  walk:120, reps:8, label:"1 min corsa + 2 min cammino × 8" },
+  { run:90,  walk:120, reps:7, label:"1 min 30 + 2 min × 7" },
+  { run:120, walk:120, reps:6, label:"2 min + 2 min × 6" },
+  { run:180, walk:120, reps:5, label:"3 min + 2 min × 5" }
+];
+var WARMUP = 300, COOLDOWN = 300;
+
+var STRETCH = [
+  { id:"gc",  n:"Gatto-cammello",      d:"10 ripetizioni" },
+  { id:"ns",  n:"Neural slider",        d:"10 lente per gamba" },
+  { id:"fem", n:"Femorali da seduto",   d:"30 sec × 2 per gamba", t:30 },
+  { id:"anc", n:"Flessori dell'anca",   d:"30 sec per lato",      t:30 },
+  { id:"pol", n:"Polpaccio al muro",    d:"30 sec per lato",      t:30 }
+];
+
+var FOODS = [
+  { g:"Proteine",   n:"Petto di pollo 100 g",  k:165, p:30 },
+  { g:"Proteine",   n:"Tonno al naturale 100 g",k:115, p:25 },
+  { g:"Proteine",   n:"Uovo",                   k:75,  p:6 },
+  { g:"Proteine",   n:"Yogurt greco 150 g",     k:130, p:10 },
+  { g:"Proteine",   n:"Legumi 100 g secchi",    k:330, p:21 },
+  { g:"Proteine",   n:"Bresaola 50 g",          k:75,  p:16 },
+  { g:"Proteine",   n:"Parmigiano 30 g",        k:120, p:10 },
+  { g:"Proteine",   n:"Formaggio stagion. 50 g",k:190, p:13 },
+  { g:"Proteine",   n:"Proteine in polvere 30 g",k:120,p:24 },
+  { g:"Carboidrati",n:"Pasta 100 g",            k:350, p:12 },
+  { g:"Carboidrati",n:"Riso 100 g",             k:350, p:7 },
+  { g:"Carboidrati",n:"Pane 100 g",             k:270, p:9 },
+  { g:"Carboidrati",n:"Patate 300 g",           k:230, p:6 },
+  { g:"Carboidrati",n:"Avena 60 g",             k:230, p:8 },
+  { g:"Densi",      n:"Frullato da massa",      k:650, p:25 },
+  { g:"Densi",      n:"Cucchiaio d'olio",       k:90,  p:0 },
+  { g:"Densi",      n:"Frutta secca 30 g",      k:190, p:6 },
+  { g:"Densi",      n:"Burro d'arachidi 20 g",  k:120, p:5 },
+  { g:"Densi",      n:"Latte intero 200 ml",    k:130, p:7 },
+  { g:"Pasti",      n:"Panino con affettato",   k:450, p:22 },
+  { g:"Pasti",      n:"Pizza margherita",       k:800, p:30 },
+  { g:"Pasti",      n:"Verdura condita",        k:100, p:2 },
+  { g:"Pasti",      n:"Frutta",                 k:70,  p:1 },
+  { g:"Pasti",      n:"Banana",                 k:90,  p:1 }
+];
+
+var KCAL_MIN = 2400, KCAL_MAX = 2500, KCAL_MANT = 2100;
+var PROT_MIN = 80, PROT_MAX = 110;
+var PESO_TARGET_SETT = 0.25, PESO_META = 53, FTF_META = 15;
+
+var GIORNI = ["Domenica","Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato"];
+var MESI = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
+var PIANO = ["riposo","pesi","corsa","pesi","riposo","pesi","corsa"]; // dom → sab
+
+/* ============================================================
+   Stato
+   ============================================================ */
+
+var KEY = "palestra-v1";
+var storageOK = true;
+
+function fresh(){
+  return {
+    v:1,
+    start:null,               // lunedì della settimana 1, ISO
+    setup:{ fermi:false, attrezzi:false },
+    weights:[],               // {d, kg}
+    ftf:[{ d:"2026-07-31", cm:30 }],
+    sessions:{},              // ISO → { goblet:[{kg,reps,done}], ... }
+    runs:[],                  // {d, week, kind, rpe}
+    stretch:{},               // ISO → { done:true, items:{id:true} }
+    food:{},                  // ISO → [{n,k,p}]
+    regol:{},                 // esercizio → regolazioni scritte da te
+    pain:{},                  // ISO → [zona, ...]
+    lastExport:null           // ISO dell'ultimo backup riuscito
+  };
+}
+var SCHEMA = 1;
+var schemaFuturo = false;
+/* Riempie i campi che una versione piu vecchia non aveva e riallinea v.
+   Non tocca mai i dati esistenti: aggiunge soltanto cio che manca. */
+function migra(o){
+  var base = fresh();
+  for(var k in base){ if(!(k in o) || o[k] == null) o[k] = base[k]; }
+  o.v = SCHEMA;
+  return o;
+}
+function load(){
+  try{
+    var raw = localStorage.getItem(KEY);
+    if(raw){
+      var o = JSON.parse(raw);
+      if(o && typeof o.v === "number"){
+        if(o.v > SCHEMA){ schemaFuturo = true; return o; }
+        return migra(o);
+      }
+    }
+  }catch(e){ storageOK = false; }
+  return fresh();
+}
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(S)); }
+  catch(e){ storageOK = false; }
+}
+var S = load();
+
+/* ============================================================
+   Date e settimane
+   ============================================================ */
+
+function iso(d){
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+function parseISO(s){ var p = s.split("-"); return new Date(+p[0], +p[1]-1, +p[2]); }
+function oggiISO(){ return iso(new Date()); }
+function mondayOf(d){
+  var x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  var w = x.getDay(); var diff = (w === 0 ? -6 : 1 - w);
+  x.setDate(x.getDate() + diff); return x;
+}
+function weekOf(isoDate){
+  if(!S.start) return null;
+  var a = parseISO(S.start), b = parseISO(isoDate);
+  var days = Math.floor((b - a) / 86400000);
+  return Math.floor(days / 7) + 1;
+}
+function weekNow(){ var w = weekOf(oggiISO()); return w; }
+function weekClamped(){ var w = weekNow(); if(w === null) return 1; return Math.max(1, Math.min(4, w)); }
+function serieCount(){ return weekNow() === 1 ? 2 : 3; }
+function dataLunga(d){ return GIORNI[d.getDay()] + " " + d.getDate() + " " + MESI[d.getMonth()]; }
+function mmss(s){
+  s = Math.max(0, Math.round(s));
+  return Math.floor(s/60) + ":" + String(s%60).padStart(2,"0");
+}
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+/* ============================================================
+   Accessori sullo stato
+   ============================================================ */
+
+function sessionOf(d){ if(!S.sessions[d]) S.sessions[d] = {}; return S.sessions[d]; }
+function setsOf(d, exId){
+  var s = sessionOf(d);
+  var need = serieCount();
+  if(!s[exId]) s[exId] = [];
+  while(s[exId].length < need) s[exId].push({ kg:null, reps:null, done:false });
+  return s[exId];
+}
+function lastSession(exId, beforeISO){
+  var keys = Object.keys(S.sessions).filter(function(k){ return k < beforeISO; }).sort();
+  for(var i = keys.length - 1; i >= 0; i--){
+    var arr = S.sessions[keys[i]][exId];
+    if(arr && arr.some(function(x){ return x.done; })) return { d:keys[i], sets:arr.filter(function(x){ return x.done; }) };
+  }
+  return null;
+}
+function suggerimento(exId, beforeISO){
+  var ex = EX.filter(function(e){ return e.id === exId; })[0];
+  var last = lastSession(exId, beforeISO);
+  if(!last) return null;
+  var soglia = ex.secs ? 30 : 12;
+  var tutte = last.sets.length >= 2 && last.sets.every(function(s){ return (s.reps || 0) >= soglia; });
+  var kg = last.sets[0].kg;
+  if(tutte && kg != null) return { kg: Math.round((kg + ex.step) * 100) / 100, base:kg };
+  return null;
+}
+/* Cosa scrivere nei campi di una serie non ancora registrata.
+   Il pattern e quello di Strong e Hevy: i numeri dell'ultima volta sono gia
+   dentro, si tocca la spunta e basta. Nella revisione JMIR 2024 (18 studi,
+   525.824 partecipanti) l'esperienza d'uso scomoda e la prima ragione di
+   abbandono su sei e il costo di inserimento dati e la quarta.
+   Se l'ultima volta erano chiuse tutte al massimo, la proposta e gia il
+   carico salito: la regola "prima ripetizioni, poi peso" applicata da sola. */
+function proposta(exId, beforeISO){
+  var ex = EX.filter(function(e){ return e.id === exId; })[0];
+  var last = lastSession(exId, beforeISO);
+  if(!last) return null;
+  var soglia = ex.secs ? 30 : 12;
+  var base = ex.secs ? 20 : 10;
+  var ultime = last.sets[last.sets.length - 1].reps || base;
+  var chiuse = last.sets.length >= 2 && last.sets.every(function(s){ return (s.reps || 0) >= soglia; });
+  if(ex.secs) return { kg:null, reps: chiuse ? ultime + ex.step : ultime, salito:chiuse };
+  var kg = last.sets[0].kg;
+  if(kg == null) return { kg:null, reps:ultime, salito:false };
+  return {
+    kg: chiuse ? Math.round((kg + ex.step) * 100) / 100 : kg,
+    reps: chiuse ? base : ultime,
+    salito: chiuse
+  };
+}
+
+function stretchDay(d){ if(!S.stretch[d]) S.stretch[d] = { items:{} }; return S.stretch[d]; }
+function stretchDone(d){
+  var s = S.stretch[d]; if(!s) return false;
+  return STRETCH.every(function(x){ return s.items && s.items[x.id]; });
+}
+function foodDay(d){ if(!S.food[d]) S.food[d] = []; return S.food[d]; }
+function foodTot(d){
+  return foodDay(d).reduce(function(a, x){ return { k:a.k + x.k, p:a.p + x.p }; }, { k:0, p:0 });
+}
+
+/* Backup. La perdita di dati e fra le sei ragioni di abbandono censite dalla
+   revisione JMIR 2024, e su iPhone Safari cancella la memoria dei siti dopo
+   sette giorni senza aprirli: la stessa soglia vale per il promemoria. */
+function giorniDaExport(){
+  if(!S.lastExport) return null;
+  return Math.floor((parseISO(oggiISO()) - parseISO(S.lastExport)) / 86400000);
+}
+function exportScaduto(){
+  if(sedute().length < 2 && S.weights.length < 2) return false;
+  var g = giorniDaExport();
+  return g === null || g >= 7;
+}
+
+/* Sedute di pesi davvero svolte, in ordine di data. Una seduta conta se ha
+   almeno una serie spuntata: le righe vuote create al volo non contano. */
+function sedute(){
+  return Object.keys(S.sessions).filter(function(dd){
+    var s = S.sessions[dd];
+    for(var k in s){
+      for(var i = 0; i < s[k].length; i++){ if(s[k][i].done) return true; }
+    }
+    return false;
+  }).sort();
+}
+/* Regola del brief: stesso dolore, stesso punto, tre sedute di fila -> ci si ferma.
+   E l'unica regola del progetto che protegge da qualcosa di non reversibile. */
+function painAlert(){
+  var ds = sedute().slice(-3);
+  if(ds.length < 3) return [];
+  return ZONE.filter(function(z){
+    return ds.every(function(dd){ return (S.pain[dd] || []).indexOf(z) >= 0; });
+  });
+}
+
+/* medie settimanali del peso */
+function pesoSettimane(){
+  if(!S.weights.length) return [];
+  var anchor = S.start ? parseISO(S.start) : mondayOf(parseISO(S.weights.slice().sort(function(a,b){ return a.d < b.d ? -1 : 1; })[0].d));
+  var m = {};
+  S.weights.forEach(function(w){
+    var idx = Math.floor((parseISO(w.d) - anchor) / 604800000) + 1;
+    if(!m[idx]) m[idx] = [];
+    m[idx].push(w.kg);
+  });
+  return Object.keys(m).map(Number).sort(function(a,b){ return a-b; }).map(function(i){
+    var a = m[i];
+    return { w:i, n:a.length, media: a.reduce(function(x,y){ return x+y; },0) / a.length };
+  });
+}
+function consiglioPeso(){
+  var ws = pesoSettimane();
+  if(ws.length < 3) return null;
+  var ult = ws[ws.length-1], pre = ws[ws.length-3];
+  if(ult.w - pre.w > 3) return null;
+  var d = ult.media - pre.media;
+  if(d < 0.15) return { t:"su", txt:"La media del peso è ferma da due settimane (" + d.toFixed(2).replace(".",",") + " kg). Regola del diario: <strong>+200 kcal al giorno</strong>, poi ricontrolla fra due settimane." };
+  var settimanale = d / (ult.w - pre.w);
+  if(settimanale > 0.4) return { t:"giu", txt:"Stai salendo di " + settimanale.toFixed(2).replace(".",",") + " kg a settimana, oltre i 400 g. Regola del diario: <strong>−150 kcal al giorno</strong>." };
+  return { t:"ok", txt:"Ritmo dentro il bersaglio: " + settimanale.toFixed(2).replace(".",",") + " kg a settimana contro i 250 g previsti. Non toccare niente." };
+}
+
+/* ============================================================
+   Audio e vibrazione
+   ============================================================ */
+
+var actx = null;
+function beep(n){
+  try{
+    if(!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+    if(actx.state === "suspended") actx.resume();
+    for(var i = 0; i < (n||1); i++){
+      var o = actx.createOscillator(), g = actx.createGain();
+      var t = actx.currentTime + i * 0.22;
+      o.frequency.value = 760; o.type = "sine";
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.35, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+      o.connect(g); g.connect(actx.destination);
+      o.start(t); o.stop(t + 0.2);
+    }
+  }catch(e){}
+}
+function buzz(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
+
+/* Schermo acceso per tutta la seduta, non solo dentro i timer: fra un
+   esercizio e l'altro il telefono si spegneva e andava sbloccato con le mani
+   sudate. Il wake lock viene rilasciato dal browser ogni volta che la pagina
+   passa in secondo piano, quindi va richiesto di nuovo al ritorno — altrimenti
+   dura solo fino alla prima notifica che ti porta fuori dall'app.
+   Nessun conteggio di chi lo ha chiesto: syncWake() ricalcola dallo stato. */
+var wake = null, wakeWanted = false;
+function wakeNeeded(){
+  return ses.on || tab === "pesi" || tab === "corsa" || rest.on || run.playing;
+}
+function syncWake(){
+  wakeWanted = wakeNeeded();
+  applyWake();
+}
+function applyWake(){
+  try{
+    if(wakeWanted && navigator.wakeLock && !wake && document.visibilityState === "visible"){
+      navigator.wakeLock.request("screen").then(function(w){
+        wake = w;
+        w.addEventListener("release", function(){ wake = null; });
+      }).catch(function(){});
+    } else if(!wakeWanted && wake){ wake.release(); wake = null; }
+  }catch(e){}
+}
+document.addEventListener("visibilitychange", function(){
+  if(document.visibilityState === "visible") applyWake();
+});
+
+/* ============================================================
+   Timer di riposo
+   ============================================================ */
+
+var rest = { end:0, label:"", on:false };
+function restStart(sec, label){
+  rest.end = Date.now() + sec * 1000; rest.label = label; rest.on = true;
+  syncWake(); tickRest();
+}
+function restStop(){ rest.on = false; document.getElementById("rest").hidden = true; syncWake(); }
+function tickRest(){
+  var el = document.getElementById("rest");
+  if(!rest.on){ el.hidden = true; return; }
+  var left = (rest.end - Date.now()) / 1000;
+  /* Nella seduta guidata il conto alla rovescia sta a schermo intero: la
+     fascetta in basso resterebbe nascosta sotto la schermata blu. */
+  var cd = document.getElementById("sesCd");
+  if(cd) cd.textContent = mmss(Math.max(0, left));
+  /* Chi usa un lettore di schermo non vede il numero che scorre. Si annuncia
+     solo negli ultimi 10 secondi: un annuncio al secondo per due minuti
+     renderebbe l'app inascoltabile (WCAG 4.1.3). */
+  var live = document.getElementById("sesLive");
+  if(live){
+    var L = Math.ceil(Math.max(0, left));
+    live.textContent = left <= 0 ? "Riposo finito" : (L <= 10 ? L + " secondi" : "");
+  }
+  el.hidden = ses.on;
+  if(!ses.on){
+    document.getElementById("restT").textContent = mmss(Math.max(0, left));
+    document.getElementById("restW").innerHTML = left <= 0
+      ? "Riposo finito — vai con la serie"
+      : "Riposo · " + esc(rest.label);
+  }
+  if(left <= 0 && !rest.done){ rest.done = true; beep(2); buzz([160,80,160]); }
+  if(left > 0) rest.done = false;
+  /* "lui conta il tempo, poi parte l'altra": a zero il percorso avanza da solo. */
+  if(left <= 0 && ses.on && !ses.avanzato && (ses.steps[ses.i] || {}).t === "riposo"){
+    ses.avanzato = true; restStop(); sesVai(1); return;
+  }
+  if(left < -20) restStop();
+}
+
+/* ============================================================
+   Timer della corsa
+   ============================================================ */
+
+var run = { seq:[], i:0, end:0, playing:false, started:false };
+function buildSeq(week){
+  var cfg = RUN_WEEKS[Math.max(0, Math.min(3, week - 1))];
+  var seq = [{ k:"warm", n:"Riscaldamento", s:WARMUP }];
+  for(var i = 0; i < cfg.reps; i++){
+    seq.push({ k:"run", n:"Corsa", s:cfg.run, b:i+1, tot:cfg.reps });
+    if(i < cfg.reps - 1) seq.push({ k:"walk", n:"Cammino", s:cfg.walk, b:i+1, tot:cfg.reps });
+  }
+  seq.push({ k:"cool", n:"Defaticamento", s:COOLDOWN });
+  return seq;
+}
+function runStart(){
+  if(!run.started){ run.seq = buildSeq(weekClamped()); run.i = 0; run.started = true; }
+  run.end = Date.now() + run.seq[run.i].s * 1000;
+  run.playing = true; syncWake(); beep(1);
+}
+function runPause(){
+  if(!run.playing) return;
+  run.seq[run.i].s = Math.max(1, Math.round((run.end - Date.now()) / 1000));
+  run.playing = false; syncWake();
+}
+function runNext(){
+  run.i++;
+  if(run.i >= run.seq.length){ runFinish(); return; }
+  run.end = Date.now() + run.seq[run.i].s * 1000;
+  var k = run.seq[run.i].k;
+  beep(k === "run" ? 2 : 1);
+  buzz(k === "run" ? [200,90,200] : [220]);
+}
+function runFinish(){
+  run.playing = false; run.started = false; syncWake();
+  beep(3); buzz([300,120,300,120,300]);
+  var rpe = prompt("Sessione finita. Sensazione da 1 a 5?\n1 = facile, potevo continuare · 3 = giusta · 5 = ho finito a fatica");
+  var n = parseInt(rpe, 10);
+  S.runs.push({ d:oggiISO(), week:weekClamped(), kind:"corsa", rpe:(n >= 1 && n <= 5) ? n : null });
+  save(); render();
+}
+function tickRun(){
+  if(!run.started) return;
+  var box = document.getElementById("runner");
+  if(!box) return;
+  var ph = run.seq[run.i];
+  var left = run.playing ? (run.end - Date.now()) / 1000 : ph.s;
+  if(run.playing && left <= 0){ runNext(); return; }
+  box.setAttribute("data-kind", ph.k);
+  /* La figura cambia col cambio di fase: corre nei blocchi, cammina nei recuperi. */
+  var vuole = ph.k === "run" ? "corre" : "cammina";
+  if(anim.id !== vuole){
+    var w = box.querySelector(".figcorsa");
+    if(w){ w.innerHTML = figuraSVG(vuole); animaOn(vuole); }
+  }
+  box.querySelector(".phase").textContent = ph.n;
+  box.querySelector(".big").textContent = mmss(left);
+  box.querySelector(".of").textContent = ph.b ? ("blocco " + ph.b + " di " + ph.tot) : (run.playing ? "in corso" : "in pausa");
+  var tr = box.querySelector(".track");
+  if(tr) Array.prototype.forEach.call(tr.children, function(el, idx){
+    el.setAttribute("data-p", idx <= run.i ? "1" : "0");
+  });
+}
+
+setInterval(function(){ tickRest(); tickRun(); }, 250);
+
+/* ============================================================
+   Grafici
+   ============================================================ */
+
+function lineChart(pts, opts){
+  opts = opts || {};
+  if(pts.length === 0) return "";
+  var W = 320, H = 96, pl = 30, pr = 8, pt = 10, pb = 18;
+  var ys = pts.map(function(p){ return p.y; });
+  var extra = (opts.guide || []).reduce(function(a,g){ return a.concat(g.map(function(p){ return p.y; })); }, []);
+  var all = ys.concat(extra, opts.goal != null ? [opts.goal] : []);
+  var min = Math.min.apply(null, all), max = Math.max.apply(null, all);
+  if(max - min < 0.6){ max += 0.4; min -= 0.4; }
+  var pad = (max - min) * 0.12; min -= pad; max += pad;
+  var n = Math.max(1, pts.length - 1);
+  var X = function(i){ return pl + (i / n) * (W - pl - pr); };
+  var Y = function(v){ return pt + (1 - (v - min) / (max - min)) * (H - pt - pb); };
+  var s = '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(opts.alt || "grafico") + '">';
+  [0, 0.5, 1].forEach(function(f){
+    var y = pt + f * (H - pt - pb);
+    s += '<line x1="' + pl + '" y1="' + y + '" x2="' + (W - pr) + '" y2="' + y + '" stroke="var(--line)" stroke-width="1"/>';
+  });
+  s += '<text x="2" y="' + (pt + 4) + '" font-size="9" fill="var(--ink-3)" font-family="var(--mono)">' + max.toFixed(0) + '</text>';
+  s += '<text x="2" y="' + (H - pb + 4) + '" font-size="9" fill="var(--ink-3)" font-family="var(--mono)">' + min.toFixed(0) + '</text>';
+  if(opts.goal != null){
+    s += '<line x1="' + pl + '" y1="' + Y(opts.goal) + '" x2="' + (W - pr) + '" y2="' + Y(opts.goal) + '" stroke="' + (opts.goalColor || "var(--ok)") + '" stroke-width="1.2" stroke-dasharray="3 3"/>';
+  }
+  (opts.guide || []).forEach(function(g){
+    var d = g.map(function(p, i){ return (i ? "L" : "M") + X(p.x) + " " + Y(p.y); }).join(" ");
+    s += '<path d="' + d + '" fill="none" stroke="var(--ink-3)" stroke-width="1.2" stroke-dasharray="4 3" opacity=".7"/>';
+  });
+  var col = opts.color || "var(--accent)";
+  var d = pts.map(function(p, i){ return (i ? "L" : "M") + X(i) + " " + Y(p.y); }).join(" ");
+  if(pts.length > 1){
+    s += '<path d="' + d + ' L' + X(pts.length-1) + ' ' + (H - pb) + ' L' + X(0) + ' ' + (H - pb) + ' Z" fill="' + col + '" opacity=".10" style="animation:appari .8s .5s ease both"/>';
+    /* pathLength="1" normalizza la lunghezza: cosi il tratteggio vale 1 e la
+       linea si disegna da sinistra a destra senza doverla misurare. */
+    s += '<path d="' + d + '" fill="none" stroke="' + col + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"' +
+      ' pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" style="animation:traccia .9s cubic-bezier(.3,.7,.3,1) forwards"/>';
+  }
+  pts.forEach(function(p, i){
+    var last = i === pts.length - 1;
+    var ritardo = (0.15 + 0.75 * (i / Math.max(1, pts.length - 1))).toFixed(2);
+    s += '<circle cx="' + X(i) + '" cy="' + Y(p.y) + '" r="' + (last ? 4 : 2.4) + '" fill="' + (last ? col : "var(--bg)") + '" stroke="' + col + '" stroke-width="1.6"' +
+      ' style="animation:appari .3s ' + ritardo + 's ease both"/>';
+  });
+  var lp = pts[pts.length-1];
+  s += '<text x="' + Math.min(W - pr, X(pts.length-1)) + '" y="' + Math.max(10, Y(lp.y) - 8) + '" font-size="10" text-anchor="end" fill="' + col + '" font-family="var(--mono)" font-weight="600">' + esc(lp.lab || lp.y) + '</text>';
+  s += '</svg>';
+  return s;
+}
+
+/* ============================================================
+   Viste
+   ============================================================ */
+
+var tab = "oggi";
+
+function render(){
+  var w = weekNow();
+  document.getElementById("wkLabel").textContent = S.start
+    ? (w > 4 ? "settimana " + w + " · oltre scheda" : "settimana " + w + " di 4")
+    : "non avviato";
+  Array.prototype.forEach.call(document.querySelectorAll("#tabs button"), function(b){
+    if(b.dataset.tab === tab) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+  });
+  var v = document.getElementById("view");
+  if(ses.on){
+    v.innerHTML = vSessione();
+    var s = ses.steps[ses.i];
+    var fig = s.t === "intro" || s.t === "serie" ? s.ex.id : s.t === "stre" ? s.st.id : null;
+    if(fig) animaOn(fig); else animaOff();
+  } else {
+    v.innerHTML = ({ oggi:vOggi, pesi:vPesi, corsa:vCorsa, cibo:vCibo, dati:vDati })[tab]();
+    /* Qualunque vista puo mostrare una figura: basta un contenitore data-fig. */
+    var wf = v.querySelector("[data-fig]");
+    if(wf) animaOn(wf.dataset.fig); else animaOff();
+  }
+  animaConta();
+  syncWake();
+  window.scrollTo(0, 0);
+}
+
+function bannerStorage(){
+  var pre = schemaFuturo ? '<div class="note alert"><strong>Questi dati vengono da una versione piu recente dell\'app.</strong> Questa versione potrebbe non leggerli tutti: aggiornala prima di scriverci sopra, oppure esporta subito come backup.</div>' : "";
+  if(storageOK) return pre;
+  return pre + '<div class="note alert"><strong>I dati non si salvano su questo browser.</strong> Probabilmente è attiva la navigazione privata o il blocco dei dati dei siti. Quello che scrivi resta finché non chiudi la pagina: esporta prima di uscire.</div>';
+}
+
+/* ============================================================
+   SEDUTA GUIDATA
+   Una cosa sola sullo schermo. Vai -> l'omino mostra il movimento -> dici
+   fatto -> l'app conta il riposo -> parte il successivo, fino alla fine.
+   Nessun parametro del programma cambia qui: e solo messa in scena.
+   ============================================================ */
+
+/* Scheletro: 0 anca · 1 spalla · 2 testa · 3 gomito · 4 mano
+              5 ginocchio · 6 caviglia · 7 punta · 8 controllo della schiena
+   Due pose per esercizio, interpolate. Le lunghezze delle ossa devono restare
+   uguali fra le due pose, altrimenti la figura si allunga: e verificato. */
+var POSE = {
+  goblet:{ attr:"kb",
+    a:[[100,112],[100,62],[100,48],[107,89],[96,65],[100,145],[100,180],[115,180],[100,87]],
+    b:[[79,155],[102,111],[108,98],[108,138],[96,116],[111,147],[100,180],[115,180],[94,130]] },
+  rdl:{ attr:"db",
+    a:[[100,112],[100,62],[100,48],[102,90],[104,116],[100,145],[100,180],[115,180],[100,87]],
+    b:[[84,115],[134,110],[148,108],[136,138],[137,164],[97,145],[100,180],[115,180],[109,109]] },
+  chest:{ attr:"bar",
+    a:[[85,135],[82,86],[81,72],[56,95],[82,100],[118,140],[122,175],[137,175],[83,110]],
+    b:[[85,135],[82,86],[81,72],[109,92],[135,95],[118,140],[122,175],[137,175],[83,110]] },
+  lat:{ attr:"bar",
+    a:[[90,138],[88,88],[87,74],[80,61],[74,35],[122,143],[126,178],[141,178],[89,113]],
+    b:[[90,138],[88,88],[87,74],[66,106],[90,95],[122,143],[126,178],[141,178],[89,113]] },
+  row:{ attr:"db",
+    a:[[75,120],[125,118],[139,116],[127,146],[128,172],[70,152],[72,180],[86,180],[100,116]],
+    b:[[75,120],[125,118],[139,116],[103,133],[122,150],[70,152],[72,180],[86,180],[100,116]] },
+  ohp:{ attr:"db",
+    a:[[88,138],[86,88],[85,74],[62,102],[75,80],[120,143],[124,178],[139,178],[87,113]],
+    b:[[88,138],[86,88],[85,74],[80,61],[86,36],[120,143],[124,178],[139,178],[87,113]] },
+  plank:{ attr:null,
+    a:[[100,163],[148,149],[162,146],[150,177],[174,177],[68,171],[34,180],[26,174],[124,153]],
+    b:[[100,166],[148,150],[162,147],[150,178],[174,178],[68,173],[34,181],[26,175],[124,156]] },
+  gc:{ attr:null,
+    a:[[75,130],[125,128],[140,124],[127,156],[129,181],[75,163],[41,171],[28,175],[100,112]],
+    b:[[75,130],[125,128],[140,124],[127,156],[129,181],[75,163],[41,171],[28,175],[100,146]] },
+  ns:{ attr:null,
+    a:[[85,130],[83,80],[84,66],[85,108],[95,131],[118,135],[122,170],[134,172],[84,105]],
+    b:[[85,130],[83,80],[76,68],[85,108],[95,131],[118,135],[152,143],[165,148],[84,105]] },
+  fem:{ attr:null,
+    a:[[80,138],[78,88],[77,74],[80,116],[95,137],[113,143],[147,151],[158,144],[79,113]],
+    b:[[80,138],[111,99],[120,88],[118,126],[140,142],[113,143],[147,151],[158,144],[93,116]] },
+  /* Lo scheletro ha una gamba sola: qui è la gamba DIETRO, quella che si
+     allunga — ginocchio a terra e stinco appoggiato all'indietro. Disegnare
+     la gamba davanti darebbe una figura in piedi, che non è l'esercizio. */
+  anc:{ attr:null,
+    a:[[95,147],[92,97],[91,83],[94,125],[97,150],[90,180],[55,180],[45,176],[93,122]],
+    b:[[101,150],[98,100],[97,86],[100,128],[103,153],[90,180],[55,180],[45,176],[99,125]] },
+  /* Corsa e cammino: due falcate, una per fase del timer a intervalli.
+     Non e decorazione — dice in che fase sei senza doverlo leggere. */
+  /* Corsa: ginocchio alto davanti col braccio indietro, poi gamba distesa
+     dietro in spinta col braccio avanti. E la falcata, non due gambe piegate. */
+  corre:{ attr:null,
+    a:[[100,110],[104,60],[108,47],[82,78],[66,98],[131,100],[118,133],[132,138],[101,84]],
+    b:[[100,106],[104,56],[108,43],[126,72],[144,52],[75,128],[51,154],[40,163],[101,80]] },
+  cammina:{ attr:null,
+    a:[[100,112],[100,62],[100,48],[90,88],[82,112],[113,143],[122,177],[137,174],[100,87]],
+    b:[[100,114],[100,64],[100,50],[111,89],[122,112],[90,145],[77,178],[62,180],[100,89]] },
+  pol:{ attr:"muro",
+    a:[[90,115],[105,68],[110,55],[133,70],[159,73],[80,146],[70,180],[85,180],[97,91]],
+    b:[[96,118],[112,71],[117,58],[140,73],[166,76],[80,146],[70,180],[85,180],[104,94]] }
+};
+
+/* Poche frasi, quelle che cambiano l'esecuzione. Il resto sta dietro un tasto. */
+var CUE = {
+  goblet:["Peso contro il petto, due mani","Talloni a terra, petto alto","Scendi finché le cosce sono parallele"],
+  rdl:   ["Ginocchia poco piegate e ferme","Spingi il bacino indietro, non piegarti","Fermati quando tira dietro le cosce"],
+  chest: ["Maniglie a metà petto","Non bloccare i gomiti in fondo","Gomiti mai oltre la linea del busto"],
+  lat:   ["Barra davanti alla testa, mai dietro","Tira coi gomiti verso le costole","Cosce bloccate sotto i rulli"],
+  row:   ["Schiena piatta, parallela al pavimento","Gomito vicino al corpo","Non ruotare il busto per tirare"],
+  ohp:   ["Schienale quasi verticale","Gomiti sotto i polsi","Spingi in alto senza bloccare i gomiti"],
+  plank: ["Gomiti sotto le spalle","Glutei e addome contratti","Quando il bacino cede hai finito"],
+  gc:    ["A quattro zampe, mani sotto le spalle","Inarca in su, poi lascia scendere","Lento, senza forzare"],
+  ns:    ["Seduto, schiena appoggiata","Stendi il ginocchio e porta il mento in giù","Poi piega e guarda in alto"],
+  fem:   ["Una gamba tesa davanti","Scendi dall'anca, non curvando la schiena","Fermati dove tira, senza rimbalzi"],
+  anc:   ["Ginocchio a terra, l'altro piede avanti","Spingi il bacino in avanti","Senti tirare davanti alla coscia dietro"],
+  pol:   ["Mani al muro, gamba dietro tesa","Tallone dietro schiacciato a terra","Avvicina il bacino al muro"]
+};
+
+/* L'attrezzo su cui sta l'omino, in grigio dietro di lui: senza, le figure
+   sedute sembrano sospese a mezz'aria. Coordinate fisse, non si muove. */
+var MACC = {
+  chest:'<rect x="62" y="138" width="54" height="8" rx="3"/><rect x="52" y="92" width="9" height="50" rx="4"/>' +
+        '<rect x="140" y="66" width="7" height="112" rx="3"/><rect x="52" y="176" width="98" height="5" rx="2"/>',
+  lat:  '<rect x="68" y="140" width="50" height="8" rx="3"/><circle cx="122" cy="131" r="7"/>' +
+        '<rect x="44" y="28" width="7" height="152" rx="3"/><rect x="44" y="28" width="76" height="6" rx="3"/>' +
+        '<rect x="52" y="176" width="90" height="5" rx="2"/>',
+  row:  '<rect x="50" y="148" width="86" height="9" rx="3"/><rect x="56" y="157" width="6" height="23" rx="2"/>' +
+        '<rect x="124" y="157" width="6" height="23" rx="2"/>',
+  ohp:  '<rect x="66" y="140" width="50" height="8" rx="3"/><polygon points="60,142 70,142 80,90 71,90"/>' +
+        '<rect x="60" y="176" width="62" height="5" rx="2"/>',
+  ns:   '<rect x="64" y="132" width="54" height="7" rx="3"/><rect x="57" y="86" width="7" height="48" rx="3"/>' +
+        '<rect x="68" y="139" width="5" height="41" rx="2"/><rect x="110" y="139" width="5" height="41" rx="2"/>',
+  pol:  '<rect x="178" y="26" width="8" height="154" rx="2"/>'
+};
+
+/* ---------- la figura ---------- */
+function lerp(a, b, u){ return a + (b - a) * u; }
+function poseAt(id, u){
+  var p = POSE[id]; if(!p) return null;
+  return p.a.map(function(pt, i){
+    return [lerp(pt[0], p.b[i][0], u), lerp(pt[1], p.b[i][1], u)];
+  });
+}
+/* Riquadro stretto attorno alla figura: nel riquadro piccolo della schermata
+   Oggi un viewBox da 200x200 lascia la figura grande un dito e illeggibile.
+   Il ritaglio si calcola dalle due pose, cosi vale per qualsiasi esercizio. */
+function riquadro(id){
+  var P = POSE[id].a.concat(POSE[id].b);
+  var x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  P.forEach(function(p){
+    if(p[0] < x0) x0 = p[0]; if(p[0] > x1) x1 = p[0];
+    if(p[1] < y0) y0 = p[1]; if(p[1] > y1) y1 = p[1];
+  });
+  var m = 22, w = x1 - x0 + m * 2, hh = y1 - y0 + m * 2, l = Math.max(w, hh);
+  return (x0 - m - (l - w) / 2).toFixed(0) + " " + (y0 - m - (l - hh) / 2).toFixed(0) + " " + l.toFixed(0) + " " + l.toFixed(0);
+}
+function figuraSVG(id, stretto){
+  if(!POSE[id]) return "";
+  return '<svg class="stage" id="stage" viewBox="' + (stretto ? riquadro(id) : "0 0 200 200") + '" role="img" aria-label="dimostrazione del movimento">' +
+    '<line class="suolo" x1="10" y1="181" x2="190" y2="181"></line>' +
+    '<g class="macc">' + (MACC[id] || "") + '</g>' +
+    '<path class="bone" id="fgT"></path>' +
+    '<polyline class="bone" id="fgG"></polyline>' +
+    '<polyline class="bone" id="fgB"></polyline>' +
+    '<circle class="head" id="fgH" r="11"></circle>' +
+    '<g class="attr" id="fgA"></g>' +
+    '</svg>';
+}
+function disegna(id, u){
+  var P = poseAt(id, u); if(!P) return;
+  var T = document.getElementById("fgT"); if(!T) return;
+  T.setAttribute("d", "M" + P[0][0] + " " + P[0][1] + " Q" + P[8][0] + " " + P[8][1] + " " + P[1][0] + " " + P[1][1]);
+  document.getElementById("fgB").setAttribute("points", P[1] + " " + P[3] + " " + P[4]);
+  document.getElementById("fgG").setAttribute("points", P[0] + " " + P[5] + " " + P[6] + " " + P[7]);
+  var H = document.getElementById("fgH");
+  H.setAttribute("cx", P[2][0]); H.setAttribute("cy", P[2][1]);
+  var A = document.getElementById("fgA"), t = POSE[id].attr, m = P[4];
+  if(!A) return;
+  if(t === "kb") A.innerHTML = '<path d="M' + (m[0]-7) + ' ' + (m[1]+4) + ' q7 -10 14 0" fill="none" stroke-width="4"></path>' +
+      '<circle cx="' + m[0] + '" cy="' + (m[1]+13) + '" r="10"></circle>';
+  else if(t === "db") A.innerHTML = '<rect x="' + (m[0]-3.5) + '" y="' + (m[1]-12) + '" width="7" height="24" rx="2"></rect>';
+  else if(t === "bar") A.innerHTML = '<rect x="' + (m[0]-4) + '" y="' + (m[1]-14) + '" width="8" height="28" rx="3"></rect>' +
+      (id === "lat" ? '<line x1="47.5" y1="34" x2="' + m[0] + '" y2="' + m[1] + '" stroke-width="3"></line>' : "");
+  else A.innerHTML = "";
+}
+/* Interpolazione in JS invece che con animazioni CSS: identica su ogni browser,
+   si ferma di colpo quando l'utente apre un campo, e si spegne del tutto con
+   prefers-reduced-motion (WCAG 2.3.3) mostrando la posa finale ferma. */
+var anim = { raf:0, id:null, ferma:false };
+var pocoMoto = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function animaOn(id){
+  animaOff();
+  anim.id = id;
+  if(!POSE[id]) return;
+  if(pocoMoto){ disegna(id, 1); return; }
+  var t0 = performance.now(), ultimo = 0;
+  (function ciclo(now){
+    if(anim.id !== id) return;
+    /* ~25 fps invece di 60: sotto si vedono gli scatti, sopra non si guadagna
+       niente di visibile e si consuma batteria col wake lock acceso.
+       Resta rAF e non setInterval: si sospende da solo a pagina nascosta. */
+    if(!anim.ferma && now - ultimo >= 40){
+      ultimo = now;
+      var t = ((now - t0) % 3000) / 3000;
+      disegna(id, (1 - Math.cos(2 * Math.PI * t)) / 2);
+    }
+    anim.raf = requestAnimationFrame(ciclo);
+  })(t0);
+}
+function animaOff(){ if(anim.raf) cancelAnimationFrame(anim.raf); anim.raf = 0; anim.id = null; }
+
+/* Numeri che salgono da zero. Stessa curva e stessa durata di valore
+   (comune.js: 1300 ms, 1-(1-t)^3, parte veloce e rallenta alla fine). */
+function contaSu(el){
+  var target = parseFloat(el.dataset.target);
+  if(isNaN(target)) return;
+  /* Se la pagina non e visibile rAF non parte e il numero resterebbe a zero
+     per sempre: in quel caso si scrive e basta. Stesso per chi vuole meno moto. */
+  if(pocoMoto || document.visibilityState !== "visible"){ el.textContent = Math.round(target); return; }
+  var t0 = performance.now();
+  (function passo(ora){
+    var t = Math.min((ora - t0) / 1300, 1);
+    el.textContent = Math.round(target * (1 - Math.pow(1 - t, 3)));
+    if(t < 1) requestAnimationFrame(passo);
+    else el.textContent = Math.round(target);
+  })(t0);
+}
+function animaConta(){
+  Array.prototype.forEach.call(document.querySelectorAll(".conta"), contaSu);
+}
+
+/* ---------- il percorso ---------- */
+var ses = { on:false, i:0, steps:[], kind:"pesi", avanzato:false };
+
+function buildSteps(kind){
+  var out = [];
+  if(kind === "stretch"){
+    STRETCH.forEach(function(st){ out.push({ t:"stre", st:st }); });
+    out.push({ t:"sfine" });
+    return out;
+  }
+  var n = serieCount();
+  /* Una serie di avvicinamento, solo prima del primo esercizio. Non si
+     registra e non conta nel volume: vedi vincoli.md §1-quater per come
+     va raccontata — l'evidenza è più debole di quanto si dica in palestra. */
+  out.push({ t:"avvic", ex:EX[0] });
+  EX.forEach(function(ex, xi){
+    out.push({ t:"intro", ex:ex });
+    for(var si = 0; si < n; si++){
+      out.push({ t:"serie", ex:ex, si:si });
+      if(si < n - 1) out.push({ t:"riposo", ex:ex, sec:ex.rest, dopo:"Serie " + (si+2) + " · " + ex.n });
+      /* Riposo anche fra un esercizio e l'altro: la scheda prescrive 90-120
+         secondi anche lì, e saltarlo sarebbe cambiare un parametro. */
+      else if(xi < EX.length - 1) out.push({ t:"riposo", ex:ex, sec:100, dopo:EX[xi+1].n });
+    }
+  });
+  out.push({ t:"fastidi" });
+  out.push({ t:"fine" });
+  return out;
+}
+function sesStart(kind){
+  ses.kind = kind; ses.steps = buildSteps(kind); ses.on = true; ses.i = 0;
+  /* Riprende dal primo passo non ancora fatto invece che dall'inizio, e vale
+     per entrambi i percorsi: sullo stretching l'asimmetria sembrava un guasto.
+     Sul passo stesso, non su quello prima: rientrare dentro un riposo farebbe
+     partire un conto alla rovescia che nessuno ha chiesto. */
+  var d = oggiISO();
+  /* Solo se la seduta di oggi e gia stata cominciata: altrimenti il salto
+     mangerebbe l'avvicinamento e l'introduzione del primo esercizio. */
+  var iniziata = kind === "pesi"
+    ? EX.some(function(e){ return (((S.sessions[d] || {})[e.id]) || []).some(function(x){ return x.done; }); })
+    : STRETCH.some(function(x){ return stretchDay(d).items[x.id]; });
+  if(iniziata) for(var k = 0; k < ses.steps.length; k++){
+    var s = ses.steps[k];
+    if(kind === "pesi" && s.t === "serie" && !(setsOf(d, s.ex.id)[s.si] || {}).done){ ses.i = k; break; }
+    if(kind === "stretch" && s.t === "stre" && !stretchDay(d).items[s.st.id]){ ses.i = k; break; }
+  }
+  document.body.classList.add("in-ses");
+  render();
+}
+function sesExit(){
+  ses.on = false; animaOff(); restStop();
+  document.body.classList.remove("in-ses");
+  render();
+}
+function sesVai(d){
+  ses.i = Math.max(0, Math.min(ses.steps.length - 1, ses.i + d));
+  ses.avanzato = false;
+  var s = ses.steps[ses.i];
+  /* Il riposo parte da solo appena ci arrivi: e il punto di tutta la modalita. */
+  if(s.t === "riposo") restStart(s.sec, s.dopo); else if(rest.on) restStop();
+  render();
+}
+
+/* Segmenti della barra: uno per ogni serie (o per ogni esercizio di stretching) */
+function sesConteggio(){
+  var tot = [], now = -1;
+  ses.steps.forEach(function(s, k){
+    if(s.t === "serie" || s.t === "stre"){ if(k <= ses.i) now = tot.length; tot.push(k); }
+  });
+  return { tot:tot.length, now:now };
+}
+function sesBarra(){
+  var c = sesConteggio(), nome = ses.kind === "pesi" ? "serie" : "esercizi";
+  var h = '<div class="ses-bar" role="progressbar" aria-valuemin="0" aria-valuemax="' + c.tot +
+    '" aria-valuenow="' + Math.max(0, c.now) + '" aria-label="' + nome + ' ' + Math.max(1, c.now + 1) + ' di ' + c.tot + '">';
+  for(var j = 0; j < c.tot; j++) h += '<i data-f="' + (j < c.now ? "1" : j === c.now ? "now" : "0") + '"></i>';
+  return h + '</div>';
+}
+
+function vSessione(){
+  var s = ses.steps[ses.i], d = oggiISO();
+  var h = '<div class="ses"><div class="ses-top">' +
+    '<button type="button" class="ind" data-act="sesBack" aria-label="Passo precedente"' +
+      (ses.i === 0 ? ' disabled' : '') + '>&#8592;</button>' +
+    '<button type="button" data-act="sesExit">Esci</button>' +
+    (ses.kind === "pesi" ? '<button type="button" data-act="sesLista">Elenco</button>' : "") +
+    '<span class="who">' + (ses.kind === "pesi" ? "sett. " + weekNow() : "stretching") + '</span>' +
+    '</div>' + sesBarra() + '<div class="ses-body">';
+  var foot = "", cnt = sesConteggio();
+
+  if(s.t === "intro"){
+    h += '<span class="kicker">Esercizio ' + (EX.indexOf(s.ex) + 1) + ' di ' + EX.length + '</span>' +
+      '<h2>' + esc(s.ex.n) + '</h2>' +
+      figuraSVG(s.ex.id) +
+      '<p class="fine2">Dimostrazione del movimento, <strong>non il ritmo da tenere</strong>: la velocità delle ripetizioni non cambia i risultati, il carico sì.</p>' +
+      '<ul class="cue">' + (CUE[s.ex.id] || []).map(function(c){ return "<li>" + esc(c) + "</li>"; }).join("") + '</ul>' +
+      (S.regol[s.ex.id] ? '<div class="pan"><span class="kicker">Le tue regolazioni</span><p>' + esc(S.regol[s.ex.id]) + '</p></div>' : "");
+    foot = '<button type="button" class="go" data-act="sesNext">Vai</button>' +
+      '<button type="button" class="alt" data-act="sesHow" data-id="' + s.ex.id + '">Come si fa</button>' +
+      (FOTO[s.ex.id] ? '<button type="button" class="alt" data-act="sesFoto" data-id="' + s.ex.id + '">Foto</button>' : "");
+  }
+
+  else if(s.t === "avvic"){
+    var pr0 = proposta(s.ex.id, d);
+    var mezzo = pr0 && pr0.kg != null ? Math.round(pr0.kg / 2 * 2) / 2 : null;
+    h += '<span class="kicker">Prima di iniziare</span><h2>Serie di avvicinamento</h2>' +
+      figuraSVG(s.ex.id) +
+      '<p class="dopo"><strong>8-10 ripetizioni</strong> di ' + esc(s.ex.n) +
+        (mezzo != null ? ' con circa <strong>' + String(mezzo).replace(".", ",") + ' kg</strong>, metà del carico di oggi'
+                       : ', a corpo libero o col peso più leggero che hai') + '.</p>' +
+      '<ul class="cue"><li>Non si registra e non conta nel volume</li>' +
+      '<li>Serve a provare il movimento e a capire se il carico di oggi è giusto</li>' +
+      '<li>Una sola, poi si parte con le serie che contano</li></ul>' +
+      '<p class="fine2">Non serve a prevenire infortuni né a "preparare il muscolo": sul riscaldamento nell\'allenamento coi pesi le revisioni danno risultati misti. Serve a tarare il carico prima di impegnarti su una serie vera.</p>';
+    foot = '<button type="button" class="go" data-act="sesNext">Fatta, si parte</button>';
+  }
+
+  else if(s.t === "serie"){
+    var st = setsOf(d, s.ex.id)[s.si], pr = proposta(s.ex.id, d);
+    var vKg = st.kg != null ? st.kg : (pr && pr.kg != null ? pr.kg : "");
+    var vRp = st.reps != null ? st.reps : (pr ? pr.reps : (s.ex.secs ? 20 : 10));
+    var eti = "Serie " + (s.si + 1) + " di " + serieCount() + ", " + s.ex.n;
+    h += '<span class="kicker">' + esc(s.ex.n) + ' · esercizio ' + (EX.indexOf(s.ex) + 1) + ' di ' + EX.length +
+        ' · serie ' + (cnt.now + 1) + ' di ' + cnt.tot + '</span>' +
+      '<h2>Serie ' + (s.si + 1) + ' di ' + serieCount() + '</h2>' +
+      figuraSVG(s.ex.id) +
+      '<div class="duo">' +
+      (s.ex.secs ? "" :
+        '<label class="campo"><span>Chili</span><input type="number" inputmode="decimal" step="' + s.ex.step + '" id="sKg" value="' + vKg + '"></label>') +
+      '<label class="campo"><span>' + (s.ex.secs ? "Secondi" : "Ripetizioni") + '</span><input type="number" inputmode="numeric" id="sRp" value="' + vRp + '"></label>' +
+      '</div>' +
+      (pr && pr.salito ? '<div class="note">Il carico è <strong>salito</strong>: l\'ultima volta le avevi chiuse tutte al massimo.</div>' : "") +
+      (st.done ? '<p class="fine2">Già registrata. Tocca <strong>✓ Fatto</strong> per annullare la spunta, oppure <strong>Avanti</strong> per proseguire.</p>' : "");
+    /* Tornati indietro su una serie gia spuntata: la spunta resta, e si annulla
+       ritoccando il segno di spunta, come nella lista lunga. Il movimento in
+       avanti passa al pulsante sotto, altrimenti non si uscirebbe piu. */
+    foot = st.done
+      ? '<button type="button" class="go fatta" data-act="sesToggle" aria-label="' + esc(eti) + ', registrata. Tocca per annullare">&#10003; Fatto</button>' +
+        '<button type="button" class="alt" data-act="sesNext">Avanti</button>'
+      : '<button type="button" class="go" data-act="sesFatto" aria-label="' + esc(eti) + ' fatta">Fatto</button>' +
+        '<button type="button" class="alt" data-act="sesNext">Salta questa serie</button>';
+  }
+
+  else if(s.t === "riposo"){
+    h += '<span class="kicker">Riposo</span>' +
+      '<div class="cd num" id="sesCd" aria-hidden="true">' + mmss(s.sec) + '</div>' +
+      '<div class="sr" id="sesLive" aria-live="polite" aria-atomic="true"></div>' +
+      '<p class="dopo">Poi: <strong>' + esc(s.dopo) + '</strong></p>' +
+      '<p class="fine2">Non è tempo perso. Coi riposi corti si guadagna meno forza e meno spessore muscolare a parità di lavoro fatto.</p>';
+    foot = '<div class="duo"><button type="button" class="alt" data-act="sesPiu30">+30 secondi</button>' +
+      '<button type="button" class="alt" data-act="sesNext">Salta</button></div>';
+  }
+
+  else if(s.t === "fastidi"){
+    var pz = S.pain[d] || [], al = painAlert();
+    h += '<span class="kicker">Ultima cosa</span><h2>Hai sentito qualcosa?</h2>' +
+      '<p class="fine2">Tocca la zona dove hai sentito un fastidio <em>durante</em> la seduta. Serve ad accorgersi se lo stesso punto torna tre volte di fila, che è la differenza fra indolenzimento e infortunio.</p>' +
+      '<div class="zone row">' + ZONE.map(function(z){
+        return '<button type="button" data-act="zona" data-z="' + esc(z) + '" data-on="' + (pz.indexOf(z) >= 0 ? "1" : "0") + '">' + esc(z) + '</button>';
+      }).join("") + '</div>' +
+      (al.length ? '<div class="note"><strong>' + esc(al.join(", ")) + '</strong>: stesso punto per tre sedute di fila. Fermati e fallo vedere.</div>' : "");
+    foot = '<button type="button" class="go" data-act="sesNext">Nessuno, chiudi</button>';
+  }
+
+  else if(s.t === "fine"){
+    var fatte = 0, righe = "";
+    EX.forEach(function(ex){
+      var arr = (S.sessions[d] || {})[ex.id] || [];
+      var ok = arr.filter(function(x){ return x.done; });
+      if(!ok.length) return;
+      fatte += ok.length;
+      var prima = lastSessionPrima(ex.id, d);
+      var delta = "—";
+      if(prima && prima.sets[0].kg != null && ok[0].kg != null){
+        var dk = ok[0].kg - prima.sets[0].kg;
+        delta = dk === 0 ? "uguale" : (dk > 0 ? "+" : "") + String(Math.round(dk * 100) / 100).replace(".", ",") + " kg";
+      }
+      righe += '<tr><td>' + esc(ex.n) + '</td><td class="n">' + (ok[0].kg != null ? ok[0].kg : "—") + '</td>' +
+        '<td class="n">' + ok.map(function(x){ return x.reps || 0; }).join("/") + '</td><td class="n">' + delta + '</td></tr>';
+    });
+    h += '<span class="kicker">Seduta chiusa</span><h2>' + fatte + ' serie registrate</h2>' +
+      (righe ? '<div class="scroll"><table><thead><tr><th>Esercizio</th><th>Kg</th><th>Rip.</th><th>vs prima</th></tr></thead><tbody>' + righe + '</tbody></table></div>'
+             : '<p class="fine2">Nessuna serie spuntata. I numeri non si sono persi: non sono mai stati scritti.</p>');
+    foot = '<button type="button" class="go" data-act="sesExit">Chiudi</button>';
+  }
+
+  else if(s.t === "stre"){
+    h += '<span class="kicker">Stretching ' + (cnt.now + 1) + ' di ' + cnt.tot + '</span>' +
+      '<h2>' + esc(s.st.n) + '</h2>' + figuraSVG(s.st.id) +
+      '<p class="dopo">' + esc(s.st.d) + '</p>' +
+      '<ul class="cue">' + (CUE[s.st.id] || []).map(function(c){ return "<li>" + esc(c) + "</li>"; }).join("") + '</ul>' +
+      (s.st.t ? '<div class="cd num" id="sesCd">' + mmss(rest.on ? Math.max(0, (rest.end - Date.now())/1000) : s.st.t) + '</div>' : "");
+    foot = (s.st.t ? '<button type="button" class="alt" data-act="sesTimer" data-sec="' + s.st.t + '">Avvia i 30 secondi</button>' : "") +
+      '<button type="button" class="go" data-act="sesStreFatto" data-id="' + s.st.id + '">Fatto</button>';
+  }
+
+  else if(s.t === "sfine"){
+    var n2 = STRETCH.filter(function(x){ return (stretchDay(d).items || {})[x.id]; }).length;
+    h += '<span class="kicker">Stretching chiuso</span><h2>' + n2 + ' su ' + STRETCH.length + '</h2>' +
+      '<p class="fine2">Misura la distanza dita-terra ogni due settimane, sempre nelle stesse condizioni. È l\'unico modo per sapere se sta funzionando: sulle sensazioni non si decide niente.</p>';
+    foot = '<button type="button" class="go" data-act="sesExit">Chiudi</button>';
+  }
+
+  return h + '</div><div class="ses-foot">' + foot + '</div></div>';
+}
+
+/* Penultima seduta di quell'esercizio: serve al confronto del riepilogo. */
+function lastSessionPrima(exId, d){
+  var keys = Object.keys(S.sessions).filter(function(k){ return k < d; }).sort();
+  for(var i = keys.length - 1; i >= 0; i--){
+    var arr = S.sessions[keys[i]][exId];
+    if(arr && arr.some(function(x){ return x.done; })) return { d:keys[i], sets:arr.filter(function(x){ return x.done; }) };
+  }
+  return null;
+}
+
+/* ============================================================
+   CALENDARIO E PROMEMORIA
+   ============================================================ */
+
+var DOW = ["L","M","M","G","V","S","D"]; // lunedì → domenica
+function giornoDelProgramma(k){          // k = giorni dal lunedì della settimana 1
+  var dt = parseISO(S.start); dt.setDate(dt.getDate() + k); return dt;
+}
+function fattoIl(isoD, tipo){
+  if(tipo === "pesi") return sedute().indexOf(isoD) >= 0;
+  if(tipo === "corsa") return S.runs.some(function(r){ return r.d === isoD; });
+  return stretchDone(isoD);
+}
+function vCalendario(){
+  if(!S.start) return "";
+  var oggi = oggiISO();
+  var h = '<div class="card"><div class="eyebrow">Il programma, settimana per settimana</div>' +
+    '<div class="cal">' + DOW.map(function(g){ return '<span class="dow">' + g + '</span>'; }).join("");
+  for(var k = 0; k < 28; k++){
+    var dt = giornoDelProgramma(k), iso2 = iso(dt);
+    var tipo = PIANO[dt.getDay()];
+    h += '<div class="dd" data-t="' + tipo + '" data-oggi="' + (iso2 === oggi ? 1 : 0) + '"' +
+      ' data-fatto="' + (fattoIl(iso2, tipo) ? 1 : 0) + '" title="' + esc(iso2) + '">' +
+      dt.getDate() + (tipo === "riposo" ? "" : "<i></i>") + '</div>';
+  }
+  h += '</div><div class="calleg">' +
+    '<span><b style="background:var(--accent-soft)"></b>pesi</span>' +
+    '<span><b style="background:var(--surface-3)"></b>corsa</span>' +
+    '<span><b style="background:var(--ok)"></b>fatto</span></div>' +
+    '<p class="fine">Quattro settimane, quante ne copre la scheda. Lunedì, mercoledì e venerdì pesi; martedì e sabato corsa; stretching tutti i giorni.</p>' +
+    '</div>';
+  return h;
+}
+
+/* Promemoria veri: un file di calendario da importare nel telefono.
+   Una pagina web non può mandare notifiche su iPhone — il Calendario sì. */
+function pad2(n){ return String(n).padStart(2, "0"); }
+function icsEsc(s){ return String(s).replace(/([,;\\])/g, "\\$1").replace(/\n/g, "\\n"); }
+/* Lo standard iCalendar vuole righe non oltre 75 ottetti, spezzate con una
+   riga di continuazione che inizia con uno spazio. Si conta in byte UTF-8,
+   non in caratteri: accenti, · e — ne occupano piu di uno. */
+function bLen(ch){ var c = ch.charCodeAt(0); return c < 0x80 ? 1 : c < 0x800 ? 2 : 3; }
+function piega(l){
+  var res = [], cur = "", n = 0;
+  for(var i = 0; i < l.length; i++){
+    var b = bLen(l[i]);
+    if(n + b > 74){ res.push(cur); cur = " "; n = 1; }
+    cur += l[i]; n += b;
+  }
+  res.push(cur);
+  return res.join("\r\n");
+}
+function generaICS(ora){
+  var hh = (ora || "07:30").split(":");
+  var L = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//palestra//scheda settimane 1-4//IT", "CALSCALE:GREGORIAN"];
+  for(var k = 0; k < 28; k++){
+    var dt = giornoDelProgramma(k), iso2 = iso(dt), sett = Math.floor(k / 7) + 1;
+    var tipo = PIANO[dt.getDay()], cfg = RUN_WEEKS[Math.min(3, sett - 1)];
+    var tit, des;
+    if(tipo === "pesi"){
+      tit = "Pesi — full body";
+      des = (sett === 1 ? 2 : 3) + " serie per esercizio, 7 esercizi. " +
+        "Ogni serie finisce con 1-3 ripetizioni ancora in canna, mai a cedimento. " +
+        "Riposo 90 secondi, 2 minuti su goblet squat e stacco rumeno.";
+    } else if(tipo === "corsa"){
+      tit = "Corsa — " + cfg.label;
+      des = "5 minuti di camminata veloce prima, 5 di camminata lenta dopo. " +
+        "Ritmo facile: quello in cui riesci a dire una frase intera.";
+    } else {
+      tit = "Riposo — solo stretching";
+      des = "Riposo o camminata. Lo stretching si fa lo stesso: 10 minuti, mai a freddo.";
+    }
+    /* Lunedì e giovedì: pesata. Conta la media settimanale, non il singolo giorno. */
+    var dow = dt.getDay();
+    if(dow === 1 || dow === 4){ tit = "Pesati · " + tit; des = "PRIMA DI TUTTO: pesati appena sveglio, prima di mangiare. " + des; }
+    var stamp = iso2.replace(/-/g, "") + "T" + pad2(+hh[0]) + pad2(+hh[1]) + "00";
+    L.push("BEGIN:VEVENT",
+      "UID:palestra-" + iso2 + "@locale",
+      "DTSTAMP:" + iso2.replace(/-/g, "") + "T000000Z",
+      "DTSTART:" + stamp,
+      "DURATION:PT15M",
+      "SUMMARY:" + icsEsc("Settimana " + sett + " · " + tit),
+      "DESCRIPTION:" + icsEsc(des),
+      "BEGIN:VALARM", "TRIGGER:PT0S", "ACTION:DISPLAY",
+      "DESCRIPTION:" + icsEsc(tit), "END:VALARM",
+      "END:VEVENT");
+  }
+  L.push("END:VCALENDAR");
+  return L.map(piega).join("\r\n") + "\r\n";
+}
+function scaricaICS(){
+  var ora = (document.getElementById("icsOra") || {}).value || "07:30";
+  var testo = generaICS(ora), nome = "palestra-settimane-1-4.ics";
+  if(window.claude && window.claude.downloads && window.claude.downloads.save){
+    window.claude.downloads.save({ filename:nome, data:testo }).catch(function(){ fallbackExport(testo, nome); });
+  } else fallbackExport(testo, nome);
+}
+
+/* ============================================================
+   TESSERE-DATO
+   Icona, etichetta, numero grande, mini-grafico, una riga di stato.
+   Struttura da cruscotto: si legge a colpo d'occhio, senza paragrafi.
+   ============================================================ */
+
+var ICONE = {
+  peso:  '<path d="M3 6h10M8 6v7M5 13h6"/><path d="M2.5 6 1 11.5a2.6 2.6 0 0 0 3 0zM13.5 6 15 11.5a2.6 2.6 0 0 1-3 0z"/>',
+  mob:   '<path d="M8 1.6v7M4.5 5 8 8.6 11.5 5M2.5 12.5h11"/>',
+  stre:  '<circle cx="8" cy="2.6" r="1.6"/><path d="M8 4.6v4M4.5 6.2h7M6 14l2-5.4L10 14"/>',
+  cibo:  '<path d="M4 1.5v5.5M6 1.5v5.5M5 7v7.5M12 1.5c-1.3 1.2-1.6 3.1-1.3 5.5h2.6c.3-2.4 0-4.3-1.3-5.5zM12 7v7.5"/>',
+  pesi:  '<path d="M2.5 6v4M4.6 4.4v7.2M11.4 4.4v7.2M13.5 6v4M4.6 8h6.8"/>',
+  corsa: '<circle cx="8" cy="8" r="6"/><path d="M8 4.4V8l2.5 1.6"/>'
+};
+function tileIco(k){ return '<span class="ico"><svg viewBox="0 0 16 16">' + (ICONE[k] || "") + '</svg></span>'; }
+
+/* Sparkline: solo la forma, niente assi. Tufte — sta accanto al numero e il
+   trend si "vede" senza leggerlo (regola 4 del design di valore). */
+function spark(vals, col){
+  if(!vals || vals.length < 2) return '<div class="spark"></div>';
+  var W = 100, H = 32, min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+  if(max - min < 0.0001){ min -= 1; max += 1; }
+  var n = vals.length - 1;
+  var pt = vals.map(function(v, i){
+    return [ (i / n) * W, 3 + (1 - (v - min) / (max - min)) * (H - 8) ];
+  });
+  var d = pt.map(function(p, i){ return (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1); }).join(" ");
+  var u = pt[pt.length - 1];
+  return '<svg class="spark" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">' +
+    '<path d="' + d + ' L' + W + ' ' + H + ' L0 ' + H + ' Z" fill="' + col + '" opacity=".12"/>' +
+    '<path d="' + d + '" fill="none" stroke="' + col + '" stroke-width="2" vector-effect="non-scaling-stroke"' +
+      ' stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"' +
+      ' style="animation:traccia .9s cubic-bezier(.3,.7,.3,1) forwards"/>' +
+    '<circle cx="' + u[0].toFixed(1) + '" cy="' + u[1].toFixed(1) + '" r="2.6" fill="' + col + '"' +
+      ' vector-effect="non-scaling-stroke" style="animation:appari .3s .8s ease both"/></svg>';
+}
+/* Sette barrette: i giorni della settimana. */
+function barrette(v){
+  return '<svg class="spark" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">' +
+    v.map(function(on, i){
+      var w = 100 / v.length, x = i * w + 1.5;
+      return '<rect x="' + x.toFixed(1) + '" y="' + (on ? 4 : 18) + '" width="' + (w - 3).toFixed(1) + '" height="' + (on ? 28 : 14) + '" rx="2" ' +
+        'fill="' + (on ? "var(--ok)" : "var(--surface-3)") + '" style="animation:appari .3s ' + (0.1 + i * 0.05).toFixed(2) + 's ease both"/>';
+    }).join("") + '</svg>';
+}
+function tile(ic, lab, val, unita, grafico, piede, pill, pillTipo){
+  return '<div class="tile"><div class="th">' + tileIco(ic) + '<span class="tl">' + esc(lab) + '</span></div>' +
+    '<div class="tv">' + val + (unita ? '<small>' + esc(unita) + '</small>' : "") + '</div>' +
+    (grafico || "") +
+    '<div class="tf">' + (pill ? '<span class="pill-sm ' + (pillTipo || "") + '">' + esc(pill) + '</span>' : "") +
+    '<span>' + esc(piede) + '</span></div></div>';
+}
+
+/* ---------- OGGI ---------- */
+function vOggi(){
+  var d = oggiISO(), now = new Date();
+  var h = bannerStorage();
+
+  if(!S.start){
+    var lun = iso(mondayOf(now));
+    h += '<div class="card">' +
+      '<div class="eyebrow">Prima di cominciare</div>' +
+      '<h2>Quando parte la settimana 1?</h2>' +
+      '<p>Serve un lunedì di riferimento: da lì l\'app conta le settimane, sceglie il blocco della corsa e passa da 2 a 3 serie.</p>' +
+      '<input type="date" id="startD" value="' + lun + '">' +
+      '<button class="btn primary wide" data-act="setStart">Avvia il programma</button>' +
+      '</div>';
+    return h;
+  }
+
+  var w = weekNow();
+  var tipo = PIANO[now.getDay()];
+  var titolo = tipo === "pesi" ? "Pesi — full body" : tipo === "corsa" ? "Corsa" : "Riposo";
+  var fattoPesi = tipo === "pesi" && S.sessions[d] && EX.some(function(e){ return (S.sessions[d][e.id]||[]).some(function(x){ return x.done; }); });
+  var fattaCorsa = tipo === "corsa" && S.runs.some(function(r){ return r.d === d; });
+
+  /* La prima cosa che si vede: il saluto, cosa si fa oggi, un omino di lato
+     che lo mostra, e una riga sola di numeri. Il resto sta dietro il Vai. */
+  var ora = now.getHours();
+  var saluto = ora < 13 ? "Buongiorno" : ora < 18 ? "Buon pomeriggio" : "Buonasera";
+  var figOggi = tipo === "pesi" ? "goblet" : tipo === "corsa" ? "corre" : "cammina";
+  var riga, azione;
+  if(tipo === "pesi"){
+    riga = EX.length + " esercizi · " + serieCount() + " serie · circa " + (w === 1 ? 40 : 55) + " min";
+    azione = '<button class="btn primary wide" data-act="sesStart" data-kind="pesi">' +
+      (fattoPesi ? "Riprendi" : "Vai") + '</button>' +
+      '<button class="btn ghost wide sm" data-act="go" data-to="pesi">Elenco</button>';
+  } else if(tipo === "corsa"){
+    var c = RUN_WEEKS[weekClamped()-1];
+    riga = c.reps + " × " + Math.round(c.run/60*10)/10 + " min · circa " +
+      Math.round((WARMUP + COOLDOWN + c.reps*(c.run+c.walk)) / 60) + " min";
+    azione = '<button class="btn primary wide" data-act="go" data-to="corsa">' + (fattaCorsa ? "Riapri" : "Vai") + '</button>';
+  } else {
+    riga = "Riposo o camminata · stretching lo stesso";
+    azione = '<button class="btn primary wide" data-act="sesStart" data-kind="stretch">Vai — stretching</button>';
+  }
+
+  h += '<div class="today">' +
+    '<span class="date">' + esc(dataLunga(now)) + ' · settimana ' + w + '</span>' +
+    '<div class="saluto">' +
+      '<div><h2>' + saluto + ' ric</h2><p class="oggi-cosa">Oggi: <strong>' + esc(titolo.toLowerCase()) + '</strong></p></div>' +
+      '<div class="figmini" data-fig="' + figOggi + '">' + figuraSVG(figOggi, true) + '</div>' +
+    '</div>' +
+    '<p class="num riga-dati">' + esc(riga) + '</p>' +
+    azione +
+    '</div>';
+
+  /* backup scaduto */
+  if(exportScaduto()){
+    var gg = giorniDaExport();
+    h += '<div class="note warn"><strong>' + (gg === null ? "Non hai mai fatto un backup." : "Ultimo backup " + gg + " giorni fa.") + '</strong> ' +
+      'I numeri stanno solo dentro questo telefono, e nessuno li copia al posto tuo. ' +
+      '<button class="btn sm" data-act="go" data-to="dati" style="margin-top:8px">Esporta adesso</button></div>';
+  }
+
+  /* peso di partenza mancante */
+  if(!S.weights.length){
+    h += '<div class="note warn"><strong>Manca ancora il peso di partenza.</strong> È il dato che manca da quattro sessioni di lavoro sul progetto: senza, il ciclo di controllo sulle calorie non può partire. Pesati appena sveglio, prima di mangiare. <button class="btn sm" data-act="go" data-to="dati" style="margin-top:8px">Registra il peso</button></div>';
+  }
+
+  /* Quattro tessere: i numeri del progetto a colpo d'occhio, senza paragrafi. */
+  var sd = stretchDay(d);
+  var fattiStr = STRETCH.filter(function(x){ return sd.items[x.id]; }).length;
+  var ft = foodTot(d);
+  var ws = S.weights.slice().sort(function(a,b){ return a.d < b.d ? -1 : 1; });
+  var fs = S.ftf.slice().sort(function(a,b){ return a.d < b.d ? -1 : 1; });
+  var lun = mondayOf(now), sett = [];
+  for(var k = 0; k < 7; k++){ var dd = new Date(lun); dd.setDate(lun.getDate() + k); sett.push(stretchDone(iso(dd))); }
+  var xs = sett.filter(Boolean).length;
+
+  h += '<div class="grid2">';
+
+  h += tile("peso", "Peso",
+    ws.length ? String(ws[ws.length-1].kg).replace(".", ",") : "—", ws.length ? "kg" : "",
+    spark(ws.slice(-8).map(function(x){ return x.kg; }), "var(--accent)"),
+    ws.length ? "obiettivo " + PESO_META : "da registrare",
+    ws.length ? (ws.length >= 2 ? (ws[ws.length-1].kg - ws[0].kg >= 0 ? "+" : "") + (Math.round((ws[ws.length-1].kg - ws[0].kg) * 10) / 10).toString().replace(".", ",") + " kg" : "1 dato") : "manca",
+    ws.length >= 2 ? "ok" : "warn");
+
+  h += tile("mob", "Dita-terra",
+    fs.length ? String(fs[fs.length-1].cm).replace(".", ",") : "—", fs.length ? "cm" : "",
+    spark(fs.slice(-8).map(function(x){ return x.cm; }), "var(--accent)"),
+    "obiettivo " + FTF_META + " cm",
+    fs.length >= 2 ? (fs[fs.length-1].cm - fs[0].cm) + " cm" : null, "ok");
+
+  h += tile("stre", "Stretching", fattiStr + "/" + STRETCH.length, "oggi",
+    barrette(sett), xs + " giorni su 7",
+    xs >= 5 ? "in linea" : "obiettivo 5", xs >= 5 ? "ok" : "warn");
+
+  h += tile("cibo", "Calorie", '<span class="conta" data-target="' + Math.round(ft.k) + '">0</span>', "kcal",
+    spark([0, ft.k * 0.35, ft.k * 0.7, ft.k], ft.k >= KCAL_MIN ? "var(--ok)" : "var(--warn)"),
+    Math.round(ft.p) + " g proteine",
+    ft.k >= KCAL_MIN ? "in linea" : "mancano " + Math.max(0, Math.round(KCAL_MIN - ft.k)),
+    ft.k >= KCAL_MIN ? "ok" : "warn");
+
+  h += '</div>';
+
+  h += '<div class="card riga"><div style="flex:1">' +
+    '<div class="eyebrow">Stretching di oggi</div>' +
+    '<div class="pallini">' + STRETCH.map(function(x){
+      return '<i data-on="' + (sd.items[x.id] ? 1 : 0) + '"></i>';
+    }).join("") + '<span class="num">' + fattiStr + '/' + STRETCH.length + '</span></div>' +
+    (tipo === "pesi" ? '<p class="fine">Dopo i pesi, non prima.</p>' : "") +
+    '</div><button class="btn" data-act="sesStart" data-kind="stretch">Vai</button></div>';
+
+  h += '<div class="card riga"><div style="flex:1">' +
+    '<div class="eyebrow">Cibo</div>' +
+    gauge(ft.k, KCAL_MAX + 400, KCAL_MIN, KCAL_MAX, "kcal", "2.400-2.500") +
+    gauge(ft.p, 140, PROT_MIN, PROT_MAX, "g proteine", "80-110") +
+    '</div><button class="btn" data-act="go" data-to="cibo">Aggiungi</button></div>';
+
+  /* le due cose che restano da fare una volta sola */
+  var pesato = S.weights.length > 0;
+  if(!(pesato && S.setup.fermi && S.setup.attrezzi)){
+    h += '<div class="card"><div class="eyebrow">Una volta sola</div><div class="checklist">' +
+      '<div class="check" data-on="' + (pesato ? 1 : 0) + '"><span class="box">✓</span><span class="lbl">Pesarsi appena sveglio</span></div>' +
+      '<button type="button" class="check" data-act="setup" data-id="fermi" data-on="' + (S.setup.fermi ? 1 : 0) + '"><span class="box">✓</span><span class="lbl">Collaudare i fermi del rack<span class="sub">Bilanciere scarico, lasciati cadere sopra apposta</span></span></button>' +
+      '<button type="button" class="check" data-act="setup" data-id="attrezzi" data-on="' + (S.setup.attrezzi ? 1 : 0) + '"><span class="box">✓</span><span class="lbl">Identificare i due attacchi<span class="sub">Rullo sotto i polpacci = leg curl · sopra le caviglie = leg extension</span></span></button>' +
+      '</div></div>';
+  }
+
+  if(w > 4){
+    h += '<div class="note warn"><strong>La scheda copre le settimane 1-4.</strong> Da qui in poi ripete la quarta.</div>';
+  }
+  return h;
+}
+
+function gauge(val, scala, min, max, unita, goal){
+  var pct = Math.min(100, (val / scala) * 100);
+  var z1 = (min / scala) * 100, z2 = (max / scala) * 100;
+  var stato = val < min ? "sotto" : val > max ? "sopra" : "dentro";
+  return '<div class="gauge">' +
+    '<span class="lab"><b class="conta num" data-target="' + Math.round(val) + '">0</b> ' + esc(unita) +
+    '<span class="goal">obiettivo ' + esc(goal) + '</span></span>' +
+    '<div class="bar"><span class="fill" data-s="' + stato + '" style="width:' + pct.toFixed(1) + '%"></span>' +
+    '<span class="zone" style="left:' + z1.toFixed(1) + '%;width:' + (z2-z1).toFixed(1) + '%"></span></div>' +
+    '<div class="ticks"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>' +
+    '</div>';
+}
+
+/* ---------- PESI ---------- */
+function vPesi(){
+  if(!S.start) return '<div class="note">Prima avvia il programma dalla scheda <strong>Oggi</strong>.</div>';
+  var d = oggiISO(), n = serieCount();
+  var h = bannerStorage();
+  var tipo = PIANO[new Date().getDay()];
+
+  h += '<div class="card">' +
+    '<div class="eyebrow">Seduta · settimana ' + weekNow() + '</div>' +
+    '<h2>Full body — ' + n + ' serie</h2>' +
+    '<p class="fine">Ogni serie finisce con <strong>1-3 ripetizioni ancora in canna</strong>, mai a cedimento. Riposo 90 secondi, 2 minuti su goblet squat e stacco rumeno: parte da solo quando spunti la serie.</p>' +
+    '<p class="fine">I numeri <strong>in grigio</strong> sono quelli dell\'ultima volta, già pronti: se il peso è quello, tocca solo la spunta e non scrivere niente. Se cambi un numero diventa nero, ed è un dato tuo. Lo schermo resta acceso finché sei su questa scheda.</p>' +
+    '<button class="btn primary wide" data-act="sesStart" data-kind="pesi">Vai — seduta guidata</button>' +
+    (tipo !== "pesi" ? '<div class="note">Oggi il piano dice <strong>' + (tipo === "corsa" ? "corsa" : "riposo") + '</strong>. Puoi registrare lo stesso, ma tre sedute di pesi non consecutive sono la struttura su cui è costruito il volume settimanale.</div>' : '') +
+    '</div>';
+
+  EX.forEach(function(ex, i){
+    var sets = setsOf(d, ex.id);
+    var last = lastSession(ex.id, d);
+    var pr = proposta(ex.id, d);
+    h += '<div class="ex" data-ex="' + ex.id + '">' +
+      '<div class="ex-h">' +
+        '<span class="idx num">' + (i+1) + '</span>' +
+        '<div style="flex:1">' +
+          '<h3>' + esc(ex.n) + '</h3>' +
+          '<div class="meta">' + (ex.secs ? n + ' × 20-30 sec' : n + ' × 10-12') + ' · ' + esc(ex.att) +
+            (S.regol[ex.id] ? ' · <span class="regp">' + esc(S.regol[ex.id]) + '</span>' : '') + '</div>' +
+        '</div>' +
+        '<button class="btn sm ghost" data-act="how" data-id="' + ex.id + '">Come si fa</button>' +
+      '</div>';
+
+    h += '<div class="ex-body">';
+    if(last){
+      h += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
+      h += '<span class="pill">ultima · ' + (last.sets[0].kg != null ? last.sets[0].kg + (ex.secs ? "" : " kg") + " · " : "") +
+           last.sets.map(function(s){ return s.reps || 0; }).join("/") + '</span>';
+      if(pr && pr.salito){
+        h += '<span class="pill up">salito a ' + (ex.secs ? pr.reps + ' secondi' : String(pr.kg).replace(".",",") + ' kg') + ' — le avevi chiuse tutte</span>';
+      }
+      h += '</div>';
+    }
+    h += '<div class="set-head"><span>Serie</span><span>' + (ex.secs ? "—" : "Kg") + '</span><span>' + (ex.secs ? "Secondi" : "Rip.") + '</span><span></span></div>';
+    sets.forEach(function(st, si){
+      /* Campi vuoti = si mostra la proposta, in grigio. Diventa un dato vero
+         solo quando spunti o quando modifichi: fino ad allora S resta intatto. */
+      var vuota = st.kg == null && st.reps == null && !st.done;
+      var prop = vuota && pr ? 1 : 0;
+      var vKg = st.kg != null ? st.kg : (prop && pr.kg != null ? pr.kg : "");
+      var vRp = st.reps != null ? st.reps : (prop ? pr.reps : "");
+      h += '<div class="set" data-ex="' + ex.id + '" data-i="' + si + '" data-done="' + (st.done ? 1 : 0) + '" data-prop="' + prop + '">' +
+        '<span class="sn">' + (si+1) + '</span>' +
+        (ex.secs
+          ? '<span style="text-align:center;color:var(--ink-3);font-family:var(--mono);font-size:12px">corpo</span>'
+          : '<div class="stepper"><button type="button" data-act="st" data-f="kg" data-dl="-' + ex.step + '">−</button>' +
+            '<input type="number" inputmode="decimal" step="' + ex.step + '" data-f="kg" value="' + vKg + '" aria-label="chili serie ' + (si+1) + '">' +
+            '<button type="button" data-act="st" data-f="kg" data-dl="' + ex.step + '">+</button></div>') +
+        '<div class="stepper"><button type="button" data-act="st" data-f="reps" data-dl="' + (ex.secs ? -5 : -1) + '">−</button>' +
+        '<input type="number" inputmode="numeric" data-f="reps" value="' + vRp + '" aria-label="ripetizioni serie ' + (si+1) + '">' +
+        '<button type="button" data-act="st" data-f="reps" data-dl="' + (ex.secs ? 5 : 1) + '">+</button></div>' +
+        '<button type="button" class="tick" data-act="done" aria-label="serie ' + (si+1) + ' fatta">✓</button>' +
+        '</div>';
+    });
+    h += '</div>';
+    h += '<div class="how" id="how-' + ex.id + '" hidden>' +
+      (FOTO[ex.id] ? '<img class="foto" src="' + FOTO[ex.id] + '" alt="' + esc(ex.att) + ' — la tua attrezzatura">' : '') +
+      ex.how.map(function(p){ return "<p>" + esc(p) + "</p>"; }).join("") +
+      '<label class="reg"><span>Le tue regolazioni — si salvano da sole</span>' +
+      '<input type="text" data-reg="' + ex.id + '" value="' + esc(S.regol[ex.id] || "") +
+      '" placeholder="es. sedile foro 3 · manubri da 6 kg"></label>' +
+      '</div>';
+    h += '</div>';
+  });
+
+  var pz = S.pain[d] || [], al = painAlert();
+  h += '<div class="card"><div class="eyebrow">Fastidi e dolori</div>' +
+    '<p class="fine">Tocca la zona dove hai sentito qualcosa <em>durante</em> la seduta. Non serve a lamentarsi: serve ad accorgersi se lo stesso punto torna tre sedute di fila, che è la differenza fra indolenzimento e infortunio.</p>' +
+    '<div class="zone">' + ZONE.map(function(z){
+      return '<button type="button" data-act="zona" data-z="' + esc(z) + '" data-on="' + (pz.indexOf(z) >= 0 ? "1" : "0") + '">' + esc(z) + '</button>';
+    }).join("") + '</div>' +
+    (al.length
+      ? '<div class="note alert"><strong>' + esc(al.join(", ")) + ' — stesso punto per tre sedute di fila.</strong> Questo non è indolenzimento: i DOMS sono diffusi, simmetrici e migliorano col movimento. Fermati su quel movimento e fallo vedere. Un dolore guardato subito costa molte meno settimane di uno ignorato.</div>'
+      : '<p class="fine">Nessuna zona ripetuta per tre sedute.</p>') +
+    '</div>';
+
+  h += '<div class="card"><div class="eyebrow">Come si progredisce</div>' +
+    '<p class="fine">Prima le ripetizioni, poi il peso: porti tutte le serie a 12 pulite, <em>solo allora</em> aggiungi carico. Coi manubri e il bilanciere si sale di 2,5 kg grazie ai dischi piccoli; sulle macchine a pila il gradino è 5 kg, che a 50 kg di peso corporeo è tanto — lì riparti da 8 ripetizioni invece che da 10. L\'app te lo propone da sola quando la seduta precedente è chiusa a 12.</p></div>';
+  return h;
+}
+
+/* ---------- CORSA ---------- */
+function vCorsa(){
+  if(!S.start) return '<div class="note">Prima avvia il programma dalla scheda <strong>Oggi</strong>.</div>';
+  var wk = weekClamped(), cfg = RUN_WEEKS[wk-1];
+  var h = bannerStorage();
+  var seq = run.started ? run.seq : buildSeq(wk);
+  var totale = Math.round(seq.reduce(function(a,x){ return a + x.s; }, 0) / 60);
+
+  h += '<div class="runner" id="runner" data-kind="' + (run.started ? seq[run.i].k : "warm") + '">' +
+    '<div class="phase">' + (run.started ? esc(seq[run.i].n) : "Pronto") + '</div>' +
+    '<div class="big num">' + mmss(run.started ? seq[run.i].s : WARMUP) + '</div>' +
+    (function(){ var f = run.started && seq[run.i].k === "run" ? "corre" : "cammina";
+      return '<div class="figcorsa" data-fig="' + f + '">' + figuraSVG(f) + '</div>'; })() +
+    '<div class="of num">' + esc(cfg.label) + '</div>' +
+    '<div class="track">' + seq.map(function(x, i){ return '<i data-s="' + x.k + '" data-p="' + (run.started && i <= run.i ? 1 : 0) + '"></i>'; }).join("") + '</div>' +
+    '<div class="row" style="margin-top:14px;justify-content:center">' +
+      (run.playing
+        ? '<button class="btn" data-act="runPause">Pausa</button>'
+        : '<button class="btn primary" data-act="runPlay">' + (run.started ? "Riprendi" : "Avvia") + '</button>') +
+      '<button class="btn" data-act="runSkip">Salta fase</button>' +
+      (run.started ? '<button class="btn ghost" data-act="runStop">Chiudi</button>' : "") +
+    '</div>' +
+    '</div>';
+
+  h += '<div class="card">' +
+    '<div class="eyebrow">Settimana ' + wk + ' · ' + totale + ' minuti in tutto</div>' +
+    '<p class="fine">Ritmo facile: quello in cui riesci a dire una frase intera. Se le corse diventano dure si mangiano il recupero che serve ai pesi, e i pesi sono la priorità di questo trimestre.</p>' +
+    '<hr>' +
+    '<p class="fine"><strong>Mai due giorni di fila.</strong> Nei principianti l\'incidenza di infortuni è 17,8 ogni 1.000 ore contro 7,7 nei corridori già rodati: la fase pericolosa è proprio questa. I tendini iniziano ad adattarsi dopo due settimane, ma il rimodellamento va avanti per mesi — il muscolo dirà "posso" quando il tendine è ancora indietro.</p>' +
+    '</div>';
+
+  h += '<div class="card">' +
+    '<div class="eyebrow">Se questa settimana sei svuotato</div>' +
+    '<p class="fine">La corsa disturba la crescita muscolare più del ciclismo, per il danno eccentrico di ogni atterraggio. Se i carichi calano, sostituisci <strong>una</strong> delle due corse con 20-25 minuti di ellittica facile. Non farne un\'abitudine: i 5 km si costruiscono correndo.</p>' +
+    '<button class="btn wide" data-act="ellittica">Registra 25 minuti di ellittica</button>' +
+    '</div>';
+
+  var ultime = S.runs.slice(-8).reverse();
+  if(ultime.length){
+    var due5 = S.runs.length >= 2 && S.runs.slice(-2).every(function(r){ return r.rpe === 5; });
+    h += '<div class="card"><div class="eyebrow">Registro</div>';
+    if(due5) h += '<div class="note warn">Due sessioni di fila a sensazione 5. <strong>Ripeti la settimana invece di avanzare.</strong></div>';
+    h += '<div class="scroll"><table><thead><tr><th>Data</th><th>Sett.</th><th>Tipo</th><th>Sens.</th></tr></thead><tbody>';
+    ultime.forEach(function(r){
+      h += '<tr><td class="n">' + esc(r.d.slice(8) + "/" + r.d.slice(5,7)) + '</td><td class="n">' + r.week + '</td><td>' + esc(r.kind) + '</td><td class="n">' + (r.rpe || "—") + '</td></tr>';
+    });
+    h += '</tbody></table></div></div>';
+  }
+  return h;
+}
+
+/* ---------- CIBO ---------- */
+function vCibo(){
+  var d = oggiISO(), t = foodTot(d), lista = foodDay(d);
+  var h = bannerStorage();
+
+  h += '<div class="card">' +
+    '<div class="eyebrow">Oggi · grana grossa, non bilancia</div>' +
+    gauge(t.k, KCAL_MAX + 400, KCAL_MIN, KCAL_MAX, "kcal", "2.400-2.500") +
+    gauge(t.p, 140, PROT_MIN, PROT_MAX, "g proteine", "80-110") +
+    '<p class="fine">Il mantenimento stimato è 2.100 kcal: sotto quella soglia non stai costruendo niente. Le due barre servono a dirti se sei sopra o sotto, non a contare i grammi.</p>';
+
+  var manca = KCAL_MIN - t.k;
+  if(lista.length && manca > 250){
+    h += '<div class="note food">Mancano <strong>' + Math.round(manca) + ' kcal</strong>. La leva più efficace quando il problema è l\'appetito sono le calorie liquide: un frullato da 650 non attiva la sazietà come lo stesso valore in forma solida. In alternativa due cucchiai d\'olio a crudo e 30 g di frutta secca fanno 370 senza riempirti.</div>';
+  } else if(lista.length && t.p < PROT_MIN){
+    h += '<div class="note food">Sei a <strong>' + Math.round(t.p) + ' g di proteine</strong> contro un minimo di 80. L\'allenamento rompe, il recupero ricostruisce, le proteine sono il materiale: con tre sedute a settimana il cantiere è aperto quasi sempre.</div>';
+  }
+  h += '</div>';
+
+  if(lista.length){
+    h += '<div class="card"><div class="eyebrow">Mangiato oggi</div><div class="eaten">';
+    lista.forEach(function(x, i){
+      h += '<div class="e"><span>' + esc(x.n) + '</span><span class="v">' + x.k + ' kcal · ' + x.p + ' g</span>' +
+           '<button type="button" class="x" data-act="delFood" data-i="' + i + '" aria-label="togli">×</button></div>';
+    });
+    h += '</div></div>';
+  }
+
+  var gruppi = {};
+  FOODS.forEach(function(f){ (gruppi[f.g] = gruppi[f.g] || []).push(f); });
+  Object.keys(gruppi).forEach(function(g){
+    h += '<div class="card"><div class="eyebrow">' + esc(g) + '</div><div class="foods">';
+    gruppi[g].forEach(function(f){
+      h += '<button type="button" class="food" data-act="addFood" data-n="' + esc(f.n) + '" data-k="' + f.k + '" data-p="' + f.p + '">' +
+        '<span class="fn">' + esc(f.n) + '</span><span class="fv">' + f.k + ' kcal · ' + f.p + ' g prot</span></button>';
+    });
+    h += '</div></div>';
+  });
+
+  h += '<div class="card"><div class="eyebrow">Altro</div>' +
+    '<div class="row"><input type="text" id="cN" placeholder="Cosa" style="flex:2;min-width:120px">' +
+    '<input type="number" id="cK" inputmode="numeric" placeholder="kcal" style="flex:1;min-width:70px">' +
+    '<input type="number" id="cP" inputmode="numeric" placeholder="prot" style="flex:1;min-width:70px"></div>' +
+    '<button class="btn wide" data-act="addCustom">Aggiungi</button></div>';
+
+  h += '<div class="card"><div class="eyebrow">Perché questa parte è grezza</div>' +
+    '<p class="fine">Il brief del progetto vieta il conteggio calorico dettagliato, e i valori qui sopra sono indicativi: un petto di pollo vero non fa esattamente 165 kcal. Non serve. Il tuo collo di bottiglia non è la precisione, è <strong>arrivare a 2.400</strong> con un appetito che non è ancora salito. Il numero vero del tuo metabolismo non lo dà nessuna tabella: esce dalla media settimanale del peso, nella scheda Dati.</p>' +
+    '<p class="fine">Su questi accorgimenti pratici — densità calorica, pasti piccoli e frequenti — non esistono studi randomizzati, è prassi consolidata. Il meccanismo delle calorie liquide, quello sì, ha supporto sperimentale.</p></div>';
+  return h;
+}
+
+/* ---------- DATI ---------- */
+function vDati(){
+  var h = bannerStorage();
+
+  /* peso */
+  var ws = S.weights.slice().sort(function(a,b){ return a.d < b.d ? -1 : 1; });
+  h += '<div class="card"><div class="eyebrow">Peso corporeo</div>' +
+    '<p class="fine">Due volte a settimana, appena sveglio, prima di mangiare. Conta solo la media settimanale: le oscillazioni giornaliere sono acqua, non tessuto.</p>' +
+    '<div class="row"><input type="date" id="wD" value="' + oggiISO() + '" style="flex:2;min-width:140px">' +
+    '<input type="number" id="wK" inputmode="decimal" step="0.1" placeholder="kg" style="flex:1;min-width:80px"></div>' +
+    '<button class="btn primary wide" data-act="addPeso">Registra il peso</button>';
+
+  if(ws.length){
+    var pts = ws.map(function(x, i){ return { x:i, y:x.kg, lab:x.kg.toFixed(1).replace(".",",") }; });
+    var g0 = ws[0].kg, gs = [];
+    for(var i = 0; i <= Math.max(1, ws.length - 1); i++) gs.push({ x:i, y:g0 + (i / Math.max(1, ws.length-1)) * PESO_TARGET_SETT * ((ws.length-1)/2) });
+    h += lineChart(pts, { alt:"andamento del peso", goal:null, color:"var(--accent)" });
+    var sett = pesoSettimane();
+    h += '<div class="scroll"><table><thead><tr><th>Sett.</th><th>Misure</th><th>Media</th><th>Δ</th></tr></thead><tbody>';
+    sett.forEach(function(s, i){
+      var dlt = i ? (s.media - sett[i-1].media) : null;
+      h += '<tr><td class="n">' + s.w + '</td><td class="n">' + s.n + '</td><td class="n">' + s.media.toFixed(2).replace(".",",") + '</td>' +
+        '<td class="n" style="color:' + (dlt == null ? "var(--ink-3)" : dlt > 0 ? "var(--ok)" : "var(--bad)") + '">' + (dlt == null ? "—" : (dlt > 0 ? "+" : "") + dlt.toFixed(2).replace(".",",")) + '</td></tr>';
+    });
+    h += '</tbody></table></div>';
+    var c = consiglioPeso();
+    if(c) h += '<div class="note ' + (c.t === "ok" ? "" : "warn") + '">' + c.txt + '</div>';
+    else h += '<p class="fine">Servono almeno tre settimane di misure prima di toccare le calorie. Due settimane è il tempo minimo per distinguere un segnale dal rumore.</p>';
+  }
+  h += '</div>';
+
+  /* dita-terra */
+  var fs = S.ftf.slice().sort(function(a,b){ return a.d < b.d ? -1 : 1; });
+  h += '<div class="card"><div class="eyebrow">Dita-terra</div>' +
+    '<p class="fine">Ogni due settimane, stesse condizioni: stessa ora, dopo 3-4 minuti di riscaldamento leggero, gambe tese, nessun rimbalzo. Numero negativo = superi il pavimento.</p>' +
+    '<div class="row"><input type="date" id="fD" value="' + oggiISO() + '" style="flex:2;min-width:140px">' +
+    '<input type="number" id="fC" inputmode="decimal" step="0.5" placeholder="cm" style="flex:1;min-width:80px"></div>' +
+    '<button class="btn wide" data-act="addFtf">Registra la misura</button>';
+  if(fs.length){
+    h += lineChart(fs.map(function(x, i){ return { x:i, y:x.cm, lab:x.cm + " cm" }; }),
+      { alt:"distanza dita-terra", goal:FTF_META, color:"var(--accent)", goalColor:"var(--ok)" });
+    h += '<p class="fine">La linea tratteggiata è l\'obiettivo dei tre mesi: <strong>15 cm</strong>. Non esistono valori normativi per questo test — in uno studio la media maschile era 21,5 cm ma con deviazione standard di 21,7 e intervallo 0-48. Serve a misurare te nel tempo, non a confrontarti con una tabella.</p>';
+  }
+  h += '</div>';
+
+  /* pesi: storico carichi */
+  var storico = EX.map(function(ex){
+    var l = lastSession(ex.id, "9999-99-99");
+    return { ex:ex, l:l };
+  }).filter(function(x){ return x.l; });
+  if(storico.length){
+    h += '<div class="card"><div class="eyebrow">Carichi attuali</div><div class="scroll"><table><thead><tr><th>Esercizio</th><th>Carico</th><th>Ripetizioni</th><th>Data</th></tr></thead><tbody>';
+    storico.forEach(function(x){
+      h += '<tr><td>' + esc(x.ex.n) + '</td><td class="n">' + (x.l.sets[0].kg != null ? x.l.sets[0].kg + (x.ex.secs ? "" : " kg") : "corpo") + '</td>' +
+        '<td class="n">' + x.l.sets.map(function(s){ return s.reps || 0; }).join("/") + '</td>' +
+        '<td class="n">' + esc(x.l.d.slice(8) + "/" + x.l.d.slice(5,7)) + '</td></tr>';
+    });
+    h += '</tbody></table></div></div>';
+  }
+
+  /* stretching settimana */
+  var lun = mondayOf(new Date()), xs = 0;
+  for(var k = 0; k < 7; k++){
+    var dd = new Date(lun); dd.setDate(lun.getDate() + k);
+    if(stretchDone(iso(dd))) xs++;
+  }
+  h += '<div class="card"><div class="eyebrow">Stretching di questa settimana</div>' +
+    '<p><span class="conta num" data-target="' + xs + '" style="font-size:26px;font-weight:600">0</span> giorni completi su 7 — obiettivo 5-7.</p></div>';
+
+  /* calendario e promemoria */
+  h += vCalendario();
+  if(S.start){
+    h += '<div class="card"><div class="eyebrow">Promemoria al mattino</div>' +
+      '<p class="fine">Questa pagina non può mandarti notifiche: su iPhone servono meccanismi che una pagina web non ha. Quelle vere le dà il <strong>Calendario del telefono</strong>. Qui sotto generi un file con le quattro settimane già dentro — cosa tocca ogni giorno, e nei giorni giusti il promemoria di pesarti. Lo apri e il telefono ti chiede se aggiungerlo.</p>' +
+      '<div class="row"><label class="campo" style="flex:1"><input type="time" id="icsOra" value="07:30" style="width:100%"></label>' +
+      '<button class="btn primary" data-act="ics" style="flex:2">Genera il calendario</button></div>' +
+      '<p class="fine">28 promemoria, uno al giorno all\'ora che scegli. Quando la scheda arriverà alle settimane 5-8 ne rigeneri uno nuovo.</p></div>';
+  }
+
+  /* esporta */
+  var gEx = giorniDaExport();
+  h += '<div class="card"><div class="eyebrow">Backup</div>' +
+    '<p class="fine">I dati stanno solo su questo telefono. Esporta ogni tanto e metti il file in <span class="num">app/</span> del progetto: così i numeri sopravvivono al browser.</p>' +
+    (exportScaduto()
+      ? '<div class="note warn"><strong>' + (gEx === null ? "Non hai mai fatto un backup." : "Ultimo backup " + gEx + " giorni fa.") + '</strong> ' +
+        'La perdita di dati è una delle ragioni per cui la gente smette di usare queste app, e su iPhone Safari cancella la memoria dei siti dopo sette giorni senza aprirli. Due tap adesso.</div>'
+      : (gEx !== null ? '<p class="fine">Ultimo backup: <span class="num">' + (gEx === 0 ? "oggi" : gEx === 1 ? "ieri" : gEx + " giorni fa") + '</span>.</p>' : "")) +
+    '<div class="row"><button class="btn wide" data-act="export">Esporta i dati</button></div>' +
+    '<div class="row"><button class="btn ghost wide sm" data-act="showImport">Ripristina da un backup</button></div>' +
+    '<div id="importBox" hidden><textarea id="impT" placeholder="Incolla qui il contenuto del file"></textarea><button class="btn wide sm" data-act="import">Ripristina</button></div>' +
+    '</div>';
+
+  h += '<div class="card"><div class="eyebrow">Programma</div>' +
+    '<p class="fine">Settimana 1 iniziata il <span class="num">' + (S.start ? esc(S.start) : "—") + '</span>.</p>' +
+    '<div class="row"><input type="date" id="startD2" value="' + (S.start || oggiISO()) + '" style="flex:1"><button class="btn sm" data-act="setStart2">Cambia</button></div></div>';
+  return h;
+}
+
+/* ============================================================
+   Eventi
+   ============================================================ */
+
+document.getElementById("tabs").addEventListener("click", function(e){
+  var b = e.target.closest("button[data-tab]"); if(!b) return;
+  tab = b.dataset.tab; render();
+});
+
+document.getElementById("rest").addEventListener("click", function(e){
+  var b = e.target.closest("button"); if(!b) return;
+  if(b.dataset.act === "rest-stop") restStop();
+  if(b.dataset.act === "rest-add"){ rest.end += 30000; rest.done = false; tickRest(); }
+});
+
+document.getElementById("view").addEventListener("click", function(e){
+  var el = e.target.closest("[data-act]"); if(!el) return;
+  var a = el.dataset.act, d = oggiISO();
+
+  /* ---- seduta guidata ---- */
+  if(a === "sesStart"){ sesStart(el.dataset.kind || "pesi"); return; }
+  if(a === "sesExit"){ sesExit(); return; }
+  if(a === "sesNext"){ sesVai(1); return; }
+  if(a === "sesBack"){ sesVai(-1); return; }
+  /* Annulla la spunta senza avanzare: stesso comportamento della lista lunga. */
+  if(a === "sesToggle"){
+    var sT = ses.steps[ses.i];
+    setsOf(d, sT.ex.id)[sT.si].done = false;
+    save(); render(); return;
+  }
+  if(a === "sesLista"){ ses.on = false; animaOff(); document.body.classList.remove("in-ses"); tab = "pesi"; render(); return; }
+  if(a === "sesPiu30"){ rest.end += 30000; rest.done = false; tickRest(); return; }
+  if(a === "sesTimer"){ restStart(+el.dataset.sec, "Tenuta"); return; }
+  if(a === "sesHow" || a === "sesFoto"){
+    var exH = EX.filter(function(x){ return x.id === el.dataset.id; })[0];
+    var box = document.getElementById("sesPop");
+    if(box){ box.remove(); return; }
+    var corpo = a === "sesFoto"
+      ? (FOTO[exH.id] ? '<img class="foto" src="' + FOTO[exH.id] + '" alt="' + esc(exH.att) + '">' : '<p>Per questo esercizio non c\'è una foto: è a corpo libero o coi manubri.</p>')
+      : exH.how.map(function(p){ return "<p>" + esc(p) + "</p>"; }).join("");
+    var pan = document.createElement("div");
+    pan.className = "pan"; pan.id = "sesPop";
+    pan.innerHTML = '<span class="kicker">' + (a === "sesFoto" ? "La tua attrezzatura" : "Come si fa") + '</span>' + corpo;
+    document.querySelector(".ses-body").appendChild(pan);
+    pan.scrollIntoView({ block:"nearest" });
+    return;
+  }
+  if(a === "sesFatto"){
+    var sf = ses.steps[ses.i], setsF = setsOf(d, sf.ex.id), stF = setsF[sf.si];
+    var ik = document.getElementById("sKg"), ir = document.getElementById("sRp");
+    var kgF = ik ? parseFloat(ik.value) : NaN, rpF = ir ? parseFloat(ir.value) : NaN;
+    stF.kg = isNaN(kgF) ? null : kgF;
+    stF.reps = isNaN(rpF) ? (sf.ex.secs ? 20 : 10) : rpF;
+    stF.done = true;
+    save(); buzz(40);
+    sesVai(1); return;
+  }
+  if(a === "sesStreFatto"){
+    stretchDay(d).items[el.dataset.id] = true; save(); buzz(25);
+    sesVai(1); return;
+  }
+
+  if(a === "go"){ tab = el.dataset.to; render(); return; }
+
+  if(a === "setStart" || a === "setStart2"){
+    var inp = document.getElementById(a === "setStart" ? "startD" : "startD2");
+    if(!inp.value) return;
+    S.start = iso(mondayOf(parseISO(inp.value))); save(); render(); return;
+  }
+
+  if(a === "stretch"){
+    var sd = stretchDay(d), id = el.dataset.id;
+    sd.items[id] = !sd.items[id]; save();
+    el.setAttribute("data-on", sd.items[id] ? "1" : "0");
+    var box = el.closest(".card").querySelector(".eyebrow");
+    var n = STRETCH.filter(function(x){ return sd.items[x.id]; }).length;
+    box.textContent = "Stretching · ogni giorno · " + n + " di " + STRETCH.length;
+    return;
+  }
+  if(a === "timer30"){ e.stopPropagation(); restStart(+el.dataset.sec, el.dataset.label); return; }
+
+  if(a === "setup"){ S.setup[el.dataset.id] = !S.setup[el.dataset.id]; save(); render(); return; }
+
+  if(a === "how"){
+    var box2 = document.getElementById("how-" + el.dataset.id);
+    box2.hidden = !box2.hidden;
+    el.textContent = box2.hidden ? "Come si fa" : "Chiudi";
+    return;
+  }
+
+  if(a === "st"){
+    var inp2 = el.parentElement.querySelector("input");
+    var step = parseFloat(el.dataset.dl);
+    var cur = parseFloat(inp2.value);
+    if(isNaN(cur)) cur = el.dataset.f === "reps" ? (step > 0 ? 10 : 10) : 0;
+    else cur = cur + step;
+    if(cur < 0) cur = 0;
+    inp2.value = Math.round(cur * 100) / 100;
+    writeSet(inp2); return;
+  }
+
+  if(a === "done"){
+    var row = el.closest(".set");
+    var exId = row.dataset.ex, i = +row.dataset.i;
+    var ex = EX.filter(function(x){ return x.id === exId; })[0];
+    var sets = setsOf(d, exId);
+    sets[i].done = !sets[i].done;
+    if(sets[i].done){
+      row.querySelectorAll("input").forEach(function(inp3){ writeSet(inp3); });
+      if(sets[i].reps == null) sets[i].reps = ex.secs ? 20 : 10;
+      restStart(ex.rest, ex.n + " · serie " + (i+1));
+      buzz(40);
+    }
+    save();
+    row.setAttribute("data-done", sets[i].done ? "1" : "0");
+    row.setAttribute("data-prop", "0");
+    row.querySelectorAll("input").forEach(function(inp4){
+      if(inp4.dataset.f === "reps" && !inp4.value) inp4.value = sets[i].reps;
+    });
+    return;
+  }
+
+  if(a === "zona"){
+    if(!S.pain[d]) S.pain[d] = [];
+    var z = el.dataset.z, k = S.pain[d].indexOf(z);
+    if(k >= 0) S.pain[d].splice(k, 1); else S.pain[d].push(z);
+    save(); render(); return;
+  }
+
+  if(a === "runPlay"){ runStart(); render(); return; }
+  if(a === "runPause"){ runPause(); render(); return; }
+  if(a === "runSkip"){ if(!run.started){ run.seq = buildSeq(weekClamped()); run.i = 0; run.started = true; } runNext(); render(); return; }
+  if(a === "runStop"){ run.started = false; run.playing = false; syncWake(); render(); return; }
+  if(a === "ellittica"){
+    S.runs.push({ d:d, week:weekClamped(), kind:"ellittica", rpe:null }); save(); render(); return;
+  }
+
+  if(a === "addFood"){
+    foodDay(d).push({ n:el.dataset.n, k:+el.dataset.k, p:+el.dataset.p });
+    save(); buzz(25); render(); return;
+  }
+  if(a === "delFood"){ foodDay(d).splice(+el.dataset.i, 1); save(); render(); return; }
+  if(a === "addCustom"){
+    var n2 = document.getElementById("cN").value.trim();
+    var k2 = parseFloat(document.getElementById("cK").value);
+    var p2 = parseFloat(document.getElementById("cP").value);
+    if(!n2 || isNaN(k2)) return;
+    foodDay(d).push({ n:n2, k:Math.round(k2), p:isNaN(p2) ? 0 : Math.round(p2) });
+    save(); render(); return;
+  }
+
+  if(a === "addPeso"){
+    var wd = document.getElementById("wD").value, wk2 = parseFloat(document.getElementById("wK").value);
+    if(!wd || isNaN(wk2)) return;
+    S.weights = S.weights.filter(function(x){ return x.d !== wd; });
+    S.weights.push({ d:wd, kg:wk2 }); save(); render(); return;
+  }
+  if(a === "addFtf"){
+    var fd = document.getElementById("fD").value, fc = parseFloat(document.getElementById("fC").value);
+    if(!fd || isNaN(fc)) return;
+    S.ftf = S.ftf.filter(function(x){ return x.d !== fd; });
+    S.ftf.push({ d:fd, cm:fc }); save(); render(); return;
+  }
+
+  if(a === "ics"){ scaricaICS(); return; }
+  if(a === "export"){ doExport(); return; }
+  if(a === "showImport"){ var ib = document.getElementById("importBox"); ib.hidden = !ib.hidden; return; }
+  if(a === "import"){
+    try{
+      var o = JSON.parse(document.getElementById("impT").value);
+      if(!o || typeof o.v !== "number") throw 0;
+      if(o.v > SCHEMA){ alert("Questo backup viene da una versione piu recente dell'app. Aggiorna l'app prima di ripristinarlo."); return; }
+      S = migra(o); save(); render();
+    }catch(err){ alert("Il testo incollato non è un backup valido. Deve iniziare con una graffa e contenere tutti i dati del file esportato."); }
+    return;
+  }
+});
+
+document.getElementById("view").addEventListener("change", function(e){
+  if(e.target.matches(".set input")) writeSet(e.target);
+  if(e.target.matches("[data-reg]")){ S.regol[e.target.dataset.reg] = e.target.value.trim(); save(); }
+});
+document.getElementById("view").addEventListener("input", function(e){
+  if(e.target.matches("[data-reg]")){ S.regol[e.target.dataset.reg] = e.target.value.trim(); save(); }
+});
+/* Il movimento accanto a un campo aperto e solo disturbo: la figura si ferma. */
+document.getElementById("view").addEventListener("focusin", function(e){
+  if(e.target.matches("input")) anim.ferma = true;
+});
+document.getElementById("view").addEventListener("focusout", function(e){
+  if(e.target.matches("input")) anim.ferma = false;
+});
+
+function writeSet(inp){
+  var row = inp.closest(".set"); if(!row) return;
+  var sets = setsOf(oggiISO(), row.dataset.ex);
+  var i = +row.dataset.i;
+  /* Se la riga era ancora una proposta, toccarla la promuove per intero: si
+     scrivono tutti i campi visibili, non solo quello modificato, altrimenti
+     resterebbe mezza registrata e mezza suggerita. */
+  var campi = row.dataset.prop === "1" ? row.querySelectorAll("input") : [inp];
+  Array.prototype.forEach.call(campi, function(x){
+    var v = parseFloat(x.value);
+    sets[i][x.dataset.f] = isNaN(v) ? null : v;
+  });
+  row.setAttribute("data-prop", "0");
+  save();
+}
+
+function doExport(){
+  var payload = JSON.stringify(S, null, 1);
+  var name = "palestra-" + oggiISO() + ".json";
+  if(window.claude && window.claude.downloads && window.claude.downloads.save){
+    window.claude.downloads.save({ filename:name, data:payload })
+      .then(function(){ segnaExport(); })
+      .catch(function(){ fallbackExport(payload, name); });
+  } else fallbackExport(payload, name);
+}
+/* Segnato solo quando il salvataggio e andato a buon fine: se l'utente annulla
+   il download il promemoria deve restare acceso. */
+function segnaExport(){
+  S.lastExport = oggiISO(); save();
+  if(tab === "dati") render();
+}
+function fallbackExport(payload, name){
+  try{
+    var blob = new Blob([payload], { type:"application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    segnaExport();
+  }catch(e){
+    var ib = document.getElementById("importBox");
+    if(ib){ ib.hidden = false; document.getElementById("impT").value = payload; }
+    alert("Non riesco a scaricare il file da qui. Ho messo i dati nel riquadro di testo qui sotto: copiali e incollali in un file.");
+  }
+}
+
+render();
+</script>
