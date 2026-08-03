@@ -29,9 +29,9 @@
        lo smeraldo resta l'unico che vuol dire qualcosa. --ghisa e cio che si
        muove col tuo gesto, --ghisa-2 il telaio che sta fermo. */
     --ghisa:#2E8BFF; --ghisa-2:#1B4C86;
+    --rete:rgba(22,232,160,0.14); --alone-oriz:rgba(22,232,160,0.13);
     --ombra:0 8px 30px rgba(0,0,0,0.4);
     --alone:0 14px 36px rgba(0,0,0,0.28), 0 0 22px rgba(22,232,160,0.18);
-    --rete:rgba(22,232,160,0.14); --alone-oriz:rgba(22,232,160,0.13);
     --mono:ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono",Menlo,Consolas,monospace;
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI Variable Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
     --r:16px;
@@ -47,9 +47,9 @@
     --warn:#EF9F27;
     --bad:#E24B4A; --bad-soft:rgba(226,75,74,0.16);
     --ghisa:#2E8BFF; --ghisa-2:#1B4C86;
+    --rete:rgba(22,232,160,0.14); --alone-oriz:rgba(22,232,160,0.13);
     --ombra:0 8px 30px rgba(0,0,0,0.4);
     --alone:0 14px 36px rgba(0,0,0,0.28), 0 0 22px rgba(22,232,160,0.18);
-    --rete:rgba(22,232,160,0.14); --alone-oriz:rgba(22,232,160,0.13);
   }
 
   *{box-sizing:border-box}
@@ -63,14 +63,19 @@
 
   /* ---------- fondale in profondita ----------
      Un pavimento che scorre verso di te, in prospettiva: le tessere smettono
-     di stare su una parete piatta e galleggiano sopra uno spazio.
-     E CSS 3D e non WebGL per un motivo preciso: durante la seduta lo schermo
+     di stare su una parete piatta e iniziano a galleggiare sopra uno spazio.
+     E CSS 3D, non WebGL, per un motivo preciso: durante la seduta lo schermo
      resta acceso col wake lock, e un contesto WebGL che gira per un'ora di
      palestra si mangia la batteria. Qui si animano solo transform e opacity,
-     quindi il lavoro lo fa la GPU e il thread principale resta ai timer. */
+     due soli livelli, quindi il lavoro lo fa la GPU e il thread principale
+     resta libero per i timer.
+     L'alfa e bassissima di proposito: i contrasti del testo sono calcolati
+     su --surface, e questo non deve spostarli. */
   .fondo{
     position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none;
     perspective:640px; perspective-origin:50% 30%;
+    /* Sfuma all'orizzonte e a fondo schermo: senza, la griglia finisce di
+       taglio contro il bordo e si legge come un difetto. */
     -webkit-mask-image:linear-gradient(to bottom, transparent 24%, #000 42%, #000 90%, transparent);
     mask-image:linear-gradient(to bottom, transparent 24%, #000 42%, #000 90%, transparent);
   }
@@ -78,6 +83,8 @@
     position:absolute; left:-70%; right:-70%; top:30%; bottom:-70%;
     transform:rotateX(69deg); transform-origin:50% 0;
   }
+  /* Il disegno e alto il doppio di una cella e scorre di una cella esatta:
+     cosi il ciclo si richiude e non si vede il salto. */
   .fondo .griglia{
     position:absolute; inset:-64px 0 0 0;
     background-image:
@@ -86,6 +93,7 @@
     animation:scorre 9s linear infinite;
   }
   @keyframes scorre{from{transform:translate3d(0,0,0)} to{transform:translate3d(0,64px,0)}}
+  /* Alone all'orizzonte: da solo dice "profondita" piu della griglia. */
   .fondo .orizz{
     position:absolute; left:50%; top:30%; width:160%; height:260px;
     transform:translate(-50%,-70%);
@@ -125,12 +133,17 @@
   /* dissolvenza in entrata. In valore e una coppia di classi perche il DOM resta;
      qui render() ricostruisce la vista ogni volta, quindi basta l'animazione:
      riparte da sola a ogni cambio di scheda e non puo lasciare niente nascosto. */
-  /* --dx la scrive render(): la vista entra dal lato da cui sei arrivato. */
+  /* --dx la scrive render(): la vista entra dal lato da cui sei arrivato,
+     cosi il passaggio fra schede racconta in che direzione ti sei mosso. */
   @keyframes entra{
-    from{opacity:0; transform:translate3d(var(--dx,0px),6px,0)}
+    from{opacity:0; transform:translate3d(var(--dx,0px),14px,0) scale(.985)}
     to{opacity:1; transform:none}
   }
-  .card, .today, .ex, .runner, .ses{animation:entra .45s cubic-bezier(.2,.8,.2,1) both}
+  /* .52s invece di .45: con la scala in mezzo, il tempo di prima faceva
+     sembrare la scheda scattata li invece di arrivata. */
+  .card, .today, .ex, .runner, .ses{animation:entra .52s cubic-bezier(.2,.8,.2,1) both}
+  /* Il pannello della seduta e fisso a schermo intero: entra piu deciso e
+     senza scaglionamento, e un passo solo. */
   .ses{animation-duration:.34s}
   /* Scaglionate: l'occhio segue l'ordine di lettura invece di ricevere tutto
      in faccia. Oltre la quinta il ritardo si sentirebbe come lentezza. */
@@ -138,10 +151,21 @@
   #view > *:nth-child(3){animation-delay:.10s}
   #view > *:nth-child(4){animation-delay:.15s}
   #view > *:nth-child(5){animation-delay:.20s}
+  #view > *:nth-child(6){animation-delay:.25s}
+  #view > *:nth-child(7){animation-delay:.30s}
+  #view > *:nth-child(8){animation-delay:.35s}
+  #view > *:nth-child(n+9){animation-delay:.40s}
+  /* Sotto la piega lo scaglionamento non serve: quando ci arrivi scorrendo,
+     quella scheda e la prima che vedi. Entra da sola, senza coda. */
+  .attesa{opacity:0 !important; animation:none !important}
+  .arriva{animation:entra .52s cubic-bezier(.2,.8,.2,1) both !important; animation-delay:0s !important}
   /* le barre si riempiono invece di saltare al valore */
   @keyframes riempi{from{transform:scaleX(0)} to{transform:scaleX(1)}}
   /* i grafici si tracciano da sinistra a destra */
   @keyframes traccia{from{stroke-dashoffset:1} to{stroke-dashoffset:0}}
+  /* Un numero che sale cambia larghezza a ogni cifra e trascina con se tutto
+     cio che gli sta accanto: le cifre a passo fisso tengono ferma la riga. */
+  .conta{font-variant-numeric:tabular-nums}
   @keyframes appari{from{opacity:0} to{opacity:1}}
   @keyframes pop{from{opacity:0;transform:scale(.4)} to{opacity:1;transform:none}}
   /* Cinque pallini che compaiono in fila: si conta con l'occhio, non leggendo. */
@@ -326,7 +350,7 @@
     background:var(--surface);color:var(--ink);
     /* Il bordo e il BINARIO su cui corre la riga del riposo, quindi va spento:
        con lo smeraldo su tutta la larghezza la riga che si accorcia sopra era
-       invisibile, sotto restava una linea piena dello stesso colore. */
+       invisibile — sotto restava una linea piena dello stesso colore. */
     border-top:2px solid var(--line-2); box-shadow:var(--ombra);
     padding:9px 16px;display:flex;align-items:center;gap:12px;
     max-width:560px;margin:0 auto;
@@ -334,7 +358,7 @@
   /* l'attributo hidden nasconde con display:none, ma il display:flex qui sopra
      lo batteva per specificita: la barra restava a schermo con 0:00 sempre */
   .rest[hidden]{display:none}
-  /* Riparte ogni volta che torna visibile: passando da display:none a flex
+  /* Riparte a ogni volta che torna visibile: passando da display:none a flex
      le animazioni ricominciano da sole, senza toccarla da JS. */
   .rest{animation:daSotto .34s cubic-bezier(.2,.8,.2,1)}
   @keyframes daSotto{from{transform:translate3d(0,100%,0)} to{transform:none}}
@@ -362,7 +386,8 @@
   }
   /* era [data-kind="corsa"] e non corrispondeva mai: le fasi si chiamano run/walk */
   .runner[data-kind="run"] .big, .runner[data-kind="run"] .phase{color:var(--accent)}
-  .figcorsa{max-width:220px; margin:2px auto 8px}
+  .figcorsa{max-width:200px; margin:2px auto 8px}
+  .figcorsa{max-width:220px}
   .figcorsa .stage{background:none; border:none}
   .figcorsa .stage .bone{stroke:var(--ink)}
   .figcorsa .stage .head{fill:var(--ink)}
@@ -415,11 +440,9 @@
   .eaten .e .en{flex:1;min-width:0}
   .eaten .e .qt{color:var(--accent);font-family:var(--mono);font-size:12.5px}
   .eaten .e .v{font-family:var(--mono);font-size:12px;color:var(--ink-3);white-space:nowrap}
-  /* mezza porzione e doppia porzione, sulla voce gia inserita */
   .qb{display:flex;flex:none;border:1px solid var(--line-2);border-radius:7px;overflow:hidden}
   .qb button{width:32px;min-height:32px;font-size:16px;color:var(--ink-2);background:var(--surface-2)}
   .qb button:active{background:var(--accent-soft);color:var(--accent)}
-  /* i cibi tuoi: bottone piu la crocetta per toglierli dall'elenco */
   .mio{position:relative}
   .mio .food{width:100%;padding-right:30px}
   .delmio{position:absolute;top:3px;right:3px;width:26px;height:26px;border-radius:6px;
@@ -522,11 +545,12 @@
   .saluto h2{font-size:25px}
   .oggi-cosa{font-size:16px; color:var(--ink-2); margin-top:3px}
   .oggi-cosa strong{color:var(--accent)}
-  .figmini{width:118px; flex:none; margin-left:auto}
+  .figmini{width:104px; flex:none; margin-left:auto}
+  .figmini{width:118px}
   .figmini .stage{background:none; border:none; box-shadow:none}
   .figmini .stage .bone{stroke:var(--ink)}
   .figmini .stage .head{fill:var(--ink)}
-  .figmini .stage .suolo{stroke:var(--accent); stroke-opacity:.3}
+  .figmini .stage .suolo{stroke:var(--ink-3); stroke-opacity:.5}
   .figmini .stage .attr{fill:var(--ghisa); stroke:var(--ghisa)}
   .figmini .stage .macc{fill:var(--ghisa-2)}
   .riga-dati{font-size:13px; color:var(--ink-3); letter-spacing:.01em}
@@ -555,6 +579,22 @@
   .chiudi{margin-left:auto;width:28px;height:28px;border-radius:7px;flex:none;
     color:var(--ink-3);font-size:18px;display:grid;place-items:center}
   .chiudi:active{background:var(--surface-3);color:var(--ink)}
+  /* Aggiungere o togliere una serie, sotto le righe dell'esercizio. */
+  .serie-piu{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:4px}
+  .serie-piu .num{font-size:15px;color:var(--ink-2);min-width:16px;text-align:center}
+  .avviso-serie{text-align:center;color:var(--warn);margin-top:6px}
+  /* Cerca un video: il tasto e i segni che squalificano quello che trovi. */
+  .video{margin:12px 0 4px;padding-top:10px;border-top:1px solid var(--line)}
+  .video .btn{margin-bottom:8px}
+  .cue-no{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:5px}
+  .cue-no li{font-size:13px;line-height:1.4;padding-left:17px;position:relative;color:var(--ink-2)}
+  .cue-no li::before{content:"×";position:absolute;left:2px;top:-1px;color:var(--bad);font-weight:700}
+  .ses .video{border-top-color:rgba(255,255,255,.16)}
+  .ses .cue-no li{color:rgba(255,255,255,.85)}
+  .ses .video .fine{color:rgba(255,255,255,.6)}
+  /* la coppia di bottoni nella seduta: serve per Salta + una serie */
+  .ses .duo{display:flex;gap:9px}
+  .ses .duo > *{flex:1}
   .cal .dd i{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.45;font-style:normal}
   .cal .dd[data-fatto="1"] i{background:var(--ok);opacity:1;width:8px;height:8px}
   .calleg{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--ink-3)}
@@ -632,9 +672,6 @@
   .stage .macc .telaio{fill:var(--ghisa-2)}
   /* arti del lato lontano: servono a leggere la profondita, non a competere */
   .stage .bone.lontano{opacity:.32}
-  .attrezzo{text-align:center;font-family:var(--mono);font-size:12px;letter-spacing:.06em;
-    text-transform:uppercase;color:var(--ink-3);margin-top:8px}
-  .ses .attrezzo{color:rgba(255,255,255,.65)}
   .stage .suolo{stroke:var(--accent); stroke-opacity:.32; stroke-width:1.5}
 
   .ses .go{
@@ -653,8 +690,6 @@
   .ses .ind{font-size:20px; min-width:44px; opacity:.9}
   .ses .ind[disabled]{opacity:.25}
   .sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
-  .ses .duo{display:flex; gap:9px}
-  .ses .duo > *{flex:1}
   .ses input[type=number]{
     background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.35);
     color:#fff; min-height:64px; font-size:26px; text-align:center;
@@ -684,37 +719,28 @@
   body.in-ses .tabs{display:none}
 
   /* --- attrezzi, regolazioni, fastidi --- */
-  /* Disegno dell'attrezzo, non fotografia: stessa regola del resto dell'app —
-     telaio spento, in azzurro pieno solo cio che si regola o si muove.
-     Niente cornice: sta sul fondo del pannello come la figura animata. */
-  .disegno{width:100%;max-width:300px;margin:0 auto 12px;display:block}
-  .disegno .telaio{fill:var(--ghisa-2)}
-  .disegno .vivo{fill:var(--ghisa)}
-  .disegno .imb{fill:var(--ink-3);opacity:.55}
-  .disegno .suolo{stroke:var(--ink-3);stroke-opacity:.45;stroke-width:1.5}
-  .disegno .quota{stroke:var(--ghisa);stroke-width:1.5;stroke-dasharray:4 4;fill:none}
-  /* I tratti vanno tenuti separati dalle campiture: una classe che riempie,
-     applicata a un path pensato come linea, lo trasforma in una macchia. */
-  .disegno .tratto{fill:none;stroke:var(--ghisa);stroke-linecap:round}
-  .disegno .tratto-2{fill:none;stroke:var(--ghisa-2);stroke-linecap:round}
-  /* Aggiungere o togliere una serie, sotto le righe dell'esercizio. */
-  .serie-piu{display:flex; align-items:center; justify-content:center; gap:12px; margin-top:4px}
-  .serie-piu .num{font-size:15px; color:var(--ink-2); min-width:16px; text-align:center}
-  .avviso-serie{text-align:center; color:var(--warn); margin-top:6px}
-
-  /* Cerca un video: il tasto e i segni che squalificano quello che trovi. */
-  .video{margin:12px 0 4px; padding-top:10px; border-top:1px solid var(--line)}
-  .video .btn{margin-bottom:8px}
-  .cue-no{list-style:none; margin:6px 0 0; padding:0; display:flex; flex-direction:column; gap:5px}
-  .cue-no li{
-    font-size:13px; line-height:1.4; padding-left:17px; position:relative; color:var(--ink-2);
+  /* Scheda macchina: nessuna immagine, solo cio che non puoi vedere
+     guardando l'attrezzo. La regolazione e in azzurro perche e un dato tuo
+     sull'attrezzatura, come i carichi: lo smeraldo resta per "fatto". */
+  .macchina{display:flex;flex-direction:column;gap:14px;margin:0 0 14px}
+  .macchina .mrow{display:flex;flex-direction:column;gap:6px}
+  .macchina .mval{
+    font-family:var(--mono); font-size:24px; font-weight:600;
+    letter-spacing:-.03em; line-height:1.15; color:var(--ghisa);
   }
-  .cue-no li::before{
-    content:"×"; position:absolute; left:2px; top:-1px; color:var(--bad); font-weight:700;
+  .macchina .mvuoto{font-size:14px;color:var(--ink-3)}
+  .macchina .mrow > .fine + .fine{margin-top:8px}
+  .macchina .passi{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px;counter-reset:p}
+  .macchina .passi li{
+    counter-increment:p; display:grid; grid-template-columns:16px 1fr; gap:11px;
+    font-size:14.5px; line-height:1.45; color:var(--ink); text-wrap:pretty;
   }
-  .ses .video{border-top-color:rgba(255,255,255,.16)}
-  .ses .cue-no li{color:rgba(255,255,255,.85)}
-  .ses .video .fine{color:rgba(255,255,255,.6)}
+  /* Il numero e un contatore CSS: se un giorno si aggiunge un passaggio,
+     la numerazione si sistema da sola invece di andare fuori posto. */
+  .macchina .passi li::before{
+    content:counter(p); font-family:var(--mono); font-size:12px;
+    color:var(--ghisa); line-height:1.75;
+  }
   .reg{display:block;margin:10px 0 2px}
   .reg span{display:block;font-size:12px;color:var(--ink-3);margin-bottom:4px}
   .reg input{width:100%;padding:10px;min-height:42px;border:1px solid var(--line-2);border-radius:var(--r);
@@ -791,133 +817,41 @@ var EX = [
          "Quando il bacino cede hai finito la serie, anche se sono passati 18 secondi."] }
 ];
 
+
 /* ============================================================
-   DISEGNI DEGLI ATTREZZI
+   LA SCHEDA MACCHINA
    ============================================================
-   Sostituiscono le foto della sala. Una foto dice "e quello li", un disegno
-   dice "guarda questo pezzo": qui l'azzurro pieno cade solo su cio che si
-   regola o si muove, il resto del telaio resta spento. E la stessa regola
-   che governa gia le macchine sotto la figura animata, quindi la scheda
-   "come si fa" e il movimento parlano la stessa lingua.
-   Nessun colore di stato: lo smeraldo resta riservato a "fatto".
+   Qui c'erano prima sei fotografie della sala, poi sei disegni tecnici.
+   Nessuna delle due strade funzionava, e per lo stesso motivo: l'attrezzo lo
+   hai davanti agli occhi mentre leggi. Non serve vederlo su uno schermo —
+   serve sapere a che foro stava il perno e in che ordine si fanno le cose.
+   Quindi nessuna immagine: le tue regolazioni in grande, e i passaggi
+   numerati. E l'unica versione che resta utile anche se cambi palestra.
    ============================================================ */
 
-var DIS = {
-  /* Una rastrelliera con tre pesi e quello giusto acceso: dice "prendi
-     questo, non quello", che e l'unica cosa che serve sapere davanti allo
-     scaffale. Gli altri due restano spenti e danno la scala. */
-  goblet:{ t:"Kettlebell tenuto al petto, sulla rastrelliera", d:
-    '<line class="suolo" x1="8" y1="120" x2="192" y2="120"></line>' +
-    '<rect class="telaio" x="22" y="34" width="156" height="6" rx="3"></rect>' +
-    '<rect class="telaio" x="22" y="86" width="156" height="6" rx="3"></rect>' +
-    '<rect class="telaio" x="24" y="34" width="6" height="86" rx="3"></rect>' +
-    '<rect class="telaio" x="170" y="34" width="6" height="86" rx="3"></rect>' +
-    /* piccolo */
-    '<path class="tratto-2" stroke-width="5" d="M50 76q10 -14 20 0"></path>' +
-    '<circle class="telaio" cx="60" cy="80" r="11"></circle>' +
-    /* quello da usare */
-    '<path class="tratto" stroke-width="7" d="M88 68q17 -20 34 0"></path>' +
-    '<circle class="vivo" cx="105" cy="76" r="17"></circle>' +
-    /* grande */
-    '<path class="tratto-2" stroke-width="6" d="M140 70q13 -16 26 0"></path>' +
-    '<circle class="telaio" cx="153" cy="78" r="15"></circle>' },
-
-  /* Due, uno per mano: il testo lo dice e il disegno deve dirlo insieme a lui.
-     Quello dietro e piu tenue, altrimenti si leggono come un bilanciere. */
-  rdl:{ t:"Un manubrio per mano, davanti alle cosce", d:
-    '<line class="suolo" x1="8" y1="120" x2="192" y2="120"></line>' +
-    '<g opacity=".38">' +
-    '<rect class="vivo" x="30" y="58" width="52" height="8" rx="4"></rect>' +
-    '<rect class="vivo" x="20" y="46" width="15" height="32" rx="5"></rect>' +
-    '<rect class="vivo" x="77" y="46" width="15" height="32" rx="5"></rect>' +
-    '</g>' +
-    '<rect class="vivo" x="108" y="82" width="60" height="9" rx="4.5"></rect>' +
-    '<rect class="vivo" x="96" y="68" width="17" height="37" rx="6"></rect>' +
-    '<rect class="vivo" x="163" y="68" width="17" height="37" rx="6"></rect>' },
-
-  chest:{ t:"Chest press · sedile e maniglie", d:
-    '<line class="suolo" x1="8" y1="120" x2="192" y2="120"></line>' +
-    /* schienale e seduta */
-    '<rect class="imb" x="52" y="56" width="12" height="46" rx="5"></rect>' +
-    '<rect class="imb" x="60" y="94" width="46" height="11" rx="5"></rect>' +
-    '<rect class="telaio" x="58" y="102" width="6" height="18" rx="3"></rect>' +
-    '<rect class="telaio" x="98" y="102" width="6" height="18" rx="3"></rect>' +
-    /* colonna e pila */
-    '<rect class="telaio" x="150" y="22" width="7" height="98" rx="3"></rect>' +
-    '<rect class="telaio" x="163" y="34" width="4" height="76" rx="2"></rect>' +
-    '<rect class="vivo" x="158" y="42" width="26" height="7" rx="2"></rect>' +
-    '<rect class="vivo" x="158" y="51" width="26" height="7" rx="2"></rect>' +
-    '<rect class="telaio" x="158" y="60" width="26" height="7" rx="2"></rect>' +
-    '<rect class="telaio" x="158" y="69" width="26" height="7" rx="2"></rect>' +
-    '<rect class="telaio" x="158" y="78" width="26" height="7" rx="2"></rect>' +
-    '<rect class="telaio" x="158" y="87" width="26" height="7" rx="2"></rect>' +
-    /* bracci e maniglie: sono cio che spingi */
-    '<path class="quota" d="M153 52 L118 60"></path>' +
-    '<rect class="vivo" x="104" y="52" width="16" height="7" rx="3.5"></rect>' +
-    '<rect class="vivo" x="104" y="44" width="7" height="24" rx="3.5"></rect>' +
-    /* perno di regolazione del sedile */
-    '<circle class="vivo" cx="70" cy="88" r="5"></circle>' },
-
-  lat:{ t:"Lat machine · barra alta e rulli", d:
-    '<line class="suolo" x1="8" y1="120" x2="192" y2="120"></line>' +
-    '<rect class="telaio" x="164" y="14" width="8" height="106" rx="3"></rect>' +
-    '<rect class="telaio" x="72" y="14" width="100" height="7" rx="3"></rect>' +
-    '<circle class="telaio" cx="78" cy="24" r="6"></circle>' +
-    /* cavo e barra: cio che tiri */
-    '<line class="quota" x1="78" y1="26" x2="78" y2="46"></line>' +
-    '<rect class="vivo" x="42" y="46" width="72" height="8" rx="4"></rect>' +
-    '<rect class="vivo" x="38" y="40" width="8" height="20" rx="3"></rect>' +
-    '<rect class="vivo" x="110" y="40" width="8" height="20" rx="3"></rect>' +
-    /* seduta e rulli fermacosce: e la regolazione che cambia ogni volta */
-    '<rect class="imb" x="56" y="88" width="48" height="11" rx="5"></rect>' +
-    '<rect class="telaio" x="76" y="96" width="6" height="24" rx="3"></rect>' +
-    '<rect class="vivo" x="52" y="66" width="56" height="9" rx="4.5"></rect>' +
-    '<circle class="vivo" cx="52" cy="70" r="8"></circle>' +
-    '<circle class="vivo" cx="108" cy="70" r="8"></circle>' +
-    /* pila */
-    '<rect class="vivo" x="140" y="42" width="24" height="7" rx="2"></rect>' +
-    '<rect class="vivo" x="140" y="51" width="24" height="7" rx="2"></rect>' +
-    '<rect class="telaio" x="140" y="60" width="24" height="7" rx="2"></rect>' +
-    '<rect class="telaio" x="140" y="69" width="24" height="7" rx="2"></rect>' +
-    '<rect class="telaio" x="140" y="78" width="24" height="7" rx="2"></rect>' +
-    '<rect class="telaio" x="140" y="87" width="24" height="7" rx="2"></rect>' },
-
-  row:{ t:"Rematore · manubrio e appoggio", d:
-    '<line class="suolo" x1="8" y1="120" x2="192" y2="120"></line>' +
-    /* panca di appoggio */
-    '<rect class="imb" x="30" y="60" width="86" height="12" rx="6"></rect>' +
-    '<rect class="telaio" x="38" y="70" width="7" height="50" rx="3"></rect>' +
-    '<rect class="telaio" x="102" y="70" width="7" height="50" rx="3"></rect>' +
-    '<rect class="telaio" x="30" y="114" width="24" height="6" rx="3"></rect>' +
-    '<rect class="telaio" x="94" y="114" width="24" height="6" rx="3"></rect>' +
-    /* manubrio: e cio che si muove */
-    '<rect class="vivo" x="136" y="76" width="9" height="34" rx="4.5"></rect>' +
-    '<rect class="vivo" x="126" y="70" width="29" height="10" rx="4"></rect>' +
-    '<rect class="vivo" x="126" y="106" width="29" height="10" rx="4"></rect>' +
-    '<path class="quota" d="M140 68 L140 44"></path>' },
-
-  ohp:{ t:"Spinte sopra la testa · schienale alto", d:
-    '<line class="suolo" x1="8" y1="120" x2="192" y2="120"></line>' +
-    '<rect class="imb" x="86" y="40" width="13" height="52" rx="6"></rect>' +
-    '<rect class="imb" x="94" y="84" width="44" height="11" rx="5"></rect>' +
-    '<rect class="telaio" x="92" y="92" width="6" height="28" rx="3"></rect>' +
-    '<rect class="telaio" x="128" y="92" width="6" height="28" rx="3"></rect>' +
-    '<rect class="telaio" x="82" y="114" width="30" height="6" rx="3"></rect>' +
-    /* la leva dello schienale: e la regolazione da ricordare */
-    '<circle class="vivo" cx="86" cy="76" r="5"></circle>' +
-    '<path class="quota" d="M86 70 q-14 -12 -6 -26"></path>' +
-    /* manubri sopra la testa */
-    '<rect class="vivo" x="46" y="30" width="34" height="9" rx="4.5"></rect>' +
-    '<rect class="vivo" x="40" y="22" width="9" height="25" rx="4"></rect>' +
-    '<rect class="vivo" x="77" y="22" width="9" height="25" rx="4"></rect>' +
-    '<rect class="vivo" x="140" y="30" width="34" height="9" rx="4.5"></rect>' +
-    '<rect class="vivo" x="134" y="22" width="9" height="25" rx="4"></rect>' +
-    '<rect class="vivo" x="171" y="22" width="9" height="25" rx="4"></rect>' }
-};
-
-function disegnoAttr(id){
-  var D = DIS[id]; if(!D) return "";
-  return '<svg class="disegno" viewBox="0 0 200 132" role="img" aria-label="' + esc(D.t) + '">' + D.d + '</svg>';
+function schedaAttr(ex){
+  var reg = S.regol[ex.id];
+  var h = '<div class="macchina">';
+  /* La regolazione sta in cima e grande: e la sola cosa che non puoi dedurre
+     guardando l'attrezzo, e la sola che cambia da persona a persona. */
+  h += '<div class="mrow">' +
+    '<span class="kicker">La tua regolazione</span>' +
+    (reg ? '<span class="mval">' + esc(reg) + '</span>'
+         : '<span class="mvuoto">non l\'hai ancora scritta</span>') +
+    '</div>';
+  /* I passi numerati vengono da CUE, non da ex.how: how e prosa mista —
+     tecnica nel primo paragrafo e poi il perche di quella scelta e quando
+     passare al bilanciere. Numerata diventava un ordine da eseguire ("passa
+     al bilanciere" come terza cosa da fare nella serie). CUE sono imperativi
+     brevi, gia scritti per essere letti in piedi con un peso in mano. */
+  var cue = CUE[ex.id] || [];
+  if(cue.length) h += '<div class="mrow"><span class="kicker">Nell\'ordine</span><ol class="passi">' +
+    cue.map(function(c){ return '<li>' + esc(c) + '</li>'; }).join("") + '</ol></div>';
+  /* La prosa resta, ma sotto e senza numeri: e contesto, non istruzione. */
+  h += '<div class="mrow">' +
+    ex.how.map(function(p){ return '<p class="fine">' + esc(p) + '</p>'; }).join("") +
+    '</div>';
+  return h + '</div>';
 }
 
 /* Le fotografie della sala stavano qui, incorporate: circa 240 kB di JPEG per
@@ -1096,7 +1030,47 @@ function save(){
   try{ localStorage.setItem(KEY, JSON.stringify(S)); }
   catch(e){ storageOK = false; }
 }
+
+/* ============================================================
+   RETE DI SICUREZZA SUI DATI
+   ============================================================
+   Due reti, e fanno lavori diversi.
+   1) Copia automatica: alla prima apertura di ogni giorno mette da parte lo
+      stato com'era, e ne tiene sette. Protegge dagli errori — una spunta
+      cancellata, un ripristino sbagliato, una serie tolta per errore.
+      NON protegge dalla cancellazione dei dati del browser: sta nello stesso
+      posto, quindi se sparisce quello sparisce anche lei. Va detto.
+   2) L'export in un file, che c'e gia: e l'unica che sopravvive davvero,
+      perche esce dal telefono.
+   ============================================================ */
+var KEY_BK = "palestra-copie";
+function copie(){
+  try{ return JSON.parse(localStorage.getItem(KEY_BK) || "[]"); }catch(e){ return []; }
+}
+function copiaDelGiorno(){
+  try{
+    var d = oggiISO(), c = copie();
+    if(c.some(function(x){ return x.d === d; })) return;   /* una al giorno basta */
+    /* si salva lo stato COM'ERA all'apertura, non quello che scriverai oggi:
+       serve a tornare indietro, e tornare a com'era stamattina e' l'utile */
+    c.push({ d:d, s:JSON.stringify(S) });
+    while(c.length > 7) c.shift();
+    localStorage.setItem(KEY_BK, JSON.stringify(c));
+  }catch(e){}
+}
+function ripristinaCopia(d){
+  var c = copie(), v = null;
+  c.forEach(function(x){ if(x.d === d) v = x.s; });
+  if(!v) return false;
+  try{
+    var o = JSON.parse(v);
+    if(!o || typeof o.v !== "number") return false;
+    S = migra(o); save(); return true;
+  }catch(e){ return false; }
+}
+
 var S = load();
+copiaDelGiorno();
 
 /* ============================================================
    Date e settimane
@@ -1209,7 +1183,7 @@ function stretchDone(d){
   return STRETCH.every(function(x){ return s.items && s.items[x.id]; });
 }
 function foodDay(d){ if(!S.food[d]) S.food[d] = []; return S.food[d]; }
-/* q = quantita, 1 se assente: le voci scritte prima della v1.8 non ce l'hanno. */
+/* q = quantita, 1 se assente: le voci scritte prima della v1.8 non ce l hanno. */
 function foodTot(d){
   return foodDay(d).reduce(function(a, x){
     var q = x.q || 1;
@@ -1528,9 +1502,12 @@ function render(){
     var wf = v.querySelector("[data-fig]");
     if(wf) animaOn(wf.dataset.fig); else animaOff();
   }
-  animaConta();
   syncWake();
   window.scrollTo(0, 0);
+  /* Dopo lo scrollTo, non prima: la misura di cosa sta sotto la piega va
+     fatta a pagina gia riportata in cima, altrimenti e la misura di ieri. */
+  scorrimentoIngresso();
+  animaConta();
 }
 
 function bannerStorage(){
@@ -1968,19 +1945,101 @@ function festaSpunta(el){
 function contaSu(el){
   var target = parseFloat(el.dataset.target);
   if(isNaN(target)) return;
+  /* Il peso corporeo e 51,5 e non 52: senza decimali la tessera piu importante
+     salirebbe fino a un numero che non e quello scritto nei dati. */
+  var dec = parseInt(el.dataset.dec || "0", 10);
+  var ritardo = parseInt(el.dataset.ritardo || "0", 10);
+  function scrivi(v){ el.textContent = v.toFixed(dec).replace(".", ","); }
   /* Se la pagina non e visibile rAF non parte e il numero resterebbe a zero
      per sempre: in quel caso si scrive e basta. Stesso per chi vuole meno moto. */
-  if(pocoMoto || document.visibilityState !== "visible"){ el.textContent = Math.round(target); return; }
-  var t0 = performance.now();
-  (function passo(ora){
-    var t = Math.min((ora - t0) / 1300, 1);
-    el.textContent = Math.round(target * (1 - Math.pow(1 - t, 3)));
-    if(t < 1) requestAnimationFrame(passo);
-    else el.textContent = Math.round(target);
-  })(t0);
+  if(pocoMoto || document.visibilityState !== "visible"){ scrivi(target); return; }
+  /* Parte quando la sua tessera ha finito di entrare: se salgono tutti insieme
+     mentre le tessere scorrono, lo schermo diventa illeggibile per un secondo. */
+  setTimeout(function(){
+    var t0 = performance.now();
+    (function passo(ora){
+      var t = Math.min((ora - t0) / 1300, 1);
+      scrivi(target * (1 - Math.pow(1 - t, 3)));
+      if(t < 1) requestAnimationFrame(passo); else scrivi(target);
+    })(t0);
+  }, ritardo);
 }
-function animaConta(){
-  Array.prototype.forEach.call(document.querySelectorAll(".conta"), contaSu);
+function animaConta(radice){
+  var dove = radice || document;
+  Array.prototype.forEach.call(dove.querySelectorAll(".conta"), function(el){
+    /* Se la sua scheda non e ancora entrata, il numero sale quando entra lei:
+       altrimenti scorri fin li e lo trovi gia arrivato. */
+    if(!radice && el.closest(".attesa")) return;
+    contaSu(el);
+  });
+}
+
+/* ------------------------------------------------------------------
+   Ingresso legato allo scorrimento
+   ------------------------------------------------------------------
+   Prima ogni scheda partiva al momento del render: quelle in fondo alla
+   pagina finivano di entrare mentre stavi ancora leggendo la prima, e
+   scorrendo trovavi solo roba ferma. Ora chi nasce sotto la piega aspetta,
+   e parte quando lo sguardo ci arriva davvero.
+   Chi e gia visibile non viene toccato: conserva lo scaglionamento in
+   cascata, che li ha senso perche le vedi tutte insieme.
+   ------------------------------------------------------------------ */
+var dormienti = [], spazzataInCoda = 0;
+function liberaScheda(el){
+  el.classList.remove("attesa");
+  el.classList.add("arriva");
+  animaConta(el);
+}
+/* La regola e "il viewport ci e arrivato o ci e passato sopra", non "ci sta
+   dentro adesso". Un elemento superato da uno scorrimento veloce non tornera
+   mai a incrociare il bordo scendendo: se la condizione fosse l'incrocio,
+   resterebbe invisibile per sempre. Qui basta che il suo bordo alto sia
+   entrato nella finestra, anche molto prima e anche solo per un istante. */
+function spazza(){
+  spazzataInCoda = 0;
+  if(!dormienti.length) return;
+  var alte = window.innerHeight, restano = [];
+  dormienti.forEach(function(el){
+    if(el.getBoundingClientRect().top < alte) liberaScheda(el); else restano.push(el);
+  });
+  dormienti = restano;
+  if(!dormienti.length) staccaSpazzata();
+}
+function chiediSpazzata(){
+  if(spazzataInCoda) return;
+  spazzataInCoda = requestAnimationFrame(spazza);
+}
+function staccaSpazzata(){
+  window.removeEventListener("scroll", chiediSpazzata);
+  window.removeEventListener("resize", chiediSpazzata);
+}
+function scorrimentoIngresso(){
+  /* Ogni render riparte da zero: le vecchie in attesa appartengono a una
+     vista che non esiste piu, e lasciarle nell'elenco le terrebbe nascoste. */
+  dormienti.forEach(function(el){ el.classList.remove("attesa"); });
+  dormienti = [];
+  staccaSpazzata();
+  if(pocoMoto) return;
+  var alte = window.innerHeight;
+  Array.prototype.forEach.call(
+    document.querySelectorAll("#view .card, #view .tile, #view .ex, #view .gauge"),
+    function(el){
+      /* La soglia e 96 px sotto il bordo: cio che spunta appena e gia in vista,
+         e farlo aspettare darebbe l'impressione di un buco nella pagina. */
+      if(el.getBoundingClientRect().top > alte - 96){ el.classList.add("attesa"); dormienti.push(el); }
+    });
+  if(!dormienti.length) return;
+  window.addEventListener("scroll", chiediSpazzata, { passive:true });
+  window.addEventListener("resize", chiediSpazzata);
+  /* Rete di sicurezza: se dopo dieci secondi qualcosa e ancora in attesa,
+     vuol dire che nessuno scorrimento e mai arrivato fin li. Meglio una
+     scheda che compare senza cerimonia che una scheda che non compare. */
+  setTimeout(function(){
+    if(!dormienti.length) return;
+    dormienti.forEach(liberaScheda);
+    dormienti = [];
+    staccaSpazzata();
+  }, 10000);
 }
 
 /* ---------- il percorso ---------- */
@@ -2082,20 +2141,19 @@ function vSessione(){
   if(s.t === "intro"){
     h += '<span class="kicker">Esercizio ' + (EX.indexOf(s.ex) + 1) + ' di ' + EX.length + '</span>' +
       '<h2>' + esc(s.ex.n) + '</h2>' +
-      figuraSVG(s.ex.id) + '<p class="attrezzo">' + esc(s.ex.att) + '</p>' +
+      figuraSVG(s.ex.id) +
       '<p class="fine2">Dimostrazione del movimento, <strong>non il ritmo da tenere</strong>: la velocità delle ripetizioni non cambia i risultati, il carico sì.</p>' +
       '<ul class="cue">' + (CUE[s.ex.id] || []).map(function(c){ return "<li>" + esc(c) + "</li>"; }).join("") + '</ul>' +
       (S.regol[s.ex.id] ? '<div class="pan"><span class="kicker">Le tue regolazioni</span><p>' + esc(S.regol[s.ex.id]) + '</p></div>' : "");
     foot = '<button type="button" class="go" data-act="sesNext">Vai</button>' +
-      '<button type="button" class="alt" data-act="sesHow" data-id="' + s.ex.id + '">Come si fa</button>' +
-      (DIS[s.ex.id] ? '<button type="button" class="alt" data-act="sesFoto" data-id="' + s.ex.id + '">Attrezzo</button>' : "");
+      '<button type="button" class="alt" data-act="sesHow" data-id="' + s.ex.id + '">Come si fa</button>';
   }
 
   else if(s.t === "avvic"){
     var pr0 = proposta(s.ex.id, d);
     var mezzo = pr0 && pr0.kg != null ? Math.round(pr0.kg / 2 * 2) / 2 : null;
     h += '<span class="kicker">Prima di iniziare</span><h2>Serie di avvicinamento</h2>' +
-      figuraSVG(s.ex.id) + '<p class="attrezzo">' + esc(s.ex.att) + '</p>' +
+      figuraSVG(s.ex.id) +
       '<p class="dopo"><strong>8-10 ripetizioni</strong> di ' + esc(s.ex.n) +
         (mezzo != null ? ' con circa <strong>' + String(mezzo).replace(".", ",") + ' kg</strong>, metà del carico di oggi'
                        : ', a corpo libero o col peso più leggero che hai') + '.</p>' +
@@ -2115,7 +2173,7 @@ function vSessione(){
     h += '<span class="kicker">' + esc(s.ex.n) + ' · esercizio ' + (EX.indexOf(s.ex) + 1) + ' di ' + EX.length +
         ' · serie ' + (cnt.now + 1) + ' di ' + cnt.tot + '</span>' +
       '<h2>Serie ' + (s.si + 1) + ' di ' + nS + '</h2>' +
-      figuraSVG(s.ex.id) + '<p class="attrezzo">' + esc(s.ex.att) + '</p>' +
+      figuraSVG(s.ex.id) +
       '<div class="duo">' +
       (s.ex.secs ? "" :
         '<label class="campo"><span>Chili</span><input type="number" inputmode="decimal" step="' + s.ex.step + '" id="sKg" value="' + vKg + '"></label>') +
@@ -2184,8 +2242,7 @@ function vSessione(){
       '<h2>' + esc(s.st.n) + '</h2>' + figuraSVG(s.st.id) +
       '<p class="dopo">' + esc(s.st.d) + '</p>' +
       '<ul class="cue">' + (CUE[s.st.id] || []).map(function(c){ return "<li>" + esc(c) + "</li>"; }).join("") + '</ul>' +
-      (s.st.t ? '<div class="cd num" id="sesCd">' + mmss(rest.on ? Math.max(0, (rest.end - Date.now())/1000) : s.st.t) + '</div>' : "") +
-      cercaVideo(s.st.id);
+      (s.st.t ? '<div class="cd num" id="sesCd">' + mmss(rest.on ? Math.max(0, (rest.end - Date.now())/1000) : s.st.t) + '</div>' : "");
     foot = (s.st.t ? '<button type="button" class="alt" data-act="sesTimer" data-sec="' + s.st.t + '">Avvia i 30 secondi</button>' : "") +
       '<button type="button" class="go" data-act="sesStreFatto" data-id="' + s.st.id + '">Fatto</button>';
   }
@@ -2495,14 +2552,14 @@ function vOggi(){
   h += '<div class="grid2">';
 
   h += tile("peso", "Peso",
-    ws.length ? String(ws[ws.length-1].kg).replace(".", ",") : "—", ws.length ? "kg" : "",
+    ws.length ? '<span class="conta" data-dec="1" data-ritardo="60" data-target="' + ws[ws.length-1].kg + '">0,0</span>' : "—", ws.length ? "kg" : "",
     spark(ws.slice(-8).map(function(x){ return x.kg; }), "var(--accent)"),
     ws.length ? "obiettivo " + PESO_META : "da registrare",
     ws.length ? (ws.length >= 2 ? (ws[ws.length-1].kg - ws[0].kg >= 0 ? "+" : "") + (Math.round((ws[ws.length-1].kg - ws[0].kg) * 10) / 10).toString().replace(".", ",") + " kg" : "1 dato") : "manca",
     ws.length >= 2 ? "ok" : "warn");
 
   h += tile("mob", "Dita-terra",
-    fs.length ? String(fs[fs.length-1].cm).replace(".", ",") : "—", fs.length ? "cm" : "",
+    fs.length ? '<span class="conta" data-ritardo="120" data-target="' + fs[fs.length-1].cm + '">0</span>' : "—", fs.length ? "cm" : "",
     spark(fs.slice(-8).map(function(x){ return x.cm; }), "var(--accent)"),
     "obiettivo " + FTF_META + " cm",
     fs.length >= 2 ? (fs[fs.length-1].cm - fs[0].cm) + " cm" : null, "ok");
@@ -2511,7 +2568,7 @@ function vOggi(){
     barrette(sett), xs + " giorni su 7",
     xs >= 5 ? "in linea" : "obiettivo 5", xs >= 5 ? "ok" : "warn");
 
-  h += tile("cibo", "Calorie", '<span class="conta" data-target="' + Math.round(ft.k) + '">0</span>', "kcal",
+  h += tile("cibo", "Calorie", '<span class="conta" data-ritardo="240" data-target="' + Math.round(ft.k) + '">0</span>', "kcal",
     spark([0, ft.k * 0.35, ft.k * 0.7, ft.k], ft.k >= KCAL_MIN ? "var(--ok)" : "var(--warn)"),
     Math.round(ft.p) + " g proteine",
     ft.k >= KCAL_MIN ? "in linea" : "mancano " + Math.max(0, Math.round(KCAL_MIN - ft.k)),
@@ -2635,8 +2692,7 @@ function vPesi(){
       (avvisoSerie && avvisoSerie.id === ex.id ? '<p class="fine avviso-serie">' + esc(avvisoSerie.t) + '</p>' : "");
     h += '</div>';
     h += '<div class="how" id="how-' + ex.id + '" hidden>' +
-      disegnoAttr(ex.id) +
-      ex.how.map(function(p){ return "<p>" + esc(p) + "</p>"; }).join("") +
+      schedaAttr(ex) +
       cercaVideo(ex.id) +
       '<label class="reg"><span>Le tue regolazioni — si salvano da sole</span>' +
       '<input type="text" data-reg="' + ex.id + '" value="' + esc(S.regol[ex.id] || "") +
@@ -2890,6 +2946,18 @@ function vDati(){
     '<div class="row"><button class="btn wide" data-act="export">Esporta i dati</button></div>' +
     '<div class="row"><button class="btn ghost wide sm" data-act="showImport">Ripristina da un backup</button></div>' +
     '<div id="importBox" hidden><textarea id="impT" placeholder="Incolla qui il contenuto del file"></textarea><button class="btn wide sm" data-act="import">Ripristina</button></div>' +
+    (function(){
+      /* Copie automatiche degli ultimi giorni: servono a tornare indietro da
+         un errore, non a sopravvivere alla cancellazione dei dati. */
+      var c = copie().filter(function(x){ return x.d !== oggiISO(); }).reverse();
+      if(!c.length) return '<p class="fine">Da domani qui sotto trovi le copie automatiche degli ultimi sette giorni.</p>';
+      return '<hr><div class="eyebrow">Torna a com era</div>' +
+        '<div class="row">' + c.map(function(x){
+          return '<button class="btn sm" data-act="torna" data-d="' + x.d + '">' +
+            esc(x.d.slice(8) + "/" + x.d.slice(5,7)) + '</button>';
+        }).join("") + '</div>' +
+        '<p class="fine">Copia automatica di come stavano i dati all apertura di quel giorno. Sette giorni, poi la piu vecchia si perde. Sta nella memoria di questo browser: se cancelli i dati dei siti sparisce anche lei — per quello serve <strong>Esporta</strong>.</p>';
+    })() +
     '</div>';
 
   h += '<div class="card"><div class="eyebrow">Programma</div>' +
@@ -2932,19 +3000,15 @@ document.getElementById("view").addEventListener("click", function(e){
   if(a === "sesLista"){ ses.on = false; animaOff(); document.body.classList.remove("in-ses"); tab = "pesi"; render(); return; }
   if(a === "sesPiu30"){ rest.end += 30000; rest.done = false; tickRest(); return; }
   if(a === "sesTimer"){ restStart(+el.dataset.sec, "Tenuta"); return; }
-  if(a === "sesHow" || a === "sesFoto"){
+  if(a === "sesHow"){
     var exH = EX.filter(function(x){ return x.id === el.dataset.id; })[0];
     var box = document.getElementById("sesPop");
     if(box){ box.remove(); return; }
-    var corpo = a === "sesFoto"
-      ? (DIS[exH.id] ? disegnoAttr(exH.id) + '<p class="fine">' + esc(DIS[exH.id].t) + '</p>' : '<p>Questo è a corpo libero: non c\'è un attrezzo da regolare.</p>')
-      : exH.how.map(function(p){ return "<p>" + esc(p) + "</p>"; }).join("") + cercaVideo(exH.id);
+    var corpo = schedaAttr(exH);
     var pan = document.createElement("div");
     pan.className = "pan"; pan.id = "sesPop";
-    pan.innerHTML = '<span class="kicker">' + (a === "sesFoto" ? "L'attrezzo" : "Come si fa") + '</span>' + corpo;
+    pan.innerHTML = corpo;
     document.querySelector(".ses-body").appendChild(pan);
-    /* scrollIntoView spostava l'intera app: si porta in fondo il solo
-       contenitore scorrevole. */
     var corpoSes = document.querySelector(".ses-body");
     corpoSes.scrollTop = corpoSes.scrollHeight;
     return;
@@ -2992,8 +3056,8 @@ document.getElementById("view").addEventListener("click", function(e){
   if(a === "seriePiu"){ avvisoSerie = null; cambiaSerie(d, el.dataset.id, +1); buzz(25); render(); return; }
   if(a === "serieMeno"){
     var esito = cambiaSerie(d, el.dataset.id, -1);
-    /* Il messaggio va dentro la pagina, non in una finestra di sistema: le
-       finestre di avviso sul telefono a volte non compaiono affatto. */
+    /* Il messaggio va dentro la pagina, non in una finestra di sistema: quelle
+       sul telefono a volte non compaiono affatto. */
     avvisoSerie = esito === "spuntata" ? { id:el.dataset.id, t:"Questa serie l'hai già registrata. Annulla la spunta e poi la togli." }
                 : esito === "minimo" ? { id:el.dataset.id, t:"Una serie deve restare." }
                 : null;
@@ -3010,6 +3074,10 @@ document.getElementById("view").addEventListener("click", function(e){
     }
     buzz(25); render(); return;
   }
+
+  /* Tocca un giorno del calendario: si apre il dettaglio, ritoccalo e si chiude. */
+  if(a === "giorno"){ giornoSel = (giornoSel === el.dataset.d) ? null : el.dataset.d; render(); return; }
+  if(a === "giornoChiudi"){ giornoSel = null; render(); return; }
 
   if(a === "how"){
     var box2 = document.getElementById("how-" + el.dataset.id);
@@ -3109,12 +3177,19 @@ document.getElementById("view").addEventListener("click", function(e){
     S.ftf.push({ d:fd, cm:fc }); save(); render(); return;
   }
 
-  /* Tocca un giorno del calendario: si apre il dettaglio, ritoccalo e si chiude. */
-  if(a === "giorno"){ giornoSel = (giornoSel === el.dataset.d) ? null : el.dataset.d; render(); return; }
-  if(a === "giornoChiudi"){ giornoSel = null; render(); return; }
   if(a === "ics"){ scaricaICS(); return; }
   if(a === "export"){ doExport(); return; }
   if(a === "showImport"){ var ib = document.getElementById("importBox"); ib.hidden = !ib.hidden; return; }
+  if(a === "torna"){
+    /* Prima di sovrascrivere si mette da parte com'e adesso, altrimenti un
+       ripristino sbagliato e' irreversibile quanto quello che sta riparando. */
+    if(!confirm("Rimetti i dati com'erano il " + el.dataset.d.slice(8) + "/" + el.dataset.d.slice(5,7) + "?\nQuello che hai scritto dopo va perso.")) return;
+    var c = copie(); c.push({ d:"prima-del-ripristino", s:JSON.stringify(S) });
+    while(c.length > 8) c.shift();
+    try{ localStorage.setItem(KEY_BK, JSON.stringify(c)); }catch(e){}
+    if(ripristinaCopia(el.dataset.d)) render();
+    return;
+  }
   if(a === "import"){
     try{
       var o = JSON.parse(document.getElementById("impT").value);
