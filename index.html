@@ -697,6 +697,11 @@
      applicata a un path pensato come linea, lo trasforma in una macchia. */
   .disegno .tratto{fill:none;stroke:var(--ghisa);stroke-linecap:round}
   .disegno .tratto-2{fill:none;stroke:var(--ghisa-2);stroke-linecap:round}
+  /* Aggiungere o togliere una serie, sotto le righe dell'esercizio. */
+  .serie-piu{display:flex; align-items:center; justify-content:center; gap:12px; margin-top:4px}
+  .serie-piu .num{font-size:15px; color:var(--ink-2); min-width:16px; text-align:center}
+  .avviso-serie{text-align:center; color:var(--warn); margin-top:6px}
+
   /* Cerca un video: il tasto e i segni che squalificano quello che trovi. */
   .video{margin:12px 0 4px; padding-top:10px; border-top:1px solid var(--line)}
   .video .btn{margin-bottom:8px}
@@ -1060,7 +1065,8 @@ function fresh(){
     regol:{},                 // esercizio → regolazioni scritte da te
     pain:{},                  // ISO → [zona, ...]
     lastExport:null,          // ISO dell'ultimo backup riuscito
-    mieiCibi:[]               // cibi aggiunti da te, riusabili {n,k,p}
+    mieiCibi:[],              // cibi aggiunti da te, riusabili {n,k,p}
+    serie:{}                  // ISO -> {esercizio: quante serie} se le hai cambiate
   };
 }
 var SCHEMA = 1;
@@ -1115,6 +1121,26 @@ function weekOf(isoDate){
 function weekNow(){ var w = weekOf(oggiISO()); return w; }
 function weekClamped(){ var w = weekNow(); if(w === null) return 1; return Math.max(1, Math.min(4, w)); }
 function serieCount(){ return weekNow() === 1 ? 2 : 3; }
+/* Quante serie oggi per questo esercizio. Di regola quelle della scheda, ma
+   se le hai cambiate a mano vince il tuo numero: alcuni giorni ne hai una in
+   piu nelle gambe, altri no, e il piano non deve impedirtelo. */
+function nSerie(d, exId){
+  var m = S.serie[d];
+  return (m && m[exId]) || serieCount();
+}
+/* Non si toglie una serie gia registrata: prima si annulla la spunta.
+   Altrimenti un tocco sbagliato cancella un numero vero. */
+function cambiaSerie(d, exId, delta){
+  var arr = setsOf(d, exId);
+  if(delta < 0){
+    if(arr.length <= 1) return "minimo";
+    if(arr[arr.length - 1].done) return "spuntata";
+    arr.pop();
+  }
+  if(!S.serie[d]) S.serie[d] = {};
+  S.serie[d][exId] = arr.length + (delta > 0 ? delta : 0);
+  save(); return true;
+}
 function dataLunga(d){ return GIORNI[d.getDay()] + " " + d.getDate() + " " + MESI[d.getMonth()]; }
 function mmss(s){
   s = Math.max(0, Math.round(s));
@@ -1129,7 +1155,7 @@ function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").rep
 function sessionOf(d){ if(!S.sessions[d]) S.sessions[d] = {}; return S.sessions[d]; }
 function setsOf(d, exId){
   var s = sessionOf(d);
-  var need = serieCount();
+  var need = nSerie(d, exId);
   if(!s[exId]) s[exId] = [];
   while(s[exId].length < need) s[exId].push({ kg:null, reps:null, done:false });
   return s[exId];
@@ -1967,13 +1993,16 @@ function buildSteps(kind){
     out.push({ t:"sfine" });
     return out;
   }
-  var n = serieCount();
+  var dOggi = oggiISO();
   /* Una serie di avvicinamento, solo prima del primo esercizio. Non si
      registra e non conta nel volume: vedi vincoli.md §1-quater per come
      va raccontata — l'evidenza è più debole di quanto si dica in palestra. */
   out.push({ t:"avvic", ex:EX[0] });
   EX.forEach(function(ex, xi){
     out.push({ t:"intro", ex:ex });
+    /* per esercizio, non globale: se ne hai aggiunta una al goblet il percorso
+       la contiene, e gli altri restano come sono */
+    var n = nSerie(dOggi, ex.id);
     for(var si = 0; si < n; si++){
       out.push({ t:"serie", ex:ex, si:si });
       if(si < n - 1) out.push({ t:"riposo", ex:ex, sec:ex.rest, dopo:"Serie " + (si+2) + " · " + ex.n });
@@ -2081,10 +2110,11 @@ function vSessione(){
     var st = setsOf(d, s.ex.id)[s.si], pr = proposta(s.ex.id, d);
     var vKg = st.kg != null ? st.kg : (pr && pr.kg != null ? pr.kg : "");
     var vRp = st.reps != null ? st.reps : (pr ? pr.reps : (s.ex.secs ? 20 : 10));
-    var eti = "Serie " + (s.si + 1) + " di " + serieCount() + ", " + s.ex.n;
+    var nS = nSerie(d, s.ex.id);
+    var eti = "Serie " + (s.si + 1) + " di " + nS + ", " + s.ex.n;
     h += '<span class="kicker">' + esc(s.ex.n) + ' · esercizio ' + (EX.indexOf(s.ex) + 1) + ' di ' + EX.length +
         ' · serie ' + (cnt.now + 1) + ' di ' + cnt.tot + '</span>' +
-      '<h2>Serie ' + (s.si + 1) + ' di ' + serieCount() + '</h2>' +
+      '<h2>Serie ' + (s.si + 1) + ' di ' + nS + '</h2>' +
       figuraSVG(s.ex.id) + '<p class="attrezzo">' + esc(s.ex.att) + '</p>' +
       '<div class="duo">' +
       (s.ex.secs ? "" :
@@ -2100,7 +2130,8 @@ function vSessione(){
       ? '<button type="button" class="go fatta" data-act="sesToggle" aria-label="' + esc(eti) + ', registrata. Tocca per annullare">&#10003; Fatto</button>' +
         '<button type="button" class="alt" data-act="sesNext">Avanti</button>'
       : '<button type="button" class="go" data-act="sesFatto" aria-label="' + esc(eti) + ' fatta">Fatto</button>' +
-        '<button type="button" class="alt" data-act="sesNext">Salta questa serie</button>';
+        '<div class="duo"><button type="button" class="alt" data-act="sesNext">Salta</button>' +
+        '<button type="button" class="alt" data-act="seriePiuSes" data-id="' + s.ex.id + '">+ una serie</button></div>';
   }
 
   else if(s.t === "riposo"){
@@ -2532,6 +2563,7 @@ function gauge(val, scala, min, max, unita, goal){
 }
 
 /* ---------- PESI ---------- */
+var avvisoSerie = null;  /* messaggio sotto i tasti delle serie, dura un ridisegno */
 function vPesi(){
   if(!S.start) return '<div class="note">Prima avvia il programma dalla scheda <strong>Oggi</strong>.</div>';
   var d = oggiISO(), n = serieCount();
@@ -2550,13 +2582,13 @@ function vPesi(){
   EX.forEach(function(ex, i){
     var sets = setsOf(d, ex.id);
     var last = lastSession(ex.id, d);
-    var pr = proposta(ex.id, d);
+    var pr = proposta(ex.id, d), nEx = nSerie(d, ex.id);
     h += '<div class="ex" data-ex="' + ex.id + '">' +
       '<div class="ex-h">' +
         '<span class="idx num">' + (i+1) + '</span>' +
         '<div style="flex:1">' +
           '<h3>' + esc(ex.n) + '</h3>' +
-          '<div class="meta">' + (ex.secs ? n + ' × 20-30 sec' : n + ' × 10-12') + ' · ' + esc(ex.att) +
+          '<div class="meta">' + (ex.secs ? nEx + ' × 20-30 sec' : nEx + ' × 10-12') + ' · ' + esc(ex.att) +
             (S.regol[ex.id] ? ' · <span class="regp">' + esc(S.regol[ex.id]) + '</span>' : '') + '</div>' +
         '</div>' +
         '<button class="btn sm ghost" data-act="how" data-id="' + ex.id + '">Come si fa</button>' +
@@ -2593,6 +2625,14 @@ function vPesi(){
         '<button type="button" class="tick" data-act="done" aria-label="serie ' + (si+1) + ' fatta">✓</button>' +
         '</div>';
     });
+    /* Aggiungere o togliere una serie: alcuni giorni ne hai una in piu nelle
+       gambe, altri no. Una gia registrata non si toglie senza annullarla. */
+    h += '<div class="serie-piu">' +
+      '<button type="button" class="btn sm" data-act="serieMeno" data-id="' + ex.id + '">− serie</button>' +
+      '<span class="num">' + nEx + '</span>' +
+      '<button type="button" class="btn sm" data-act="seriePiu" data-id="' + ex.id + '">+ serie</button>' +
+      '</div>' +
+      (avvisoSerie && avvisoSerie.id === ex.id ? '<p class="fine avviso-serie">' + esc(avvisoSerie.t) + '</p>' : "");
     h += '</div>';
     h += '<div class="how" id="how-' + ex.id + '" hidden>' +
       disegnoAttr(ex.id) +
@@ -2945,6 +2985,31 @@ document.getElementById("view").addEventListener("click", function(e){
   if(a === "timer30"){ e.stopPropagation(); restStart(+el.dataset.sec, el.dataset.label); return; }
 
   if(a === "setup"){ S.setup[el.dataset.id] = !S.setup[el.dataset.id]; save(); render(); return; }
+
+  /* Aggiungere e togliere serie. Nell'elenco lungo si vede tutto, quindi
+     bastano i due tasti; nella seduta guidata aggiungere significa anche
+     rifare il percorso, altrimenti la serie nuova non avrebbe un passo. */
+  if(a === "seriePiu"){ avvisoSerie = null; cambiaSerie(d, el.dataset.id, +1); buzz(25); render(); return; }
+  if(a === "serieMeno"){
+    var esito = cambiaSerie(d, el.dataset.id, -1);
+    /* Il messaggio va dentro la pagina, non in una finestra di sistema: le
+       finestre di avviso sul telefono a volte non compaiono affatto. */
+    avvisoSerie = esito === "spuntata" ? { id:el.dataset.id, t:"Questa serie l'hai già registrata. Annulla la spunta e poi la togli." }
+                : esito === "minimo" ? { id:el.dataset.id, t:"Una serie deve restare." }
+                : null;
+    render(); return;
+  }
+  if(a === "seriePiuSes"){
+    cambiaSerie(d, el.dataset.id, +1);
+    var qui = ses.steps[ses.i];
+    ses.steps = buildSteps(ses.kind);
+    /* si resta sulla stessa serie: e cambiato il percorso sotto, non la posizione */
+    for(var k2 = 0; k2 < ses.steps.length; k2++){
+      var z = ses.steps[k2];
+      if(z.t === qui.t && z.ex && qui.ex && z.ex.id === qui.ex.id && z.si === qui.si){ ses.i = k2; break; }
+    }
+    buzz(25); render(); return;
+  }
 
   if(a === "how"){
     var box2 = document.getElementById("how-" + el.dataset.id);
