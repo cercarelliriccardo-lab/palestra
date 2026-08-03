@@ -697,6 +697,19 @@
      applicata a un path pensato come linea, lo trasforma in una macchia. */
   .disegno .tratto{fill:none;stroke:var(--ghisa);stroke-linecap:round}
   .disegno .tratto-2{fill:none;stroke:var(--ghisa-2);stroke-linecap:round}
+  /* Cerca un video: il tasto e i segni che squalificano quello che trovi. */
+  .video{margin:12px 0 4px; padding-top:10px; border-top:1px solid var(--line)}
+  .video .btn{margin-bottom:8px}
+  .cue-no{list-style:none; margin:6px 0 0; padding:0; display:flex; flex-direction:column; gap:5px}
+  .cue-no li{
+    font-size:13px; line-height:1.4; padding-left:17px; position:relative; color:var(--ink-2);
+  }
+  .cue-no li::before{
+    content:"×"; position:absolute; left:2px; top:-1px; color:var(--bad); font-weight:700;
+  }
+  .ses .video{border-top-color:rgba(255,255,255,.16)}
+  .ses .cue-no li{color:rgba(255,255,255,.85)}
+  .ses .video .fine{color:rgba(255,255,255,.6)}
   .reg{display:block;margin:10px 0 2px}
   .reg span{display:block;font-size:12px;color:var(--ink-3);margin-bottom:4px}
   .reg input{width:100%;padding:10px;min-height:42px;border:1px solid var(--line-2);border-radius:var(--r);
@@ -906,6 +919,73 @@ function disegnoAttr(id){
    sei attrezzi. Le hanno sostituite i disegni sopra. Costo di questa scelta:
    una foto diceva "e quella li, nell'angolo" e un disegno no. Beneficio:
    l'app pesa un quinto e il disegno puo indicare la leva da regolare. */
+/* ============================================================
+   CERCA UN VIDEO
+   ============================================================
+   Non c'e un elenco di video scelti, e la scelta e deliberata: nessuno qui
+   dentro li ha guardati, e su un movimento sotto carico consigliare un video
+   non visto e peggio che non darne. Quello che si puo dare con onesta e la
+   ricerca gia scritta bene, piu i segni che squalificano un video — quelli
+   vengono dalla tecnica gia scritta in output/scheda.md, non da un giudizio
+   sul filmato. Per le due macchine la ricerca porta al produttore: e il
+   manuale dell'attrezzo che ha in casa, la fonte migliore che esista.
+   ============================================================ */
+var VIDEO = {
+  goblet:{ q:"goblet squat tecnica corretta", no:[
+    "Talloni che si staccano da terra",
+    "Ginocchia che collassano verso l'interno",
+    "Schiena che si arrotonda nel punto piu basso"] },
+  rdl:{ q:"stacco rumeno manubri tecnica", no:[
+    "Schiena che si arrotonda: e il segno che sta scendendo troppo",
+    "Ginocchia che si piegano come in uno squat",
+    "Manubri lontani dalle gambe invece che a contatto"] },
+  chest:{ q:"Technogym chest press come si usa", no:[
+    "Gomiti portati oltre la linea del busto nel ritorno",
+    "Gomiti bloccati di scatto in fondo alla spinta",
+    "Sedile non regolato: le maniglie devono stare a meta petto"] },
+  lat:{ q:"Technogym lat machine come si usa", no:[
+    "Barra portata dietro la testa: mai, in nessun caso",
+    "Tirata con le mani invece che coi gomiti verso le costole",
+    "Busto che si sdraia indietro per aiutarsi"] },
+  row:{ q:"rematore con manubrio tecnica", no:[
+    "Busto che ruota per tirare piu in alto",
+    "Schiena non parallela al pavimento",
+    "Gomito che si allarga invece di scorrere vicino al corpo"] },
+  ohp:{ q:"shoulder press manubri seduto tecnica", no:[
+    "Schiena inarcata per spingere di piu",
+    "Gomiti che non stanno sotto i polsi",
+    "Manubri che sbattono in alto invece di fermarsi"] },
+  plank:{ q:"plank posizione corretta errori", no:[
+    "Bacino che cede verso il basso",
+    "Sedere alzato a formare una V",
+    "Gomiti non sotto le spalle"] },
+  gc:{ q:"esercizio gatto cammello mobilita schiena", no:[
+    "Movimento veloce invece che lento",
+    "Solo la testa che si muove invece di tutta la schiena"] },
+  ns:{ q:"neural slider nervo sciatico esercizio", no:[
+    "Tenute lunghe: questo e un movimento che scorre, non un allungamento",
+    "Dolore acuto o formicolio forte: e da fermare, non da spingere"] },
+  fem:{ q:"allungamento femorali da seduto corretto", no:[
+    "Rimbalzi",
+    "Schiena curva: il movimento deve partire dall'anca",
+    "Tenute sotto i 30 secondi"] },
+  anc:{ q:"allungamento flessori anca in ginocchio", no:[
+    "Schiena inarcata invece del bacino spinto avanti",
+    "Ginocchio davanti che supera la punta del piede"] },
+  pol:{ q:"allungamento polpaccio al muro", no:[
+    "Tallone dietro che si stacca da terra",
+    "Gamba dietro piegata: deve restare tesa"] }
+};
+function cercaVideo(id){
+  var V = VIDEO[id]; if(!V) return "";
+  return '<div class="video">' +
+    '<a class="btn wide sm" target="_blank" rel="noopener noreferrer"' +
+    ' href="https://www.youtube.com/results?search_query=' + encodeURIComponent(V.q) + '">Cerca un video</a>' +
+    '<p class="fine">Nessuno di questi video e stato scelto per te. <strong>Scarta quello che vedi se c\'e uno di questi segni:</strong></p>' +
+    '<ul class="cue-no">' + V.no.map(function(x){ return "<li>" + esc(x) + "</li>"; }).join("") + '</ul>' +
+    '</div>';
+}
+
 var ZONE = ["Spalla dx","Spalla sx","Gomito","Polso","Schiena bassa","Anca","Ginocchio dx","Ginocchio sx","Caviglia / tendine","Collo"];
 
 var RUN_WEEKS = [
@@ -2070,10 +2150,11 @@ function vSessione(){
 
   else if(s.t === "stre"){
     h += '<span class="kicker">Stretching ' + (cnt.now + 1) + ' di ' + cnt.tot + '</span>' +
-      '<h2>' + esc(s.st.n) + '</h2>' + figuraSVG(s.st.id) + '<p class="attrezzo">' + esc(s.st.d) + '</p>' +
+      '<h2>' + esc(s.st.n) + '</h2>' + figuraSVG(s.st.id) +
       '<p class="dopo">' + esc(s.st.d) + '</p>' +
       '<ul class="cue">' + (CUE[s.st.id] || []).map(function(c){ return "<li>" + esc(c) + "</li>"; }).join("") + '</ul>' +
-      (s.st.t ? '<div class="cd num" id="sesCd">' + mmss(rest.on ? Math.max(0, (rest.end - Date.now())/1000) : s.st.t) + '</div>' : "");
+      (s.st.t ? '<div class="cd num" id="sesCd">' + mmss(rest.on ? Math.max(0, (rest.end - Date.now())/1000) : s.st.t) + '</div>' : "") +
+      cercaVideo(s.st.id);
     foot = (s.st.t ? '<button type="button" class="alt" data-act="sesTimer" data-sec="' + s.st.t + '">Avvia i 30 secondi</button>' : "") +
       '<button type="button" class="go" data-act="sesStreFatto" data-id="' + s.st.id + '">Fatto</button>';
   }
@@ -2516,6 +2597,7 @@ function vPesi(){
     h += '<div class="how" id="how-' + ex.id + '" hidden>' +
       disegnoAttr(ex.id) +
       ex.how.map(function(p){ return "<p>" + esc(p) + "</p>"; }).join("") +
+      cercaVideo(ex.id) +
       '<label class="reg"><span>Le tue regolazioni — si salvano da sole</span>' +
       '<input type="text" data-reg="' + ex.id + '" value="' + esc(S.regol[ex.id] || "") +
       '" placeholder="es. sedile foro 3 · manubri da 6 kg"></label>' +
@@ -2816,7 +2898,7 @@ document.getElementById("view").addEventListener("click", function(e){
     if(box){ box.remove(); return; }
     var corpo = a === "sesFoto"
       ? (DIS[exH.id] ? disegnoAttr(exH.id) + '<p class="fine">' + esc(DIS[exH.id].t) + '</p>' : '<p>Questo è a corpo libero: non c\'è un attrezzo da regolare.</p>')
-      : exH.how.map(function(p){ return "<p>" + esc(p) + "</p>"; }).join("");
+      : exH.how.map(function(p){ return "<p>" + esc(p) + "</p>"; }).join("") + cercaVideo(exH.id);
     var pan = document.createElement("div");
     pan.className = "pan"; pan.id = "sesPop";
     pan.innerHTML = '<span class="kicker">' + (a === "sesFoto" ? "L'attrezzo" : "Come si fa") + '</span>' + corpo;
