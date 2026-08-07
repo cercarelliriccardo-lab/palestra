@@ -116,6 +116,18 @@
     margin-left:auto; font-family:var(--mono); font-size:12px;
     color:var(--ink-2); letter-spacing:.04em; text-transform:uppercase;
   }
+  /* La riga di verita della sincronia. Non e un pulsante e non chiede niente:
+     dice soltanto se quello che hai scritto e' gia uscito dal telefono.
+     Serve perche' senza non c'e' modo di fidarsi, e fidarsi e' tutto il punto. */
+  .top .sy{
+    font-family:var(--mono); font-size:11px; letter-spacing:.03em;
+    display:inline-flex; align-items:center; gap:5px; color:var(--ink-2);
+  }
+  .top .sy::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+  .top .sy[data-s="ok"]{color:var(--accent)}
+  .top .sy[data-s="lavoro"]::before{animation:respiro 1.1s ease-in-out infinite}
+  .top .sy[data-s="offline"],.top .sy[data-s="attesa"]{color:var(--warn)}
+  .top .sy[data-s="errore"],.top .sy[data-s="auth"]{color:var(--bad)}
 
   main{padding:14px 16px 24px; display:flex; flex-direction:column; gap:14px}
 
@@ -760,6 +772,7 @@
 <div id="app">
   <header class="top">
     <h1>Palestra</h1>
+    <span class="sy" id="syBar" hidden></span>
     <span class="wk num" id="wkLabel"></span>
   </header>
   <main id="view"></main>
@@ -1026,10 +1039,16 @@ function load(){
   }catch(e){ storageOK = false; }
   return fresh();
 }
-function save(){
+/* Scrive soltanto qui sul telefono. La sincronia chiama QUESTA, mai save(),
+   altrimenti ogni salvataggio in rete ne farebbe partire un altro all'infinito. */
+function salvaLocale(){
   try{ localStorage.setItem(KEY, JSON.stringify(S)); }
   catch(e){ storageOK = false; }
 }
+/* Tutto il resto dell'app continua a chiamare save(). Il telefono resta la
+   scrittura immediata — in palestra il segnale non c'e' e l'app non deve mai
+   restare ferma ad aspettare la rete — e la copia in rete parte in sottofondo. */
+function save(){ salvaLocale(); syncTocca(); }
 
 /* ============================================================
    RETE DI SICUREZZA SUI DATI
@@ -1071,6 +1090,301 @@ function ripristinaCopia(d){
 
 var S = load();
 copiaDelGiorno();
+
+/* ============================================================
+   SINCRONIA — i dati escono dal telefono
+   ============================================================
+   PERCHE' ESISTE. La memoria del browser su iPhone non e' un posto sicuro.
+   Non e' un difetto dell'app: la chiave non e' mai cambiata in nessuna
+   versione pubblicata e nessuna riga di codice azzera niente — e' iOS che
+   fa pulizia quando gli pare. Finche' i dati stavano solo li', ogni
+   sparizione era definitiva, e il rimedio era un pulsante di backup che
+   bisognava ricordarsi di premere. Un'app normale non lo chiede.
+
+   COM'E' FATTA. Un repository GitHub PRIVATO fa da cartella; dentro un solo
+   file, stato.json. Ogni salvataggio e' un commit, quindi la storia e'
+   completa e per sempre — non sette copie che scorrono via: tutto.
+
+   QUATTRO REGOLE, in ordine di importanza.
+
+   1. PRIMA IL TELEFONO. save() scrive in locale e ritorna subito. La rete
+      viene dopo, in sottofondo. Un'app che si pianta a meta' serie perche'
+      manca il campo sarebbe peggio di quella di prima.
+   2. NON SOVRASCRIVE MAI, FONDE. E' il punto pericoloso di tutta la
+      faccenda: se il telefono si fosse svuotato e pubblicasse il suo stato
+      vuoto, distruggerebbe i dati veri. Si LEGGE sempre prima di scrivere,
+      e fondi() unisce giorno per giorno senza togliere mai niente.
+   3. IL TOKEN NON ENTRA NEI DATI. Sta in una chiave sua, fuori da S, quindi
+      non finisce mai dentro il file che viene caricato in rete.
+   4. NESSUN PULSANTE. Una riga in testa dice come sta, e non chiede niente.
+   ============================================================ */
+
+var VERSIONE = "2.1";
+var KEY_SY = "palestra-sync";
+
+function syncCfg(){
+  try{
+    var c = JSON.parse(localStorage.getItem(KEY_SY) || "null");
+    if(c && c.owner && c.repo && c.token) return c;
+  }catch(e){}
+  return null;
+}
+
+/* Il JSON e' pieno di accenti e di "·". btoa() da solo si strozza su
+   qualunque byte sopra 255, quindi si passa per i byte veri. */
+function b64enc(s){
+  var b = new TextEncoder().encode(s), t = "", i;
+  for(i = 0; i < b.length; i++) t += String.fromCharCode(b[i]);
+  return btoa(t);
+}
+function b64dec(s){
+  var t = atob(String(s).replace(/\s/g, "")), b = new Uint8Array(t.length), i;
+  for(i = 0; i < t.length; i++) b[i] = t.charCodeAt(i);
+  return new TextDecoder().decode(b);
+}
+
+/* ---------- la fusione: non toglie mai niente ---------- */
+
+/* Quanto "contiene" un valore. Serve solo a scegliere fra due versioni dello
+   stesso giorno: vince la piu' piena. Grezzo di proposito — sbagliare in
+   eccesso qui costa un dato di troppo, sbagliare in difetto costa un dato. */
+function quanto(x){ try{ return JSON.stringify(x).length; }catch(e){ return 0; } }
+function piuPieno(a, b){ return quanto(a) >= quanto(b) ? a : b; }
+
+function fondiMappa(loc, rem, scegli){
+  var out = {}, k;
+  loc = loc || {}; rem = rem || {};
+  for(k in rem) if(Object.prototype.hasOwnProperty.call(rem, k)) out[k] = rem[k];
+  for(k in loc) if(Object.prototype.hasOwnProperty.call(loc, k)){
+    out[k] = Object.prototype.hasOwnProperty.call(rem, k) ? scegli(loc[k], rem[k]) : loc[k];
+  }
+  return out;
+}
+
+/* Liste indicizzate da una chiave, di solito la data. A parita' di chiave
+   vince il LOCALE: e' il telefono dove hai appena scritto, quindi se hai
+   corretto un peso la correzione e' quella buona. E niente va perso davvero
+   comunque — il valore di prima resta nella storia del repository. */
+function fondiLista(loc, rem, chiave){
+  var m = {}, ord = [], i, k;
+  function metti(x){
+    if(!x) return;
+    k = chiave(x);
+    if(!Object.prototype.hasOwnProperty.call(m, k)) ord.push(k);
+    m[k] = x;
+  }
+  for(i = 0; i < (rem || []).length; i++) metti(rem[i]);
+  for(i = 0; i < (loc || []).length; i++) metti(loc[i]);
+  ord.sort();
+  return ord.map(function(x){ return m[x]; });
+}
+
+/* "Vuoto" vuol dire: niente che tu abbia mai scritto. ftf resta fuori dal
+   conto perche' fresh() ci mette dentro la misura del 31/07 come punto di
+   partenza, e quella c'e' anche in uno stato appena nato. */
+function vuoto(o){
+  if(!o) return true;
+  return !(o.weights || []).length
+      && !(o.runs || []).length
+      && !Object.keys(o.sessions || {}).length
+      && !Object.keys(o.stretch || {}).length
+      && !Object.keys(o.food || {}).length
+      && !Object.keys(o.pain || {}).length;
+}
+
+function fondi(loc, rem){
+  if(!rem) return loc;
+  if(!loc) return migra(rem);
+  /* Il caso che conta davvero: il telefono si e' svuotato e in rete ci sono
+     i tuoi dati. Si adotta il remoto intero senza fondere, altrimenti i
+     valori di partenza di fresh() si metterebbero sopra quelli veri. */
+  if(vuoto(loc) && !vuoto(rem)) return migra(rem);
+  var o = migra(JSON.parse(JSON.stringify(loc)));
+  var r = migra(JSON.parse(JSON.stringify(rem)));
+  o.sessions = fondiMappa(o.sessions, r.sessions, piuPieno);
+  o.stretch  = fondiMappa(o.stretch,  r.stretch,  piuPieno);
+  o.food     = fondiMappa(o.food,     r.food,     piuPieno);
+  o.pain     = fondiMappa(o.pain,     r.pain,     piuPieno);
+  o.serie    = fondiMappa(o.serie,    r.serie,    piuPieno);
+  /* Le regolazioni sono testo scritto da te: vince quello che c'e', non il
+     piu' lungo — "foro 3" non deve perdere contro una frase vecchia. */
+  o.regol = fondiMappa(o.regol, r.regol, function(a, b){
+    return (a && String(a).trim()) ? a : b;
+  });
+  o.weights  = fondiLista(o.weights,  r.weights,  function(x){ return x.d; });
+  o.ftf      = fondiLista(o.ftf,      r.ftf,      function(x){ return x.d; });
+  o.runs     = fondiLista(o.runs,     r.runs,     function(x){ return x.d + "|" + (x.kind || ""); });
+  o.mieiCibi = fondiLista(o.mieiCibi, r.mieiCibi, function(x){ return String(x.n || "").toLowerCase(); });
+  o.start = o.start || r.start;
+  o.setup = {
+    fermi:    !!((o.setup || {}).fermi    || (r.setup || {}).fermi),
+    attrezzi: !!((o.setup || {}).attrezzi || (r.setup || {}).attrezzi)
+  };
+  o.lastExport = (o.lastExport && r.lastExport)
+    ? (o.lastExport > r.lastExport ? o.lastExport : r.lastExport)
+    : (o.lastExport || r.lastExport);
+  o.v = SCHEMA;
+  return o;
+}
+
+/* ---------- GitHub ---------- */
+
+function ghUrl(c){
+  return "https://api.github.com/repos/" + encodeURIComponent(c.owner) +
+         "/" + encodeURIComponent(c.repo) + "/contents/" + (c.file || "stato.json");
+}
+function ghHead(c){
+  return {
+    "Authorization": "Bearer " + c.token,
+    "Accept": "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28"
+  };
+}
+function ghErr(r){
+  if(r.status === 401 || r.status === 403) return { t:"auth", s:r.status };
+  if(r.status === 404) return { t:"manca", s:404 };
+  if(r.status === 409 || r.status === 422) return { t:"conflitto", s:r.status };
+  return { t:"rete", s:r.status };
+}
+function ghLeggi(c){
+  /* no-store piu' un parametro buttato dentro: il telefono mette in cache
+     anche le risposte dell'API, e fondere con una versione vecchia sarebbe
+     esattamente il modo di riesumare dati sorpassati. */
+  return fetch(ghUrl(c) + "?t=" + Date.now(), { headers:ghHead(c), cache:"no-store" })
+    .then(function(r){
+      if(r.status === 404) return { dati:null, sha:null };   /* prima volta: il file non c'e' ancora */
+      if(!r.ok) throw ghErr(r);
+      return r.json().then(function(j){
+        var o = null;
+        try{ o = JSON.parse(b64dec(j.content || "")); }catch(e){ o = null; }
+        return { dati:o, sha:j.sha };
+      });
+    });
+}
+function ghScrivi(c, testo, sha){
+  var body = {
+    message: "palestra " + new Date().toISOString().slice(0, 16).replace("T", " "),
+    content: b64enc(testo)
+  };
+  if(sha) body.sha = sha;   /* senza sha GitHub crea; con lo sha sbagliato rifiuta, ed e' cio che vogliamo */
+  return fetch(ghUrl(c), { method:"PUT", headers:ghHead(c), body:JSON.stringify(body) })
+    .then(function(r){
+      if(!r.ok) throw ghErr(r);
+      return r.json().then(function(j){ return (j.content || {}).sha || null; });
+    });
+}
+
+/* ---------- lo stato, e la riga che lo dice ---------- */
+
+var sy = { s:"off", quando:null, msg:"", sha:null, inCorso:false, ancora:false, timer:null, tentativi:0 };
+/* Errore del collegamento, mostrato dentro la pagina e non con alert(): sul
+   telefono le finestre di sistema a volte non compaiono affatto — imparato
+   nella v1.9.5, dove un messaggio importante non si vedeva mai. */
+var syErr = "";
+
+function syncStato(s, msg){
+  sy.s = s; sy.msg = msg || "";
+  if(s === "ok"){ sy.quando = new Date(); sy.tentativi = 0; }
+  disegnaSy();
+}
+function oraBreve(d){
+  return ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+}
+function syTesto(){
+  if(sy.s === "off")     return "";
+  if(sy.s === "lavoro")  return "salvo…";
+  if(sy.s === "attesa")  return "da salvare";
+  if(sy.s === "offline") return "senza rete";
+  if(sy.s === "auth")    return "token scaduto";
+  if(sy.s === "errore")  return "non salvato";
+  return sy.quando ? "salvato " + oraBreve(sy.quando) : "salvato";
+}
+function disegnaSy(){
+  var el = document.getElementById("syBar");
+  if(!el) return;
+  var t = syTesto();
+  el.hidden = !t;
+  el.textContent = t;
+  el.setAttribute("data-s", sy.s);
+}
+
+/* Un giro intero: leggi, fondi, riscrivi. Leggere PRIMA di scrivere e' cio
+   che rende sicura tutta la faccenda: senza, un telefono appena svuotato
+   pubblicherebbe il vuoto sopra i dati veri. */
+function syncOra(){
+  var c = syncCfg();
+  if(!c){ syncStato("off"); return Promise.resolve(); }
+  if(sy.inCorso){ sy.ancora = true; return Promise.resolve(); }
+  if(navigator.onLine === false){ syncStato("offline"); return Promise.resolve(); }
+  sy.inCorso = true;
+  syncStato("lavoro");
+  return ghLeggi(c).then(function(r){
+    var unito = r.dati ? fondi(S, r.dati) : S;
+    var prima = JSON.stringify(S);
+    var dopo  = JSON.stringify(unito);
+    var cambiato = dopo !== prima;
+    if(cambiato){ S = unito; salvaLocale(); }
+    /* Gia' identico la' sopra: nessun commit inutile. */
+    if(r.dati && JSON.stringify(r.dati) === dopo){
+      sy.sha = r.sha; syncStato("ok");
+      if(cambiato) render();
+      return;
+    }
+    return ghScrivi(c, JSON.stringify(S, null, 1), r.sha).then(function(nuovo){
+      sy.sha = nuovo; syncStato("ok");
+      if(cambiato) render();
+    });
+  }).catch(function(e){
+    var t = (e && e.t) || "rete";
+    if(t === "auth"){
+      syncStato("auth", "GitHub ha rifiutato il token (" + e.s + "). Se e' scaduto va rifatto e reincollato.");
+      return;
+    }
+    if(t === "manca"){
+      syncStato("errore", "Repository non trovato: controlla proprietario e nome, e che il token veda proprio quello.");
+      return;
+    }
+    /* Conflitto o rete che non va: si riprova, con attese sempre piu' lunghe.
+       Il conflitto si risolve da se' — al giro dopo si rilegge lo sha nuovo
+       e si rifonde, che e' esattamente la cosa giusta da fare. */
+    syncStato("errore", "Non sono riuscito a salvare in rete. Riprovo da solo.");
+    sy.tentativi++;
+    if(sy.tentativi <= 4){
+      clearTimeout(sy.timer);
+      sy.timer = setTimeout(syncOra, Math.min(60000, 3000 * Math.pow(2, sy.tentativi)));
+    }
+  }).then(function(){
+    sy.inCorso = false;
+    if(sy.ancora){
+      sy.ancora = false;
+      clearTimeout(sy.timer);
+      sy.timer = setTimeout(syncOra, 1200);
+    }
+  });
+}
+
+/* Chiamata da save(), cioe' da ogni singola modifica. Aspetta che tu abbia
+   smesso di toccare lo schermo invece di sparare una richiesta per ogni
+   spunta: fra una serie e l'altra ne partirebbero decine. */
+function syncTocca(){
+  if(!syncCfg()) return;
+  if(sy.s !== "lavoro") syncStato("attesa");
+  clearTimeout(sy.timer);
+  sy.timer = setTimeout(function(){ sy.tentativi = 0; syncOra(); }, 4000);
+}
+
+window.addEventListener("online",  function(){ sy.tentativi = 0; syncOra(); });
+window.addEventListener("offline", function(){ syncStato("offline"); });
+/* Tornando sull'app dopo averla lasciata: puo' aver scritto un altro
+   dispositivo, e comunque un invio rimasto in sospeso va chiuso. */
+document.addEventListener("visibilitychange", function(){
+  if(!document.hidden) syncOra();
+});
+
+/* Dopo il primo render, non prima: all'apertura si scarica quello che c'e'
+   in rete e si fonde. E' il momento in cui un telefono svuotato si
+   ripopola da solo, senza che tu debba fare niente. */
+setTimeout(function(){ if(syncCfg()) syncOra(); else disegnaSy(); }, 0);
 
 /* ============================================================
    Date e settimane
@@ -2853,6 +3167,34 @@ function vCibo(){
   return h;
 }
 
+/* ---------- SINCRONIA ---------- */
+function vSincronia(){
+  var c = syncCfg();
+  if(!c){
+    return '<div class="card"><div class="eyebrow">Sincronia</div>' +
+      (syErr ? '<div class="note alert">' + esc(syErr) + '</div>' : "") +
+      '<p class="fine">I dati stanno <strong>solo su questo telefono</strong>, e iOS ogni tanto svuota la memoria dei siti senza avvisare. Collegando un repository <strong>privato</strong> di GitHub l\'app ci scrive dentro da sola a ogni modifica: nessun pulsante da ricordarsi, e se il telefono si azzera i dati tornano da soli.</p>' +
+      '<div class="row"><input id="syOwner" placeholder="proprietario" value="cercarelliriccardo-lab" autocapitalize="off" autocorrect="off" spellcheck="false" style="flex:1"></div>' +
+      '<div class="row"><input id="syRepo" placeholder="nome del repository" value="palestra-dati" autocapitalize="off" autocorrect="off" spellcheck="false" style="flex:1"></div>' +
+      '<div class="row"><input id="syTok" type="password" placeholder="token" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" style="flex:1"></div>' +
+      '<div class="row"><button class="btn primary wide" data-act="syncSalva">Collega</button></div>' +
+      '<p class="fine">Il token si fa su GitHub in <span class="num">Settings → Developer settings → Personal access tokens → Fine-grained</span>, dando accesso <strong>solo</strong> a questo repository, permesso <span class="num">Contents: Read and write</span>. Resta su questo telefono e non viene mai caricato insieme ai dati.</p>' +
+      '<p class="fine">Il repository dev\'essere <strong>privato</strong>: lì dentro finiscono peso, misure e allenamenti.</p></div>';
+  }
+  var nota = sy.msg
+    ? '<div class="note ' + (sy.s === "auth" || sy.s === "errore" ? "alert" : "warn") + '">' + esc(sy.msg) + '</div>'
+    : "";
+  return '<div class="card"><div class="eyebrow">Sincronia</div>' + nota +
+    '<p class="fine">Collegato a <span class="num">' + esc(c.owner + "/" + c.repo) + '</span>. ' +
+    (sy.s === "ok" && sy.quando
+      ? 'Ultimo salvataggio in rete alle <span class="num">' + oraBreve(sy.quando) + '</span>.'
+      : 'Adesso: <span class="num">' + esc(syTesto() || "in attesa") + '</span>.') + '</p>' +
+    '<p class="fine">Non devi fare niente, salva da sola a ogni modifica. Ogni salvataggio è un commit: la storia di tutti i tuoi allenamenti resta lì per intero, non sette giorni.</p>' +
+    '<div class="row"><button class="btn ghost sm" data-act="syncAdesso">Sincronizza adesso</button>' +
+    '<button class="btn ghost sm" data-act="syncScollega">Scollega</button></div>' +
+    '<p class="fine">Il tasto serve solo se vuoi la conferma subito: non è un obbligo.</p></div>';
+}
+
 /* ---------- DATI ---------- */
 function vDati(){
   var h = bannerStorage();
@@ -2935,11 +3277,20 @@ function vDati(){
       '<p class="fine">28 promemoria, uno al giorno all\'ora che scegli. Quando la scheda arriverà alle settimane 5-8 ne rigeneri uno nuovo.</p></div>';
   }
 
+  /* sincronia, e solo dopo il backup a mano */
+  h += vSincronia();
+
   /* esporta */
   var gEx = giorniDaExport();
-  h += '<div class="card"><div class="eyebrow">Backup</div>' +
-    '<p class="fine">I dati stanno solo su questo telefono. Esporta ogni tanto e metti il file in <span class="num">app/</span> del progetto: così i numeri sopravvivono al browser.</p>' +
-    (exportScaduto()
+  var sync = !!syncCfg();
+  h += '<div class="card"><div class="eyebrow">Backup a mano</div>' +
+    (sync
+      ? '<p class="fine">Non ti serve più ricordartene: i dati vanno in rete da soli. Questo resta come via di fuga — un file che tieni tu, buono se un giorno vuoi portare via tutto senza passare da GitHub.</p>'
+      : '<p class="fine">I dati stanno solo su questo telefono. Esporta ogni tanto e metti il file in <span class="num">app/</span> del progetto: così i numeri sopravvivono al browser.</p>') +
+    /* L'assillo del backup scaduto ha senso solo finché il backup è l'unica
+       rete che c'è. Con la sincronia attiva sarebbe rumore, e il rumore
+       inutile è esattamente ciò che fa smettere di usare queste app. */
+    (!sync && exportScaduto()
       ? '<div class="note warn"><strong>' + (gEx === null ? "Non hai mai fatto un backup." : "Ultimo backup " + gEx + " giorni fa.") + '</strong> ' +
         'La perdita di dati è una delle ragioni per cui la gente smette di usare queste app, e su iPhone Safari cancella la memoria dei siti dopo sette giorni senza aprirli. Due tap adesso.</div>'
       : (gEx !== null ? '<p class="fine">Ultimo backup: <span class="num">' + (gEx === 0 ? "oggi" : gEx === 1 ? "ieri" : gEx + " giorni fa") + '</span>.</p>' : "")) +
@@ -2963,6 +3314,12 @@ function vDati(){
   h += '<div class="card"><div class="eyebrow">Programma</div>' +
     '<p class="fine">Settimana 1 iniziata il <span class="num">' + (S.start ? esc(S.start) : "—") + '</span>.</p>' +
     '<div class="row"><input type="date" id="startD2" value="' + (S.start || oggiISO()) + '" style="flex:1"><button class="btn sm" data-act="setStart2">Cambia</button></div></div>';
+
+  /* Il numero di versione, scritto dove si vede. Senza, non c'e' modo di
+     sapere quale app hai davvero in mano: e' la cosa che e' costata
+     un'intera indagine il 7 agosto, quando non si riusciva a capire se un
+     aggiornamento fosse arrivato sul telefono o no. */
+  h += '<p class="fine" style="text-align:center;opacity:.6">Palestra <span class="num">v' + VERSIONE + '</span></p>';
   return h;
 }
 
@@ -3175,6 +3532,35 @@ document.getElementById("view").addEventListener("click", function(e){
     if(!fd || isNaN(fc)) return;
     S.ftf = S.ftf.filter(function(x){ return x.d !== fd; });
     S.ftf.push({ d:fd, cm:fc }); save(); render(); return;
+  }
+
+  if(a === "syncSalva"){
+    var so = (document.getElementById("syOwner").value || "").trim();
+    var sr = (document.getElementById("syRepo").value || "").trim();
+    var st = (document.getElementById("syTok").value || "").trim();
+    if(!so || !sr || !st){
+      syErr = "Servono tutti e tre: proprietario, nome del repository e token.";
+      render(); return;
+    }
+    try{
+      localStorage.setItem(KEY_SY, JSON.stringify({ owner:so, repo:sr, token:st, file:"stato.json" }));
+    }catch(e){
+      syErr = "Non riesco a salvare il collegamento su questo browser.";
+      render(); return;
+    }
+    syErr = ""; sy.tentativi = 0; sy.sha = null;
+    /* Il primo giro e' quello che conta: legge cosa c'e' gia' in rete e lo
+       fonde con quello che hai qui. Se il telefono era vuoto, si ripopola. */
+    syncOra().then(render);
+    render();
+    return;
+  }
+  if(a === "syncAdesso"){ sy.tentativi = 0; syncOra().then(render); return; }
+  if(a === "syncScollega"){
+    if(!confirm("Scollego la sincronia?\nI dati gia' in rete restano dove sono. Da qui in poi l'app scrive solo su questo telefono.")) return;
+    try{ localStorage.removeItem(KEY_SY); }catch(e){}
+    syErr = ""; sy.sha = null; syncStato("off"); render();
+    return;
   }
 
   if(a === "ics"){ scaricaICS(); return; }
