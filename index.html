@@ -594,6 +594,14 @@
   /* Aggiungere o togliere una serie, sotto le righe dell'esercizio. */
   .serie-piu{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:4px}
   .serie-piu .num{font-size:15px;color:var(--ink-2);min-width:16px;text-align:center}
+  /* Le frecce per spostare l'esercizio. Staccate dai tasti delle serie, sulla
+     destra, perche' non si tocchino per sbaglio: sono due cose diverse. */
+  .serie-piu .ordina{margin-left:auto;display:flex;gap:6px}
+  .serie-piu .ordina .btn{min-width:44px;padding-left:0;padding-right:0;font-size:15px;line-height:1}
+  .serie-piu .ordina .btn[disabled]{opacity:.3}
+  /* 44 px su tutta la riga, frecce comprese. Erano 33: sotto la soglia che
+     questo progetto dichiara di rispettare, e con le mani sudate si sbaglia. */
+  .serie-piu .btn{min-height:44px}
   .avviso-serie{text-align:center;color:var(--warn);margin-top:6px}
   /* Cerca un video: il tasto e i segni che squalificano quello che trovi. */
   .video{margin:12px 0 4px;padding-top:10px;border-top:1px solid var(--line)}
@@ -1013,7 +1021,9 @@ function fresh(){
     pain:{},                  // ISO → [zona, ...]
     lastExport:null,          // ISO dell'ultimo backup riuscito
     mieiCibi:[],              // cibi aggiunti da te, riusabili {n,k,p}
-    serie:{}                  // ISO -> {esercizio: quante serie} se le hai cambiate
+    serie:{},                 // ISO -> {esercizio: quante serie} se le hai cambiate
+    ordine:{},                // ISO -> [id,...] se hai spostato gli esercizi quel giorno
+    ordineBase:[]             // il tuo ordine abituale, se ne hai fissato uno
   };
 }
 var SCHEMA = 1;
@@ -1119,7 +1129,7 @@ copiaDelGiorno();
    4. NESSUN PULSANTE. Una riga in testa dice come sta, e non chiede niente.
    ============================================================ */
 
-var VERSIONE = "2.1";
+var VERSIONE = "2.2";
 var KEY_SY = "palestra-sync";
 
 function syncCfg(){
@@ -1206,6 +1216,10 @@ function fondi(loc, rem){
   o.food     = fondiMappa(o.food,     r.food,     piuPieno);
   o.pain     = fondiMappa(o.pain,     r.pain,     piuPieno);
   o.serie    = fondiMappa(o.serie,    r.serie,    piuPieno);
+  /* L'ordine di un giorno non si "fonde": e' una sequenza, e mescolarne due
+     darebbe una terza che nessuno ha scelto. Vince il locale, cioe' il
+     telefono su cui hai spostato le cose. */
+  o.ordine   = fondiMappa(o.ordine,   r.ordine,   function(a, b){ return a || b; });
   /* Le regolazioni sono testo scritto da te: vince quello che c'e', non il
      piu' lungo — "foro 3" non deve perdere contro una frase vecchia. */
   o.regol = fondiMappa(o.regol, r.regol, function(a, b){
@@ -1215,6 +1229,7 @@ function fondi(loc, rem){
   o.ftf      = fondiLista(o.ftf,      r.ftf,      function(x){ return x.d; });
   o.runs     = fondiLista(o.runs,     r.runs,     function(x){ return x.d + "|" + (x.kind || ""); });
   o.mieiCibi = fondiLista(o.mieiCibi, r.mieiCibi, function(x){ return String(x.n || "").toLowerCase(); });
+  o.ordineBase = (o.ordineBase && o.ordineBase.length) ? o.ordineBase : (r.ordineBase || []);
   o.start = o.start || r.start;
   o.setup = {
     fermi:    !!((o.setup || {}).fermi    || (r.setup || {}).fermi),
@@ -1429,6 +1444,59 @@ function cambiaSerie(d, exId, delta){
   S.serie[d][exId] = arr.length + (delta > 0 ? delta : 0);
   save(); return true;
 }
+/* ---------- L'ORDINE DEGLI ESERCIZI ----------
+   Tre livelli, dal piu specifico: quello che hai spostato oggi, il tuo ordine
+   abituale, e in fondo la scheda. Stessa idea di nSerie(): la scheda e' il
+   valore di riferimento, non una gabbia. Serve perche' in sala la macchina
+   che ti tocca puo' essere occupata, e aspettare non e' allenarsi. */
+function ordineIds(d){
+  var ids = (S.ordine && S.ordine[d])
+    || ((S.ordineBase && S.ordineBase.length) ? S.ordineBase : null)
+    || EX.map(function(x){ return x.id; });
+  /* Difesa contro un ordine salvato quando la scheda era diversa: si buttano
+     gli id che non esistono piu e si accodano gli esercizi mancanti. Senza,
+     cambiare EX farebbe sparire un esercizio dalla seduta senza dirlo. */
+  var out = [];
+  ids.forEach(function(id){
+    if(out.indexOf(id) < 0 && EX.some(function(x){ return x.id === id; })) out.push(id);
+  });
+  EX.forEach(function(x){ if(out.indexOf(x.id) < 0) out.push(x.id); });
+  return out;
+}
+function exOggi(d){
+  return ordineIds(d).map(function(id){
+    var t = null;
+    EX.forEach(function(x){ if(x.id === id) t = x; });
+    return t;
+  });
+}
+function scriviOrdine(d, ids){
+  if(!S.ordine) S.ordine = {};
+  S.ordine[d] = ids;
+  save();
+}
+function spostaEx(d, exId, delta){
+  var ids = ordineIds(d), i = ids.indexOf(exId), j = i + delta;
+  if(i < 0 || j < 0 || j >= ids.length) return false;
+  ids.splice(j, 0, ids.splice(i, 1)[0]);
+  scriviOrdine(d, ids);
+  return true;
+}
+/* "Rimanda a dopo": in mezzo a una seduta e' l'unico gesto che serve davvero
+   quando trovi la macchina occupata. Sposta in fondo, non di un posto. */
+function rimandaEx(d, exId){
+  var ids = ordineIds(d), i = ids.indexOf(exId);
+  if(i < 0 || i === ids.length - 1) return false;
+  ids.splice(i, 1); ids.push(exId);
+  scriviOrdine(d, ids);
+  return true;
+}
+function fissaOrdine(d){ S.ordineBase = ordineIds(d).slice(); save(); }
+function ordineDiRiferimento(){
+  return ((S.ordineBase && S.ordineBase.length) ? S.ordineBase : EX.map(function(x){ return x.id; })).join(",");
+}
+function ordineSpostatoOggi(d){ return ordineIds(d).join(",") !== ordineDiRiferimento(); }
+
 function dataLunga(d){ return GIORNI[d.getDay()] + " " + d.getDate() + " " + MESI[d.getMonth()]; }
 function mmss(s){
   s = Math.max(0, Math.round(s));
@@ -2367,11 +2435,14 @@ function buildSteps(kind){
     return out;
   }
   var dOggi = oggiISO();
+  /* L'ordine e' quello di oggi, non quello della scheda: se hai rimandato la
+     chest press perche' era occupata, il percorso deve rispecchiarlo. */
+  var lista = exOggi(dOggi);
   /* Una serie di avvicinamento, solo prima del primo esercizio. Non si
      registra e non conta nel volume: vedi vincoli.md §1-quater per come
      va raccontata — l'evidenza è più debole di quanto si dica in palestra. */
-  out.push({ t:"avvic", ex:EX[0] });
-  EX.forEach(function(ex, xi){
+  out.push({ t:"avvic", ex:lista[0] });
+  lista.forEach(function(ex, xi){
     out.push({ t:"intro", ex:ex });
     /* per esercizio, non globale: se ne hai aggiunta una al goblet il percorso
        la contiene, e gli altri restano come sono */
@@ -2381,7 +2452,7 @@ function buildSteps(kind){
       if(si < n - 1) out.push({ t:"riposo", ex:ex, sec:ex.rest, dopo:"Serie " + (si+2) + " · " + ex.n });
       /* Riposo anche fra un esercizio e l'altro: la scheda prescrive 90-120
          secondi anche lì, e saltarlo sarebbe cambiare un parametro. */
-      else if(xi < EX.length - 1) out.push({ t:"riposo", ex:ex, sec:100, dopo:EX[xi+1].n });
+      else if(xi < lista.length - 1) out.push({ t:"riposo", ex:ex, sec:100, dopo:lista[xi+1].n });
     }
   });
   out.push({ t:"fastidi" });
@@ -2453,14 +2524,23 @@ function vSessione(){
   var foot = "", cnt = sesConteggio();
 
   if(s.t === "intro"){
-    h += '<span class="kicker">Esercizio ' + (EX.indexOf(s.ex) + 1) + ' di ' + EX.length + '</span>' +
+    h += '<span class="kicker">Esercizio ' + (ordineIds(oggiISO()).indexOf(s.ex.id) + 1) + ' di ' + EX.length + '</span>' +
       '<h2>' + esc(s.ex.n) + '</h2>' +
       figuraSVG(s.ex.id) +
       '<p class="fine2">Dimostrazione del movimento, <strong>non il ritmo da tenere</strong>: la velocità delle ripetizioni non cambia i risultati, il carico sì.</p>' +
       '<ul class="cue">' + (CUE[s.ex.id] || []).map(function(c){ return "<li>" + esc(c) + "</li>"; }).join("") + '</ul>' +
       (S.regol[s.ex.id] ? '<div class="pan"><span class="kicker">Le tue regolazioni</span><p>' + esc(S.regol[s.ex.id]) + '</p></div>' : "");
+    /* "Rimanda a dopo" solo se ha senso: non sull'ultimo, e non su un esercizio
+       gia' cominciato — spostare in fondo una cosa meta' fatta ti costringerebbe
+       a tornarci sopra senza motivo. */
+    var puoRimandare = ordineIds(d).indexOf(s.ex.id) < ordineIds(d).length - 1 &&
+      !(((S.sessions[d] || {})[s.ex.id]) || []).some(function(x){ return x.done; });
+    var tastoHow = '<button type="button" class="alt" data-act="sesHow" data-id="' + s.ex.id + '">Come si fa</button>';
     foot = '<button type="button" class="go" data-act="sesNext">Vai</button>' +
-      '<button type="button" class="alt" data-act="sesHow" data-id="' + s.ex.id + '">Come si fa</button>';
+      (puoRimandare
+        ? '<div class="duo">' + tastoHow +
+          '<button type="button" class="alt" data-act="exRimanda" data-id="' + s.ex.id + '">Rimanda a dopo</button></div>'
+        : tastoHow);
   }
 
   else if(s.t === "avvic"){
@@ -2484,7 +2564,7 @@ function vSessione(){
     var vRp = st.reps != null ? st.reps : (pr ? pr.reps : (s.ex.secs ? 20 : 10));
     var nS = nSerie(d, s.ex.id);
     var eti = "Serie " + (s.si + 1) + " di " + nS + ", " + s.ex.n;
-    h += '<span class="kicker">' + esc(s.ex.n) + ' · esercizio ' + (EX.indexOf(s.ex) + 1) + ' di ' + EX.length +
+    h += '<span class="kicker">' + esc(s.ex.n) + ' · esercizio ' + (ordineIds(oggiISO()).indexOf(s.ex.id) + 1) + ' di ' + EX.length +
         ' · serie ' + (cnt.now + 1) + ' di ' + cnt.tot + '</span>' +
       '<h2>Serie ' + (s.si + 1) + ' di ' + nS + '</h2>' +
       figuraSVG(s.ex.id) +
@@ -2531,7 +2611,7 @@ function vSessione(){
 
   else if(s.t === "fine"){
     var fatte = 0, righe = "";
-    EX.forEach(function(ex){
+    exOggi(d).forEach(function(ex){
       var arr = (S.sessions[d] || {})[ex.id] || [];
       var ok = arr.filter(function(x){ return x.done; });
       if(!ok.length) return;
@@ -2623,7 +2703,9 @@ var giornoSel = null;
 function vGiorno(d){
   var dt = parseISO(d), tipo = PIANO[dt.getDay()], w = weekOf(d);
   var sess = S.sessions[d] || {}, righe = "", serie = 0, volume = 0, sec = 0;
-  EX.forEach(function(ex){
+  /* Nell'ordine di quel giorno, non della scheda: il riepilogo deve somigliare
+     alla seduta che hai fatto davvero. */
+  exOggi(d).forEach(function(ex){
     var ok = (sess[ex.id] || []).filter(function(x){ return x.done; });
     if(!ok.length) return;
     serie += ok.length;
@@ -2948,9 +3030,17 @@ function vPesi(){
     '<p class="fine">I numeri <strong>in grigio</strong> sono quelli dell\'ultima volta, già pronti: se il peso è quello, tocca solo la spunta e non scrivere niente. Se cambi un numero diventa nero, ed è un dato tuo. Lo schermo resta acceso finché sei su questa scheda.</p>' +
     '<button class="btn primary wide" data-act="sesStart" data-kind="pesi">Vai — seduta guidata</button>' +
     (tipo !== "pesi" ? '<div class="note">Oggi il piano dice <strong>' + (tipo === "corsa" ? "corsa" : "riposo") + '</strong>. Puoi registrare lo stesso, ma tre sedute di pesi non consecutive sono la struttura su cui è costruito il volume settimanale.</div>' : '') +
+    /* L'ordine cambiato vale solo per oggi, se non lo fissi. Detto qui perche'
+       altrimenti domani lo ritrovi com'era e sembra che l'app se lo dimentichi. */
+    (ordineSpostatoOggi(d)
+      ? '<div class="note"><strong>Hai spostato gli esercizi.</strong> Vale solo per oggi: domani torna l\'ordine di sempre.' +
+        '<div class="row"><button class="btn sm" data-act="ordineFissa">Usa sempre quest\'ordine</button>' +
+        '<button class="btn sm ghost" data-act="ordineAzzera">Rimetti com\'era</button></div></div>'
+      : '') +
     '</div>';
 
-  EX.forEach(function(ex, i){
+  var lista = exOggi(d);
+  lista.forEach(function(ex, i){
     var sets = setsOf(d, ex.id);
     var last = lastSession(ex.id, d);
     var pr = proposta(ex.id, d), nEx = nSerie(d, ex.id);
@@ -3002,6 +3092,14 @@ function vPesi(){
       '<button type="button" class="btn sm" data-act="serieMeno" data-id="' + ex.id + '">− serie</button>' +
       '<span class="num">' + nEx + '</span>' +
       '<button type="button" class="btn sm" data-act="seriePiu" data-id="' + ex.id + '">+ serie</button>' +
+      /* Spostare l'esercizio. Sta qui accanto alle serie perche' e' la stessa
+         famiglia di gesto: adattare la seduta di oggi a com'e' andata. */
+      '<span class="ordina">' +
+        '<button type="button" class="btn sm" data-act="exSu" data-id="' + ex.id + '"' +
+          (i === 0 ? ' disabled' : '') + ' aria-label="sposta ' + esc(ex.n) + ' prima">↑</button>' +
+        '<button type="button" class="btn sm" data-act="exGiu" data-id="' + ex.id + '"' +
+          (i === lista.length - 1 ? ' disabled' : '') + ' aria-label="sposta ' + esc(ex.n) + ' dopo">↓</button>' +
+      '</span>' +
       '</div>' +
       (avvisoSerie && avvisoSerie.id === ex.id ? '<p class="fine avviso-serie">' + esc(avvisoSerie.t) + '</p>' : "");
     h += '</div>';
@@ -3430,6 +3528,31 @@ document.getElementById("view").addEventListener("click", function(e){
       if(z.t === qui.t && z.ex && qui.ex && z.ex.id === qui.ex.id && z.si === qui.si){ ses.i = k2; break; }
     }
     buzz(25); render(); return;
+  }
+
+  /* ---- l'ordine degli esercizi ----
+     Nell'elenco lungo due frecce, perche' li vedi tutti e sposti di un posto.
+     Nella seduta guidata invece serve un gesto solo, e diverso: la macchina e'
+     occupata adesso, quindi va in fondo, non un posto piu' in la'. */
+  if(a === "exSu"){  spostaEx(d, el.dataset.id, -1); buzz(20); render(); return; }
+  if(a === "exGiu"){ spostaEx(d, el.dataset.id, +1); buzz(20); render(); return; }
+  if(a === "ordineFissa"){ fissaOrdine(d); render(); return; }
+  if(a === "ordineAzzera"){
+    /* Un livello di ritorno alla volta: prima si annulla lo spostamento di
+       oggi, e solo se non c'e' si torna all'ordine della scheda. */
+    if(S.ordine && S.ordine[d]) delete S.ordine[d];
+    else S.ordineBase = [];
+    save(); render(); return;
+  }
+  if(a === "exRimanda"){
+    var idRim = el.dataset.id, pos = ordineIds(d).indexOf(idRim);
+    if(!rimandaEx(d, idRim)) return;
+    var subentra = ordineIds(d)[pos];   /* chi ha preso il suo posto */
+    ses.steps = buildSteps(ses.kind);
+    for(var k3 = 0; k3 < ses.steps.length; k3++){
+      if(ses.steps[k3].t === "intro" && ses.steps[k3].ex.id === subentra){ ses.i = k3; break; }
+    }
+    verso = 1; buzz(25); render(); return;
   }
 
   /* Tocca un giorno del calendario: si apre il dettaglio, ritoccalo e si chiude. */
