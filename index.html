@@ -170,6 +170,12 @@
   /* Sotto la piega lo scaglionamento non serve: quando ci arrivi scorrendo,
      quella scheda e la prima che vedi. Entra da sola, senza coda. */
   .attesa{opacity:0 !important; animation:none !important}
+  /* Ridisegno della STESSA vista: nessun ingresso. L'animazione racconta un
+     arrivo, e una spunta o una serie in piu non sono un arrivo — rifarla a
+     ogni tocco fa tornare invisibile tutto quello che sta sotto la piega, e
+     scorrendo la pagina sembra lampeggiare. */
+  #view.zitto .card, #view.zitto .today, #view.zitto .ex,
+  #view.zitto .runner, #view.zitto .ses, #view.zitto .tile{animation:none}
   .arriva{animation:entra .52s cubic-bezier(.2,.8,.2,1) both !important; animation-delay:0s !important}
   /* le barre si riempiono invece di saltare al valore */
   @keyframes riempi{from{transform:scaleX(0)} to{transform:scaleX(1)}}
@@ -1129,7 +1135,7 @@ copiaDelGiorno();
    4. NESSUN PULSANTE. Una riga in testa dice come sta, e non chiede niente.
    ============================================================ */
 
-var VERSIONE = "2.2";
+var VERSIONE = "2.3";
 var KEY_SY = "palestra-sync";
 
 function syncCfg(){
@@ -1858,7 +1864,16 @@ var TABS = ["oggi", "pesi", "corsa", "cibo", "dati"];
    un numero) farebbe scivolare tutto di lato senza motivo. */
 var verso = 0;
 
+/* Quale vista era a schermo l'ultima volta. Cambiare scheda o passo e' un
+   ARRIVO: si riparte dall'alto e le schede entrano. Ridisegnare la stessa
+   vista non lo e': la pagina deve restare esattamente dov'era. */
+var vistaPrec = null;
+
 function render(){
+  var yPrima = window.scrollY || window.pageYOffset || 0;
+  var vista = ses.on ? "ses:" + ses.i : "tab:" + tab;
+  var stessaVista = vista === vistaPrec;
+  vistaPrec = vista;
   var w = weekNow();
   document.getElementById("wkLabel").textContent = S.start
     ? (w > 4 ? "settimana " + w + " · oltre scheda" : "settimana " + w + " di 4")
@@ -1871,6 +1886,9 @@ function render(){
   var v = document.getElementById("view");
   v.style.setProperty("--dx", verso ? (verso > 0 ? "22px" : "-22px") : "0px");
   verso = 0;
+  /* Prima di riscrivere, non dopo: se la classe arrivasse a elementi gia' nel
+     documento l'animazione sarebbe gia' partita per un fotogramma. */
+  v.classList.toggle("zitto", stessaVista);
   if(ses.on){
     v.innerHTML = vSessione();
     var s = ses.steps[ses.i];
@@ -1885,11 +1903,19 @@ function render(){
     if(wf) animaOn(wf.dataset.fig); else animaOff();
   }
   syncWake();
-  window.scrollTo(0, 0);
-  /* Dopo lo scrollTo, non prima: la misura di cosa sta sotto la piega va
-     fatta a pagina gia riportata in cima, altrimenti e la misura di ieri. */
-  scorrimentoIngresso();
-  animaConta();
+  if(stessaVista){
+    /* Si torna esattamente dove si era. Prima la pagina saltava in cima a ogni
+       spunta: in mezzo a una seduta era il difetto piu fastidioso dell'app. */
+    window.scrollTo(0, yPrima);
+    fermaIngresso();
+    animaConta(null, true);   /* i numeri si scrivono, non risalgono da zero */
+  } else {
+    window.scrollTo(0, 0);
+    /* Dopo lo scrollTo, non prima: la misura di cosa sta sotto la piega va
+       fatta a pagina gia riportata in cima, altrimenti e la misura di ieri. */
+    scorrimentoIngresso();
+    animaConta();
+  }
 }
 
 function bannerStorage(){
@@ -2324,7 +2350,7 @@ function festaSpunta(el){
 
 /* Numeri che salgono da zero. Stessa curva e stessa durata di valore
    (comune.js: 1300 ms, 1-(1-t)^3, parte veloce e rallenta alla fine). */
-function contaSu(el){
+function contaSu(el, subito){
   var target = parseFloat(el.dataset.target);
   if(isNaN(target)) return;
   /* Il peso corporeo e 51,5 e non 52: senza decimali la tessera piu importante
@@ -2334,7 +2360,9 @@ function contaSu(el){
   function scrivi(v){ el.textContent = v.toFixed(dec).replace(".", ","); }
   /* Se la pagina non e visibile rAF non parte e il numero resterebbe a zero
      per sempre: in quel caso si scrive e basta. Stesso per chi vuole meno moto. */
-  if(pocoMoto || document.visibilityState !== "visible"){ scrivi(target); return; }
+  /* "subito" e' il ridisegno della stessa vista: far risalire i numeri da zero
+     dopo ogni spunta li rende illeggibili proprio mentre li stai guardando. */
+  if(subito || pocoMoto || document.visibilityState !== "visible"){ scrivi(target); return; }
   /* Parte quando la sua tessera ha finito di entrare: se salgono tutti insieme
      mentre le tessere scorrono, lo schermo diventa illeggibile per un secondo. */
   setTimeout(function(){
@@ -2346,13 +2374,13 @@ function contaSu(el){
     })(t0);
   }, ritardo);
 }
-function animaConta(radice){
+function animaConta(radice, subito){
   var dove = radice || document;
   Array.prototype.forEach.call(dove.querySelectorAll(".conta"), function(el){
     /* Se la sua scheda non e ancora entrata, il numero sale quando entra lei:
        altrimenti scorri fin li e lo trovi gia arrivato. */
-    if(!radice && el.closest(".attesa")) return;
-    contaSu(el);
+    if(!radice && !subito && el.closest(".attesa")) return;
+    contaSu(el, subito);
   });
 }
 
@@ -2395,12 +2423,20 @@ function staccaSpazzata(){
   window.removeEventListener("scroll", chiediSpazzata);
   window.removeEventListener("resize", chiediSpazzata);
 }
-function scorrimentoIngresso(){
-  /* Ogni render riparte da zero: le vecchie in attesa appartengono a una
-     vista che non esiste piu, e lasciarle nell'elenco le terrebbe nascoste. */
+/* Svuota la lista di chi aspetta e stacca gli ascoltatori, senza riarmare
+   niente. Serve in due casi: prima di ricalcolare, e sui ridisegni della
+   stessa vista — dove gli elementi in attesa sono stati staccati dal
+   documento con l'innerHTML e lasciarli in lista farebbe girare la spazzata
+   a vuoto su nodi che non esistono piu. */
+function fermaIngresso(){
   dormienti.forEach(function(el){ el.classList.remove("attesa"); });
   dormienti = [];
   staccaSpazzata();
+}
+function scorrimentoIngresso(){
+  /* Ogni render riparte da zero: le vecchie in attesa appartengono a una
+     vista che non esiste piu, e lasciarle nell'elenco le terrebbe nascoste. */
+  fermaIngresso();
   if(pocoMoto) return;
   var alte = window.innerHeight;
   Array.prototype.forEach.call(
