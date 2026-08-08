@@ -1135,7 +1135,7 @@ copiaDelGiorno();
    4. NESSUN PULSANTE. Una riga in testa dice come sta, e non chiede niente.
    ============================================================ */
 
-var VERSIONE = "2.3";
+var VERSIONE = "2.4";
 var KEY_SY = "palestra-sync";
 
 function syncCfg(){
@@ -3052,9 +3052,25 @@ function gauge(val, scala, min, max, unita, goal){
 }
 
 /* ---------- PESI ---------- */
+/* Il programma non avviato chiudeva Pesi e Corsa con una riga di testo che
+   rimandava a un'altra scheda. Effetto reale, scoperto il 07/08 leggendo i
+   dati veri: ric ha fatto due allenamenti, ha aperto l'app per registrarli e
+   ha trovato un vicolo cieco — le sedute non erano perse, erano
+   NON REGISTRABILI. La funzione principale non si chiude dietro un passaggio
+   altrove: il tasto per sbloccarla sta qui, dove sei. */
+function avvioMancante(cosa){
+  return '<div class="card"><div class="eyebrow">Prima di cominciare</div>' +
+    '<h2>Il programma non è ancora avviato</h2>' +
+    '<p class="fine">Serve un lunedì di riferimento: da lì l\'app conta le settimane, sceglie il blocco della corsa e passa da 2 a 3 serie. Finché manca, ' + cosa + ' non si può registrare.</p>' +
+    '<div class="row"><input type="date" id="startD3" value="' + iso(mondayOf(new Date())) + '" style="flex:1"></div>' +
+    '<div class="row"><button class="btn primary wide" data-act="setStart3">Comincio da questa settimana</button></div>' +
+    '<p class="fine">Se hai già cominciato prima, cambia la data: metti il lunedì della settimana in cui hai fatto il primo allenamento.</p>' +
+    '</div>';
+}
+
 var avvisoSerie = null;  /* messaggio sotto i tasti delle serie, dura un ridisegno */
 function vPesi(){
-  if(!S.start) return '<div class="note">Prima avvia il programma dalla scheda <strong>Oggi</strong>.</div>';
+  if(!S.start) return bannerStorage() + avvioMancante("una seduta di pesi");
   var d = oggiISO(), n = serieCount();
   var h = bannerStorage();
   var tipo = PIANO[new Date().getDay()];
@@ -3167,7 +3183,7 @@ function vPesi(){
 
 /* ---------- CORSA ---------- */
 function vCorsa(){
-  if(!S.start) return '<div class="note">Prima avvia il programma dalla scheda <strong>Oggi</strong>.</div>';
+  if(!S.start) return bannerStorage() + avvioMancante("una corsa");
   var wk = weekClamped(), cfg = RUN_WEEKS[wk-1];
   var h = bannerStorage();
   var seq = run.started ? run.seq : buildSeq(wk);
@@ -3522,8 +3538,8 @@ document.getElementById("view").addEventListener("click", function(e){
 
   if(a === "go"){ verso = TABS.indexOf(el.dataset.to) - TABS.indexOf(tab); tab = el.dataset.to; render(); return; }
 
-  if(a === "setStart" || a === "setStart2"){
-    var inp = document.getElementById(a === "setStart" ? "startD" : "startD2");
+  if(a === "setStart" || a === "setStart2" || a === "setStart3"){
+    var inp = document.getElementById(a === "setStart" ? "startD" : a === "setStart2" ? "startD2" : "startD3");
     if(!inp.value) return;
     S.start = iso(mondayOf(parseISO(inp.value))); save(); render(); return;
   }
