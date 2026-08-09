@@ -1370,7 +1370,7 @@ copiaDelGiorno();
    4. NESSUN PULSANTE. Una riga in testa dice come sta, e non chiede niente.
    ============================================================ */
 
-var VERSIONE = "2.7";
+var VERSIONE = "2.8";
 var KEY_SY = "palestra-sync";
 
 function syncCfg(){
@@ -3375,11 +3375,18 @@ function vOggi(){
     var c = RUN_WEEKS[weekClamped()-1];
     riga = c.reps + " × " + Math.round(c.run/60*10)/10 + " min · circa " +
       Math.round((WARMUP + COOLDOWN + c.reps*(c.run+c.walk)) / 60) + " min";
-    azione = '<button class="btn primary wide" data-act="go" data-to="corsa">' + (fattaCorsa ? "Riapri" : "Vai") + '</button>';
+    azione = '<button class="btn primary wide" data-act="go" data-to="corsa">' + (fattaCorsa ? "Riapri" : "Vai") + '</button>' +
+      '<button class="btn ghost wide sm" data-act="sesStart" data-kind="pesi">Seduta pesi</button>';
   } else {
     riga = "Riposo o camminata · stretching lo stesso";
-    azione = '<button class="btn primary wide" data-act="sesStart" data-kind="stretch">Vai — stretching</button>';
+    azione = '<button class="btn primary wide" data-act="sesStart" data-kind="stretch">Vai — stretching</button>' +
+      '<button class="btn ghost wide sm" data-act="sesStart" data-kind="pesi">Seduta pesi</button>';
   }
+  /* La seduta guidata dei pesi si apre SOLO da qui, quindi deve esserci anche
+     nei giorni in cui il piano dice altro: il piano dice cosa conviene, non
+     cosa e' permesso, e l'app lo ha sempre lasciato fare. Togliendo il tasto
+     dalla scheda Pesi (v2.8) senza questo, nei giorni di corsa la modalita'
+     sarebbe diventata irraggiungibile. */
 
   h += '<div class="today">' +
     '<span class="date">' + esc(dataLunga(now)) + ' · settimana ' + w + '</span>' +
@@ -3579,7 +3586,11 @@ function vPesi(){
     '<h2>Full body — ' + n + ' serie</h2>' +
     '<p class="fine">Ogni serie finisce con <strong>1-3 ripetizioni ancora in canna</strong>, mai a cedimento. Riposo 90 secondi, 2 minuti su goblet squat e stacco rumeno: parte da solo quando spunti la serie.</p>' +
     '<p class="fine">I numeri <strong>in grigio</strong> sono quelli dell\'ultima volta, già pronti: se il peso è quello, tocca solo la spunta e non scrivere niente. Se cambi un numero diventa nero, ed è un dato tuo. Lo schermo resta acceso finché sei su questa scheda.</p>' +
-    '<button class="btn primary wide" data-act="sesStart" data-kind="pesi">Vai — seduta guidata</button>' +
+    /* La seduta guidata si apre SOLO da Oggi: un ingresso solo, e sta dove
+       arrivi aprendo l'app. Qui resta l'elenco lungo, che serve a un altro
+       scopo — vedere tutto insieme, registrare a mano, cambiare variante. */
+    '<p class="fine">La <strong>seduta guidata</strong> — una schermata alla volta, coi timer — si apre dalla scheda <strong>Oggi</strong>.</p>' +
+    '<button class="btn wide" data-act="go" data-to="oggi">Vai a Oggi</button>' +
     (tipo !== "pesi" ? '<div class="note">Oggi il piano dice <strong>' + (tipo === "corsa" ? "corsa" : "riposo") + '</strong>. Puoi registrare lo stesso, ma tre sedute di pesi non consecutive sono la struttura su cui è costruito il volume settimanale.</div>' : '') +
     /* L'ordine cambiato vale solo per oggi, se non lo fissi. Detto qui perche'
        altrimenti domani lo ritrovi com'era e sembra che l'app se lo dimentichi. */
