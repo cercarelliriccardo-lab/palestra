@@ -1231,8 +1231,12 @@ var FOODS = [
   { g:"Pasti",      n:"Banana",                 k:90,  p:1 }
 ];
 
-var KCAL_MIN = 2400, KCAL_MAX = 2500, KCAL_MANT = 2100;
-var PROT_MIN = 80, PROT_MAX = 110;
+/* Rifatti sul peso vero il 07/08/2026. Erano calcolati su 50 kg, che non era
+   mai stato misurato: la prima pesata dice 45. Fonte: output/alimentazione-base.md
+   v3. Le calorie non cambiano — a 45 kg il mantenimento a regime e' ~2.050 e
+   il target resta 2.400 — cambiano le proteine, che sono 1,6-2,2 g per kg. */
+var KCAL_MIN = 2400, KCAL_MAX = 2500, KCAL_MANT = 2050;
+var PROT_MIN = 70, PROT_MAX = 100;
 var PESO_TARGET_SETT = 0.25, PESO_META = 53, FTF_META = 15;
 
 var GIORNI = ["Domenica","Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato"];
@@ -1381,7 +1385,7 @@ copiaDelGiorno();
    4. NESSUN PULSANTE. Una riga in testa dice come sta, e non chiede niente.
    ============================================================ */
 
-var VERSIONE = "2.9";
+var VERSIONE = "3.0";
 var KEY_SY = "palestra-sync";
 
 function syncCfg(){
@@ -3526,7 +3530,7 @@ function vOggi(){
   h += '<div class="card riga"><div style="flex:1">' +
     '<div class="eyebrow">Cibo</div>' +
     gauge(ft.k, KCAL_MAX + 400, KCAL_MIN, KCAL_MAX, "kcal", "2.400-2.500") +
-    gauge(ft.p, 140, PROT_MIN, PROT_MAX, "g proteine", "80-110") +
+    gauge(ft.p, 140, PROT_MIN, PROT_MAX, "g proteine", "70-100") +
     '</div><button class="btn" data-act="go" data-to="cibo">Aggiungi</button></div>';
 
   /* le due cose che restano da fare una volta sola */
@@ -3840,7 +3844,7 @@ function vCibo(){
   h += '<div class="card">' +
     '<div class="eyebrow">Oggi · grana grossa, non bilancia</div>' +
     gauge(t.k, KCAL_MAX + 400, KCAL_MIN, KCAL_MAX, "kcal", "2.400-2.500") +
-    gauge(t.p, 140, PROT_MIN, PROT_MAX, "g proteine", "80-110") +
+    gauge(t.p, 140, PROT_MIN, PROT_MAX, "g proteine", "70-100") +
     '<p class="fine">Le due barre dicono se sei sopra o sotto, non contano i grammi.</p>';
 
   var manca = KCAL_MIN - t.k;
@@ -3904,7 +3908,7 @@ function vCibo(){
     '<p class="fine">Resta salvata fra <strong>I tuoi</strong>: la prossima volta è un tocco solo. Vai a occhio — 100 kcal in più o in meno non cambiano niente.</p></div>';
 
   h += '<div class="card"><div class="eyebrow">Da sapere</div>' +
-    '<p class="fine">Il mantenimento stimato è <span class="num">2.100</span> kcal: sotto quella soglia non stai costruendo niente.</p>' +
+    '<p class="fine">Il mantenimento stimato è <span class="num">2.050</span> kcal: sotto quella soglia non stai costruendo niente.</p>' +
     '<details class="perche"><summary><span>Perché i numeri qui sono approssimativi</span></summary>' +
     '<p class="fine">Il brief del progetto vieta il conteggio calorico dettagliato, e i valori qui sopra sono indicativi: un petto di pollo vero non fa esattamente 165 kcal. Non serve. Il tuo collo di bottiglia non è la precisione, è <strong>arrivare a 2.400</strong> con un appetito che non è ancora salito. Il numero vero del tuo metabolismo non lo dà nessuna tabella: esce dalla media settimanale del peso, nella scheda Dati.</p>' +
     '<p class="fine">Su questi accorgimenti pratici — densità calorica, pasti piccoli e frequenti — non esistono studi randomizzati, è prassi consolidata. Il meccanismo delle calorie liquide, quello sì, ha supporto sperimentale.</p>' +
