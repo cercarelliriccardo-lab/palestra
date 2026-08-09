@@ -136,7 +136,14 @@
      di 3px e si illuminano di smeraldo quando li tocchi. Stessi valori. */
   .card, .today, .ex, .runner{
     box-shadow:var(--ombra);
-    transition:transform .25s ease, border-color .25s ease, box-shadow .25s ease, opacity .6s ease;
+    /* NIENTE opacity in questa transizione. L'opacita' e' gia' guidata
+       dall'animazione "entra" (.52s), e prima c'era anche una transizione
+       da .6s sulla stessa proprieta': due motori con durate diverse che si
+       contendono lo stesso valore. Quando l'animazione finiva e mollava la
+       presa, la transizione era ancora a meta' strada e faceva lo scatto —
+       e' il lampeggio che si vedeva scorrendo, dopo che la scheda era gia'
+       entrata. Chi la rimette lo rimette. */
+    transition:transform .25s ease, border-color .25s ease, box-shadow .25s ease;
   }
   .card:hover, .today:hover, .ex:hover, .runner:hover{
     transform:translateY(-3px); border-color:var(--accent-soft); box-shadow:var(--alone);
@@ -632,6 +639,12 @@
   .strevoce .stt em{font-style:normal; font-size:11.5px; color:var(--ink-3); line-height:1.35}
   .strevoce .std{flex:none; font-size:10.5px; color:var(--ink-3); text-align:right; max-width:88px}
   /* ---------- cambiare la variante di uno slot ---------- */
+  /* La figura dentro "come si fa". Altezza legata alla finestra come nella
+     seduta: su uno schermo corto si rimpicciolisce invece di spingere il
+     testo fuori. Nessuno sfondo e nessun bordo, come dalla v1.9.2. */
+  .fighow{margin:2px 0 12px}
+  .fighow[hidden]{display:none}
+  .fighow svg{display:block;width:100%;height:clamp(120px,26vh,220px)}
   .cambia{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
   .cambia .fine{margin:0 0 8px}
   .varvoce{
@@ -1357,7 +1370,7 @@ copiaDelGiorno();
    4. NESSUN PULSANTE. Una riga in testa dice come sta, e non chiede niente.
    ============================================================ */
 
-var VERSIONE = "2.6";
+var VERSIONE = "2.7";
 var KEY_SY = "palestra-sync";
 
 function syncCfg(){
@@ -3649,6 +3662,10 @@ function vPesi(){
       (avvisoSerie && avvisoSerie.id === ex.id ? '<p class="fine avviso-serie">' + esc(avvisoSerie.t) + '</p>' : "");
     h += '</div>';
     h += '<div class="how" id="how-' + ex.id + '" hidden>' +
+      /* Riempito dal gestore "how" al momento dell'apertura, non qui: sette
+         figure nel documento significano sette #stage, e ne verrebbe animata
+         sempre e solo la prima. */
+      '<div class="fighow"></div>' +
       schedaAttr(ex) +
       cercaVideo(ex.id) +
       '<label class="reg"><span>Le tue regolazioni — si salvano da sole</span>' +
@@ -4184,9 +4201,33 @@ document.getElementById("view").addEventListener("click", function(e){
   if(a === "giornoChiudi"){ giornoSel = null; render(); return; }
 
   if(a === "how"){
-    var box2 = document.getElementById("how-" + el.dataset.id);
-    box2.hidden = !box2.hidden;
-    el.textContent = box2.hidden ? "Come si fa" : "Chiudi";
+    var hid = el.dataset.id, box2 = document.getElementById("how-" + hid);
+    var apri = box2.hidden;
+    /* Un pannello aperto alla volta. Non e' una scelta di stile: la figura
+       animata ha id fissi al suo interno (#stage, #fgT, #fgM...), e due copie
+       nel documento farebbero muovere sempre la prima. Quindi si svuota tutto
+       e si inietta solo dove serve. */
+    Array.prototype.forEach.call(document.querySelectorAll("#view .how"), function(b){
+      b.hidden = true;
+      var f = b.querySelector(".fighow"); if(f) f.innerHTML = "";
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('#view [data-act="how"]'), function(b){
+      b.textContent = "Come si fa";
+    });
+    animaOff();
+    if(apri){
+      box2.hidden = false;
+      el.textContent = "Chiudi";
+      var f2 = box2.querySelector(".fighow");
+      /* figuraSVG restituisce "" per una variante senza posa disegnata: il
+         pannello resta col testo, che e' meglio di un riquadro vuoto. */
+      if(f2){
+        var svg = figuraSVG(hid, true);
+        f2.innerHTML = svg;
+        f2.hidden = !svg;
+        if(svg) animaOn(hid);
+      }
+    }
     return;
   }
 
