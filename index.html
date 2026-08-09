@@ -642,6 +642,17 @@
   /* La figura dentro "come si fa". Altezza legata alla finestra come nella
      seduta: su uno schermo corto si rimpicciolisce invece di spingere il
      testo fuori. Nessuno sfondo e nessun bordo, come dalla v1.9.2. */
+  /* Cronometro della tenuta: sta nella colonna dei chili degli esercizi a
+     tempo, quindi deve stare nella stessa larghezza dello stepper. */
+  .crono{
+    display:flex; align-items:center; justify-content:center;
+    min-height:44px; width:100%; padding:0;
+    background:var(--surface-3); border:1px solid var(--line); border-radius:10px;
+    color:var(--ink-2); font-family:var(--mono); font-size:13px; font-weight:600;
+    cursor:pointer;
+  }
+  .crono[data-on="1"]{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
+  .crono[disabled]{opacity:.35; cursor:default}
   .fighow{margin:2px 0 12px}
   .fighow[hidden]{display:none}
   .fighow svg{display:block;width:100%;height:clamp(120px,26vh,220px)}
@@ -1370,7 +1381,7 @@ copiaDelGiorno();
    4. NESSUN PULSANTE. Una riga in testa dice come sta, e non chiede niente.
    ============================================================ */
 
-var VERSIONE = "2.8";
+var VERSIONE = "2.9";
 var KEY_SY = "palestra-sync";
 
 function syncCfg(){
@@ -2128,6 +2139,52 @@ document.addEventListener("visibilitychange", function(){
    Timer di riposo
    ============================================================ */
 
+/* ------------------------------------------------------------------
+   CRONOMETRO DELLA TENUTA (plank, plank laterale, hollow hold)
+   ------------------------------------------------------------------
+   Non e' il timer del riposo: quello conta alla rovescia da un valore noto,
+   questo conta in avanti perche' la durata e' il DATO che stai misurando.
+   La regola del plank e' "quando il bacino cede hai finito, anche se sono
+   passati 18 secondi": il numero non si puo' sapere prima.
+
+   Il valore si calcola sulla differenza fra due timestamp, non contando i
+   fotogrammi: se il telefono si oscura o l'app va in secondo piano il
+   conteggio a schermo si ferma, ma il secondo finale resta giusto. Stessa
+   ragione per cui il timer del riposo lavora su rest.end.
+   ------------------------------------------------------------------ */
+var tenuta = { on:false, t0:0, ex:null, i:0, raf:0, el:null, ultimo:-1 };
+
+function tenutaTick(){
+  if(!tenuta.on) return;
+  var s = Math.floor((Date.now() - tenuta.t0) / 1000);
+  /* Si scrive solo quando il secondo cambia: sessanta scritture al secondo su
+     un numero che cambia una volta al secondo sono solo batteria. */
+  if(s !== tenuta.ultimo && tenuta.el){
+    tenuta.ultimo = s;
+    tenuta.el.textContent = s + "″";
+  }
+  tenuta.raf = requestAnimationFrame(tenutaTick);
+}
+function tenutaVia(el, exId, i){
+  tenutaFerma(true);                       /* uno alla volta */
+  tenuta = { on:true, t0:Date.now(), ex:exId, i:i, raf:0, el:el, ultimo:-1 };
+  el.setAttribute("data-on", "1");
+  el.textContent = "0″";
+  buzz(20);
+  tenutaTick();
+}
+/* annulla=true chiude senza restituire niente: serve quando ne parte un altro
+   o quando si esce dalla vista. */
+function tenutaFerma(annulla){
+  if(!tenuta.on) return null;
+  if(tenuta.raf) cancelAnimationFrame(tenuta.raf);
+  var sec = Math.max(1, Math.round((Date.now() - tenuta.t0) / 1000));
+  var r = { ex:tenuta.ex, i:tenuta.i, sec:sec };
+  if(tenuta.el){ tenuta.el.removeAttribute("data-on"); }
+  tenuta = { on:false, t0:0, ex:null, i:0, raf:0, el:null, ultimo:-1 };
+  return annulla ? null : r;
+}
+
 var rest = { end:0, tot:0, label:"", on:false };
 function restStart(sec, label){
   rest.end = Date.now() + sec * 1000; rest.tot = sec; rest.label = label; rest.on = true;
@@ -2334,6 +2391,15 @@ function render(){
     /* Qualunque vista puo mostrare una figura: basta un contenitore data-fig. */
     var wf = v.querySelector("[data-fig]");
     if(wf) animaOn(wf.dataset.fig); else animaOff();
+  }
+  /* Il cronometro sopravvive al ridisegno: l'innerHTML ha staccato il bottone
+     a cui scriveva, quindi va riagganciato al suo gemello nuovo. Se la riga
+     non c'e' piu — hai cambiato scheda o variante — si chiude senza scrivere
+     niente, invece di continuare a contare per un nodo morto. */
+  if(tenuta.on){
+    var bt = document.querySelector('.set[data-ex="' + tenuta.ex + '"][data-i="' + tenuta.i + '"] .crono');
+    if(bt){ tenuta.el = bt; tenuta.ultimo = -1; bt.setAttribute("data-on", "1"); }
+    else tenutaFerma(true);
   }
   syncWake();
   if(stessaVista){
@@ -3641,7 +3707,15 @@ function vPesi(){
       var vRp = st.reps != null ? st.reps : (prop ? pr.reps : "");
       h += '<div class="set" data-ex="' + ex.id + '" data-i="' + si + '" data-done="' + (st.done ? 1 : 0) + '" data-prop="' + prop + '">' +
         '<span class="sn">' + (si+1) + '</span>' +
-        (senzaKg
+        (ex.secs
+          /* Cronometro della tenuta. Sta nella colonna dei chili, che per un
+             esercizio a tempo era occupata solo dalla scritta "corpo": spazio
+             gia' pagato. Prima i secondi andavano contati a mente e scritti a
+             mano — cosa che nessuno fa mentre trema in plank. */
+          ? '<button type="button" class="crono" data-act="tenuta"' +
+            (st.done ? ' disabled' : '') + ' aria-label="cronometro della serie ' + (si+1) + '">' +
+            (tenuta.on && tenuta.ex === ex.id && tenuta.i === si ? "0″" : "▶") + '</button>'
+          : senzaKg
           ? '<span style="text-align:center;color:var(--ink-3);font-family:var(--mono);font-size:12px">corpo</span>'
           : '<div class="stepper"><button type="button" data-act="st" data-f="kg" data-dl="-' + ex.step + '">−</button>' +
             '<input type="number" inputmode="decimal" step="' + ex.step + '" data-f="kg" value="' + vKg + '" aria-label="chili serie ' + (si+1) + '">' +
@@ -4239,6 +4313,25 @@ document.getElementById("view").addEventListener("click", function(e){
         if(svg) animaOn(hid);
       }
     }
+    return;
+  }
+
+  if(a === "tenuta"){
+    var riga = el.closest(".set"); if(!riga) return;
+    var tex = riga.dataset.ex, ti = +riga.dataset.i;
+    if(tenuta.on && tenuta.ex === tex && tenuta.i === ti){
+      var rt = tenutaFerma(false);
+      if(rt){
+        /* Si scrive il numero, NON si spunta la serie. La spunta resta un
+           gesto tuo: e' l'invariante di architettura.md — niente entra in S
+           senza un gesto dell'utente, e fermare il cronometro e' un gesto
+           sul numero, non sulla serie. */
+        setsOf(d, rt.ex)[rt.i].reps = rt.sec;
+        save(); buzz(40); render();
+      }
+      return;
+    }
+    tenutaVia(el, tex, ti);
     return;
   }
 
