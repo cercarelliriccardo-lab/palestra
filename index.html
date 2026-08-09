@@ -631,6 +631,19 @@
   .strevoce .stt strong{font-size:13.5px; font-weight:600}
   .strevoce .stt em{font-style:normal; font-size:11.5px; color:var(--ink-3); line-height:1.35}
   .strevoce .std{flex:none; font-size:10.5px; color:var(--ink-3); text-align:right; max-width:88px}
+  /* ---------- cambiare la variante di uno slot ---------- */
+  .cambia{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+  .cambia .fine{margin:0 0 8px}
+  .varvoce{
+    background:var(--surface-2); border:1px solid var(--line); border-radius:10px;
+    padding:10px 11px; margin-bottom:8px;
+  }
+  .varvoce[data-on="1"]{border-color:var(--accent); background:var(--accent-soft)}
+  .varvoce .vt{font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .varvoce .va{font-size:11.5px;color:var(--ink-3);margin-top:2px}
+  .varvoce .vc{font-size:11.5px;color:var(--ink-2);margin:7px 0}
+  .cambia .btn, .varvoce .btn{min-height:44px}
+  .varvoce .note{margin:7px 0}
   /* Cerca un video: il tasto e i segni che squalificano quello che trovi. */
   .video{margin:12px 0 4px;padding-top:10px;border-top:1px solid var(--line)}
   .video .btn{margin-bottom:8px}
@@ -840,7 +853,11 @@
    Se cambia la scheda, si cambia qui.
    ============================================================ */
 
-var EX = [
+/* I sette esercizi della scheda: sono le varianti PREDEFINITE dei sette slot
+   definiti piu sotto. Restano qui con i loro testi lunghi invece di essere
+   riscritti dentro SLOT: sono prosa verificata, e ricopiarla e' solo un modo
+   di introdurre errori. */
+var EX_BASE = [
   { id:"goblet", n:"Goblet squat", att:"Kettlebell", rest:120, step:2, unit:"kg",
     how:["Kettlebell contro il petto con due mani, come se abbracciassi una coppa. Piedi a larghezza spalle, punte leggermente in fuori. Scendi col petto alto e i talloni a terra, fino a portare le cosce almeno parallele al pavimento. Risali spingendo con tutto il piede.",
          "Il peso davanti al corpo fa da contrappeso e ti mette in posizione da solo. Col bilanciere sulla schiena quella posizione la devi trovare tu, e da principiante non la trovi.",
@@ -864,6 +881,101 @@ var EX = [
   { id:"plank", n:"Plank", att:"A terra", rest:90, step:5, unit:"sec", secs:true,
     how:["Gomiti sotto le spalle, corpo in linea retta, glutei e addome contratti, respiro normale.",
          "Quando il bacino cede hai finito la serie, anche se sono passati 18 secondi."] }
+];
+
+/* ============================================================
+   SLOT E VARIANTI
+   ============================================================
+   La scheda non e' fatta di sette esercizi ma di sette PATTERN. Un sostituto
+   deve stare nello stesso slot, altrimenti la settimana perde un pattern e il
+   volume di quel gruppo muscolare crolla senza che te ne accorga.
+
+   Il carico si traccia PER ESERCIZIO, non per slot: 40 kg di chest press e
+   14 kg per manubrio di panca non sono la stessa scala. S.sessions e' gia'
+   indicizzato per id dell'esercizio, quindi la struttura reggeva gia'.
+
+   Quando scegli una variante mai usata, suggerimento() non trova niente e non
+   propone nulla. E' il comportamento giusto, non un caso da tappare.
+
+   corpo:1 = a corpo libero contando ripetizioni (niente colonna dei chili).
+   secs:1  = si contano i secondi. agg:1 = si AGGIUNGE, non sostituisce.
+   ============================================================ */
+
+var VAR_ALT = [
+  /* --- accosciata --- */
+  { id:"squatbb", n:"Squat col bilanciere", att:"Bilanciere nel rack", rest:120, step:2.5, unit:"kg",
+    k:"Il passaggio non dipende dalla settimana ma dal criterio tecnico del goblet.",
+    warn:"Solo dopo 3×10 di goblet a piena profondità con tecnica pulita — e sempre coi fermi del rack regolati." },
+  { id:"affondi", n:"Affondi", att:"Manubri", rest:90, step:2, unit:"kg",
+    k:"Una gamba per volta: scoprono gli squilibri fra destra e sinistra." },
+  { id:"bulgaro", n:"Split squat bulgaro", att:"Manubri + panca", rest:90, step:2, unit:"kg",
+    k:"Piede dietro sulla panca. Molto più duro di quanto sembri: parti a corpo libero." },
+  { id:"legpress", n:"Leg press / leg extension", att:"Attacco della chest press", rest:90, step:5, unit:"kg",
+    k:"Solo se quell'attacco risulta essere davvero questo — da verificare in casa." },
+  /* --- cerniera d'anca --- */
+  { id:"rdlbb", n:"Stacco rumeno col bilanciere", att:"Bilanciere", rest:120, step:2.5, unit:"kg",
+    k:"Stesso movimento dei manubri, progressione più fine coi dischi piccoli." },
+  { id:"ponte", n:"Ponte per glutei", att:"Bilanciere o manubrio sul bacino", rest:90, step:2.5, unit:"kg",
+    k:"Meno carico sulla schiena bassa, nei giorni in cui è affaticata." },
+  { id:"goodm", n:"Good morning", att:"Bilanciere leggero", rest:120, step:2.5, unit:"kg",
+    k:"Allena la stessa cerniera d'anca con una leva più lunga.",
+    warn:"Il più delicato tecnicamente del suo gruppo: solo carichi bassi." },
+  { id:"legcurl", n:"Leg curl", att:"Attacco della chest press", rest:90, step:5, unit:"kg", agg:1,
+    k:"Copre la flessione del ginocchio, che lo stacco non fa. Da verificare che l'attacco sia questo." },
+  /* --- spinta orizzontale --- */
+  { id:"pancadb", n:"Panca con manubri", att:"Manubri + panca", rest:90, step:2, unit:"kg",
+    k:"Da soli è accettabile: se cedi, i manubri si mollano di lato." },
+  { id:"pancainc", n:"Panca inclinata con manubri", att:"Panca a 30-45°", rest:90, step:2, unit:"kg",
+    k:"Sposta il lavoro sulla parte alta del petto." },
+  { id:"pieg", n:"Piegamenti", att:"A terra", rest:90, step:1, corpo:1,
+    k:"Scala: muro, tavolo, ginocchia, normali, piedi rialzati." },
+  { id:"dip", n:"Dip alle parallele", att:"Power tower", rest:90, step:1, corpo:1,
+    k:"Spinta verso il basso, molto carico sul petto e sui tricipiti.",
+    warn:"Duro, e con la spalla in una posizione delicata. Non prima di due mesi." },
+  /* --- trazione verticale --- */
+  { id:"traz", n:"Trazioni alla sbarra", att:"Power tower", rest:90, step:1, corpo:1,
+    k:"Se troppo dure, un elastico sotto i piedi: gli elastici ci sono. A 45 kg sei avvantaggiato." },
+  { id:"latstretta", n:"Lat machine presa stretta", att:"Macchina Technogym", rest:90, step:5, unit:"kg",
+    k:"Più bicipite, e un angolo diverso sui dorsali." },
+  { id:"latinv", n:"Lat machine presa inversa", att:"Macchina Technogym", rest:90, step:5, unit:"kg",
+    k:"Palmi rivolti verso di te." },
+  /* --- trazione orizzontale --- */
+  { id:"rowbb", n:"Rematore col bilanciere", att:"Bilanciere", rest:90, step:2.5, unit:"kg",
+    k:"Più carico, ma chiede di più alla schiena bassa." },
+  { id:"rowaus", n:"Rematore australiano", att:"Sotto la sbarra bassa", rest:90, step:1, corpo:1,
+    k:"A corpo libero: più orizzontale sei, più è duro." },
+  { id:"pulley", n:"Pulley basso", att:"Lat machine, se ha il cavo basso", rest:90, step:5, unit:"kg",
+    k:"Da verificare che il cavo basso ci sia davvero." },
+  /* --- spinta verticale --- */
+  { id:"military", n:"Military press", att:"Bilanciere nel rack", rest:90, step:2.5, unit:"kg",
+    k:"In piedi, tutto il corpo lavora per tenere la posizione.",
+    warn:"Solo dentro il rack, coi fermi regolati all'altezza giusta." },
+  { id:"arnold", n:"Arnold press", att:"Manubri", rest:90, step:2, unit:"kg",
+    k:"Con rotazione dei polsi durante la spinta." },
+  { id:"alzate", n:"Alzate laterali", att:"Manubri leggeri", rest:60, step:1, unit:"kg", agg:1,
+    k:"Isolamento del deltoide laterale. Si aggiunge in fondo, non prende il posto di una spinta." },
+  /* --- core --- */
+  { id:"planklat", n:"Plank laterale", att:"A terra", rest:90, step:5, unit:"sec", secs:true,
+    k:"Lavora i lati, che di solito sono i più deboli." },
+  { id:"deadbug", n:"Dead bug", att:"A terra", rest:90, step:1, corpo:1,
+    k:"Braccio e gamba opposti, schiena incollata al pavimento." },
+  { id:"legraise", n:"Leg raise", att:"Power tower", rest:90, step:1, corpo:1,
+    k:"Appoggio sugli avambracci, sollevi le ginocchia." },
+  { id:"hollow", n:"Hollow hold", att:"A terra", rest:90, step:5, unit:"sec", secs:true,
+    k:"Duro sul serio: parti con le ginocchia piegate." }
+];
+
+/* Registro piatto di TUTTE le varianti: serve solo per la ricerca per id. */
+var EXALL = EX_BASE.concat(VAR_ALT);
+
+var SLOT = [
+  { id:"acc",   n:"Accosciata",           mus:"quadricipiti e glutei", def:"goblet", alt:["squatbb","affondi","bulgaro","legpress"] },
+  { id:"cern",  n:"Cerniera d'anca",      mus:"femorali e glutei",     def:"rdl",    alt:["rdlbb","ponte","goodm","legcurl"] },
+  { id:"spo",   n:"Spinta orizzontale",   mus:"petto e tricipiti",     def:"chest",  alt:["pancadb","pancainc","pieg","dip"] },
+  { id:"tvert", n:"Trazione verticale",   mus:"dorsali",               def:"lat",    alt:["traz","latstretta","latinv"] },
+  { id:"toriz", n:"Trazione orizzontale", mus:"schiena media",         def:"row",    alt:["rowbb","rowaus","pulley"] },
+  { id:"svert", n:"Spinta verticale",     mus:"spalle",                def:"ohp",    alt:["military","arnold","alzate"] },
+  { id:"core",  n:"Core",                 mus:"addome",                def:"plank",  alt:["planklat","deadbug","legraise","hollow"] }
 ];
 
 
@@ -896,9 +1008,13 @@ function schedaAttr(ex){
   var cue = CUE[ex.id] || [];
   if(cue.length) h += '<div class="mrow"><span class="kicker">Nell\'ordine</span><ol class="passi">' +
     cue.map(function(c){ return '<li>' + esc(c) + '</li>'; }).join("") + '</ol></div>';
-  /* La prosa resta, ma sotto e senza numeri: e contesto, non istruzione. */
-  h += '<div class="mrow">' +
-    ex.how.map(function(p){ return '<p class="fine">' + esc(p) + '</p>'; }).join("") +
+  /* La prosa resta, ma sotto e senza numeri: e contesto, non istruzione.
+     Le varianti aggiunte nella v2.6 non hanno ne CUE ne how — hanno una nota
+     breve. Senza questo ripiego l'app CROLLAVA appena sceglievi una variante:
+     trovato in collaudo, e valeva da solo tutta la batteria di prove. */
+  var prosa = ex.how || (ex.k ? [ex.k] : []);
+  if(prosa.length) h += '<div class="mrow">' +
+    prosa.map(function(p){ return '<p class="fine">' + esc(p) + '</p>'; }).join("") +
     '</div>';
   return h + '</div>';
 }
@@ -1125,10 +1241,14 @@ function fresh(){
     ordine:{},                // ISO -> [id,...] se hai spostato gli esercizi quel giorno
     ordineBase:[],            // il tuo ordine abituale, se ne hai fissato uno
     streSel:STRE_DIFETTO.slice(), // i tre di stretching scelti da te, oltre ai due fissi
-    kw:[]                     // test ginocchio-muro {d, sx, dx} in cm
+    kw:[],                    // test ginocchio-muro {d, sx, dx} in cm
+    scelta:{},                // ISO -> {slot: idEsercizio} la variante di quel giorno
+    "default":{},             // slot -> idEsercizio, la tua variante abituale
+    extra:{},                 // ISO -> [idEsercizio] gli aggiuntivi, in fondo alla seduta
+    rifiutati:{}              // slot -> idEsercizio per cui hai gia' detto no al predefinito
   };
 }
-var SCHEMA = 2;
+var SCHEMA = 3;
 var schemaFuturo = false;
 /* Riempie i campi che una versione piu vecchia non aveva e riallinea v.
    Non tocca mai i dati esistenti: aggiunge soltanto cio che manca. */
@@ -1237,7 +1357,7 @@ copiaDelGiorno();
    4. NESSUN PULSANTE. Una riga in testa dice come sta, e non chiede niente.
    ============================================================ */
 
-var VERSIONE = "2.5";
+var VERSIONE = "2.6";
 var KEY_SY = "palestra-sync";
 
 function syncCfg(){
@@ -1328,6 +1448,11 @@ function fondi(loc, rem){
      darebbe una terza che nessuno ha scelto. Vince il locale, cioe' il
      telefono su cui hai spostato le cose. */
   o.ordine   = fondiMappa(o.ordine,   r.ordine,   function(a, b){ return a || b; });
+  /* La scelta di un giorno e' un fatto di quel giorno, come le serie. */
+  o.scelta   = fondiMappa(o.scelta,   r.scelta,   piuPieno);
+  o.extra    = fondiMappa(o.extra,    r.extra,    function(a, b){ return (a && a.length) ? a : b; });
+  o["default"]  = fondiMappa(o["default"],  r["default"],  function(a, b){ return a || b; });
+  o.rifiutati   = fondiMappa(o.rifiutati,   r.rifiutati,   function(a, b){ return a || b; });
   /* Le regolazioni sono testo scritto da te: vince quello che c'e', non il
      piu' lungo — "foro 3" non deve perdere contro una frase vecchia. */
   o.regol = fondiMappa(o.regol, r.regol, function(a, b){
@@ -1561,34 +1686,80 @@ function cambiaSerie(d, exId, delta){
    abituale, e in fondo la scheda. Stessa idea di nSerie(): la scheda e' il
    valore di riferimento, non una gabbia. Serve perche' in sala la macchina
    che ti tocca puo' essere occupata, e aspettare non e' allenarsi. */
+function exDi(id){ var t = null; EXALL.forEach(function(x){ if(x.id === id) t = x; }); return t; }
+function slotDi(sid){ var t = null; SLOT.forEach(function(s){ if(s.id === sid) t = s; }); return t; }
+/* Dall'id di un esercizio allo slot che lo contiene. */
+function slotDiEx(exId){
+  var t = null;
+  SLOT.forEach(function(s){ if(s.def === exId || s.alt.indexOf(exId) >= 0) t = s; });
+  return t;
+}
+function variantiSlot(s){ return [s.def].concat(s.alt).map(exDi).filter(Boolean); }
+
+/* Le varianti si aprono dalla settimana 5, e non e' prudenza generica: lo
+   studio che le autorizza (Baz-Valle 2019) e' su uomini GIA' ALLENATI. Al
+   primo mese il guadagno e' nervoso — il cervello impara il movimento
+   ripetendolo — e cambiare esercizio ogni volta fa ricominciare da capo.
+   vincoli.md 1-quinquies. Sullo stretching questo blocco NON c'e', ed e'
+   voluto: li' non c'e' nessuna progressione di carico da proteggere. */
+function variantiAperte(){ var w = weekNow(); return w !== null && w >= 5; }
+
+/* Quale esercizio occupa quello slot in quel giorno. La scelta di un giorno
+   passato vale sempre, anche se oggi le varianti fossero chiuse: riaprire una
+   seduta vecchia deve mostrare cio' che avevi fatto davvero quel giorno. */
+function exDelloSlot(d, sid){
+  var s = slotDi(sid); if(!s) return null;
+  var scelta = (S.scelta && S.scelta[d] && S.scelta[d][sid]) || null;
+  var pref = variantiAperte() ? ((S.default && S.default[sid]) || null) : null;
+  return exDi(scelta || pref || s.def) || exDi(s.def);
+}
+
 function ordineIds(d){
-  var ids = (S.ordine && S.ordine[d])
+  var salvato = (S.ordine && S.ordine[d])
     || ((S.ordineBase && S.ordineBase.length) ? S.ordineBase : null)
-    || EX.map(function(x){ return x.id; });
-  /* Difesa contro un ordine salvato quando la scheda era diversa: si buttano
-     gli id che non esistono piu e si accodano gli esercizi mancanti. Senza,
-     cambiare EX farebbe sparire un esercizio dalla seduta senza dirlo. */
+    || [];
   var out = [];
-  ids.forEach(function(id){
-    if(out.indexOf(id) < 0 && EX.some(function(x){ return x.id === id; })) out.push(id);
+  salvato.forEach(function(x){
+    /* Fino alla v2.2 qui c'erano id di ESERCIZIO. Con le varianti l'ordine
+       deve essere per SLOT, altrimenti cambiando esercizio un ordine salvato
+       non troverebbe piu' nulla. Si accettano tutte e due le forme. */
+    var sid = slotDi(x) ? x : (slotDiEx(x) || {}).id;
+    if(sid && out.indexOf(sid) < 0) out.push(sid);
   });
-  EX.forEach(function(x){ if(out.indexOf(x.id) < 0) out.push(x.id); });
+  /* Difesa: uno slot mancante dall'ordine salvato viene accodato invece che
+     perso. Senza, cambiare SLOT farebbe sparire un pattern dalla settimana. */
+  SLOT.forEach(function(s){ if(out.indexOf(s.id) < 0) out.push(s.id); });
   return out;
 }
-function exOggi(d){
-  return ordineIds(d).map(function(id){
-    var t = null;
-    EX.forEach(function(x){ if(x.id === id) t = x; });
-    return t;
+
+/* Le voci della seduta: slot piu esercizio. Gli AGGIUNTIVI (leg curl, alzate
+   laterali) hanno sid null — non prendono il posto di nulla e stanno in fondo. */
+function vociOggi(d){
+  var out = ordineIds(d).map(function(sid){ return { sid:sid, ex:exDelloSlot(d, sid) }; })
+                        .filter(function(v){ return v.ex; });
+  ((((S.extra || {})[d]) || [])).forEach(function(id){
+    var e = exDi(id);
+    if(e && !out.some(function(v){ return v.ex.id === id; })) out.push({ sid:null, ex:e });
   });
+  return out;
+}
+function exOggi(d){ return vociOggi(d).map(function(v){ return v.ex; }); }
+/* Posizione dell'esercizio nella seduta di quel giorno, aggiuntivi compresi.
+   Non si puo' piu' cercare l'id dell'esercizio dentro ordineIds(), che ora
+   contiene slot. */
+function posEx(d, exId){
+  var i = -1;
+  vociOggi(d).forEach(function(v, k){ if(v.ex.id === exId) i = k; });
+  return i;
 }
 function scriviOrdine(d, ids){
   if(!S.ordine) S.ordine = {};
   S.ordine[d] = ids;
   save();
 }
-function spostaEx(d, exId, delta){
-  var ids = ordineIds(d), i = ids.indexOf(exId), j = i + delta;
+/* Da qui in giu' si lavora su id di SLOT, non di esercizio. */
+function spostaEx(d, sid, delta){
+  var ids = ordineIds(d), i = ids.indexOf(sid), j = i + delta;
   if(i < 0 || j < 0 || j >= ids.length) return false;
   ids.splice(j, 0, ids.splice(i, 1)[0]);
   scriviOrdine(d, ids);
@@ -1596,16 +1767,60 @@ function spostaEx(d, exId, delta){
 }
 /* "Rimanda a dopo": in mezzo a una seduta e' l'unico gesto che serve davvero
    quando trovi la macchina occupata. Sposta in fondo, non di un posto. */
-function rimandaEx(d, exId){
-  var ids = ordineIds(d), i = ids.indexOf(exId);
+function rimandaEx(d, sid){
+  var ids = ordineIds(d), i = ids.indexOf(sid);
   if(i < 0 || i === ids.length - 1) return false;
-  ids.splice(i, 1); ids.push(exId);
+  ids.splice(i, 1); ids.push(sid);
   scriviOrdine(d, ids);
   return true;
 }
 function fissaOrdine(d){ S.ordineBase = ordineIds(d).slice(); save(); }
 function ordineDiRiferimento(){
-  return ((S.ordineBase && S.ordineBase.length) ? S.ordineBase : EX.map(function(x){ return x.id; })).join(",");
+  if(S.ordineBase && S.ordineBase.length){
+    var n = [];
+    S.ordineBase.forEach(function(x){
+      var sid = slotDi(x) ? x : (slotDiEx(x) || {}).id;
+      if(sid && n.indexOf(sid) < 0) n.push(sid);
+    });
+    SLOT.forEach(function(s){ if(n.indexOf(s.id) < 0) n.push(s.id); });
+    return n.join(",");
+  }
+  return SLOT.map(function(s){ return s.id; }).join(",");
+}
+
+/* ---------- la scelta della variante ---------- */
+
+/* Vale per il giorno, non per sempre. */
+function scegliVariante(d, sid, exId){
+  if(!S.scelta) S.scelta = {};
+  if(!S.scelta[d]) S.scelta[d] = {};
+  S.scelta[d][sid] = exId;
+  save();
+}
+/* Gli aggiuntivi: si accodano, non sostituiscono. */
+function togliExtra(d, exId){
+  if(!S.extra || !S.extra[d]) return;
+  S.extra[d] = S.extra[d].filter(function(x){ return x !== exId; });
+  save();
+}
+function aggiungiExtra(d, exId){
+  if(!S.extra) S.extra = {};
+  if(!S.extra[d]) S.extra[d] = [];
+  if(S.extra[d].indexOf(exId) < 0) S.extra[d].push(exId);
+  save();
+}
+/* Dopo tre sedute di fila con la stessa variante l'app propone di renderla
+   predefinita. Una domanda sola: se la rifiuti non torna, perche' un
+   promemoria ricorrente su una preferenza e' esattamente il tipo di rumore
+   che fa smettere di usare queste app. */
+function treVolteDiFila(sid){
+  var gg = sedute().slice(-3);
+  if(gg.length < 3) return null;
+  var primi = gg.map(function(g){ return ((S.scelta || {})[g] || {})[sid]; });
+  if(!primi[0] || primi[0] !== primi[1] || primi[1] !== primi[2]) return null;
+  if(((S.default || {})[sid]) === primi[0]) return null;
+  if(((S.rifiutati || {})[sid]) === primi[0]) return null;
+  return primi[0];
 }
 function ordineSpostatoOggi(d){ return ordineIds(d).join(",") !== ordineDiRiferimento(); }
 
@@ -1637,7 +1852,7 @@ function lastSession(exId, beforeISO){
   return null;
 }
 function suggerimento(exId, beforeISO){
-  var ex = EX.filter(function(e){ return e.id === exId; })[0];
+  var ex = exDi(exId);
   var last = lastSession(exId, beforeISO);
   if(!last) return null;
   var soglia = ex.secs ? 30 : 12;
@@ -1654,7 +1869,7 @@ function suggerimento(exId, beforeISO){
    Se l'ultima volta erano chiuse tutte al massimo, la proposta e gia il
    carico salito: la regola "prima ripetizioni, poi peso" applicata da sola. */
 function proposta(exId, beforeISO){
-  var ex = EX.filter(function(e){ return e.id === exId; })[0];
+  var ex = exDi(exId);
   var last = lastSession(exId, beforeISO);
   if(!last) return null;
   var soglia = ex.secs ? 30 : 12;
@@ -2710,7 +2925,7 @@ function sesStart(kind){
   /* Solo se la seduta di oggi e gia stata cominciata: altrimenti il salto
      mangerebbe l'avvicinamento e l'introduzione del primo esercizio. */
   var iniziata = kind === "pesi"
-    ? EX.some(function(e){ return (((S.sessions[d] || {})[e.id]) || []).some(function(x){ return x.done; }); })
+    ? exOggi(d).some(function(e){ return (((S.sessions[d] || {})[e.id]) || []).some(function(x){ return x.done; }); })
     : streOggi().some(function(x){ return stretchDay(d).items[x.id]; });
   if(iniziata) for(var k = 0; k < ses.steps.length; k++){
     var s = ses.steps[k];
@@ -2765,7 +2980,7 @@ function vSessione(){
   var foot = "", cnt = sesConteggio();
 
   if(s.t === "intro"){
-    h += '<span class="kicker">Esercizio ' + (ordineIds(oggiISO()).indexOf(s.ex.id) + 1) + ' di ' + EX.length + '</span>' +
+    h += '<span class="kicker">Esercizio ' + (posEx(d, s.ex.id) + 1) + ' di ' + vociOggi(d).length + '</span>' +
       '<h2>' + esc(s.ex.n) + '</h2>' +
       figuraSVG(s.ex.id) +
       '<p class="fine2">Dimostrazione del movimento, <strong>non il ritmo da tenere</strong>: la velocità delle ripetizioni non cambia i risultati, il carico sì.</p>' +
@@ -2805,7 +3020,7 @@ function vSessione(){
     var vRp = st.reps != null ? st.reps : (pr ? pr.reps : (s.ex.secs ? 20 : 10));
     var nS = nSerie(d, s.ex.id);
     var eti = "Serie " + (s.si + 1) + " di " + nS + ", " + s.ex.n;
-    h += '<span class="kicker">' + esc(s.ex.n) + ' · esercizio ' + (ordineIds(oggiISO()).indexOf(s.ex.id) + 1) + ' di ' + EX.length +
+    h += '<span class="kicker">' + esc(s.ex.n) + ' · esercizio ' + (posEx(d, s.ex.id) + 1) + ' di ' + vociOggi(d).length +
         ' · serie ' + (cnt.now + 1) + ' di ' + cnt.tot + '</span>' +
       '<h2>Serie ' + (s.si + 1) + ' di ' + nS + '</h2>' +
       figuraSVG(s.ex.id) +
@@ -3129,7 +3344,7 @@ function vOggi(){
   var w = weekNow();
   var tipo = PIANO[now.getDay()];
   var titolo = tipo === "pesi" ? "Pesi — full body" : tipo === "corsa" ? "Corsa" : "Riposo";
-  var fattoPesi = tipo === "pesi" && S.sessions[d] && EX.some(function(e){ return (S.sessions[d][e.id]||[]).some(function(x){ return x.done; }); });
+  var fattoPesi = tipo === "pesi" && S.sessions[d] && exOggi(d).some(function(e){ return (S.sessions[d][e.id]||[]).some(function(x){ return x.done; }); });
   var fattaCorsa = tipo === "corsa" && S.runs.some(function(r){ return r.d === d; });
 
   /* La prima cosa che si vede: il saluto, cosa si fa oggi, un omino di lato
@@ -3139,7 +3354,7 @@ function vOggi(){
   var figOggi = tipo === "pesi" ? "goblet" : tipo === "corsa" ? "corre" : "cammina";
   var riga, azione;
   if(tipo === "pesi"){
-    riga = EX.length + " esercizi · " + serieCount() + " serie · circa " + (w === 1 ? 40 : 55) + " min";
+    riga = exOggi(d).length + " esercizi · " + serieCount() + " serie · circa " + (w === 1 ? 40 : 55) + " min";
     azione = '<button class="btn primary wide" data-act="sesStart" data-kind="pesi">' +
       (fattoPesi ? "Riprendi" : "Vai") + '</button>' +
       '<button class="btn ghost wide sm" data-act="go" data-to="pesi">Elenco</button>';
@@ -3274,6 +3489,71 @@ function avvioMancante(cosa){
     '</div>';
 }
 
+/* ---------- cambiare la variante di uno slot ---------- */
+var cambioAperto = null;   /* id dello slot col pannello aperto */
+
+function ultimoCarico(exId){
+  var l = lastSession(exId, "9999-99-99");
+  if(!l || !l.sets || !l.sets.length || l.sets[0].kg == null) return null;
+  var e = exDi(exId);
+  return String(l.sets[0].kg).replace(".", ",") + (e && e.secs ? " sec" : " kg");
+}
+
+function vCambiaEx(d, sid, ex){
+  var s = slotDi(sid); if(!s) return "";
+  var h = '<div class="cambia">';
+
+  if(!variantiAperte()){
+    /* Divieto spiegato, non muto: la ragione e' tecnica e vale la pena saperla. */
+    h += '<p class="fine">Le varianti si aprono dalla <strong>settimana 5</strong>. Adesso il guadagno è nervoso — il cervello impara il movimento ripetendolo — e cambiare esercizio ogni volta fa ricominciare l\'apprendimento da capo.</p>';
+    if(sid === "acc")
+      h += '<p class="fine">Unica eccezione: il passaggio al <strong>bilanciere</strong> non dipende dalla settimana ma dal criterio tecnico — 3×10 di goblet a piena profondità con tecnica pulita.</p>';
+    return h + '</div>';
+  }
+
+  var prop = treVolteDiFila(sid);
+  if(prop && cambioAperto !== sid){
+    var pn = (exDi(prop) || {}).n || prop;
+    h += '<div class="note"><strong>Tre sedute di fila con ' + esc(pn) + '.</strong> Lo rendo il predefinito di questo slot?' +
+      '<div class="row"><button class="btn sm" data-act="defSi" data-sid="' + sid + '" data-id="' + prop + '">Sì</button>' +
+      '<button class="btn sm ghost" data-act="defNo" data-sid="' + sid + '" data-id="' + prop + '">No, lascia così</button></div></div>';
+  }
+
+  h += '<button class="btn sm ghost wide" data-act="cambiaEx" data-sid="' + sid + '">' +
+    (cambioAperto === sid ? "Chiudi" : "Cambia esercizio") + '</button>';
+  if(cambioAperto !== sid) return h + '</div>';
+
+  h += '<p class="fine">Slot <strong>' + esc(s.n) + '</strong> — ' + esc(s.mus) + '. Una sostituzione alla volta, e tienila almeno 3-4 settimane prima di giudicarla: le prime due volte sei goffo su qualsiasi movimento.</p>';
+
+  variantiSlot(s).forEach(function(v){
+    var qui = v.id === ex.id, car = ultimoCarico(v.id);
+    h += '<div class="varvoce" data-on="' + (qui ? 1 : 0) + '">' +
+      '<div class="vt"><strong>' + esc(v.n) + '</strong>' +
+        (qui ? ' <span class="pill">in uso</span>' : '') +
+        (v.agg ? ' <span class="pill up">si aggiunge</span>' : '') + '</div>' +
+      '<div class="va">' + esc(v.att) + '</div>' +
+      (v.k ? '<p class="fine">' + esc(v.k) + '</p>' : '') +
+      /* L'avviso di sicurezza sta QUI, prima che tu scelga, non nel "come si
+         fa" che si apre dopo: dopo e' tardi. */
+      (v.warn ? '<div class="note alert">' + esc(v.warn) + '</div>' : '') +
+      '<div class="vc">' + (car
+        ? 'ultimo carico <span class="num">' + car + '</span>'
+        : 'mai usato — <strong>prima seduta con carico prudente</strong>, come alla settimana 1') + '</div>' +
+      (qui ? ''
+           : v.agg
+             ? '<button class="btn sm" data-act="extraAdd" data-id="' + v.id + '">Aggiungi in fondo alla seduta</button>'
+             : '<button class="btn sm" data-act="scegliEx" data-sid="' + sid + '" data-id="' + v.id + '">Usa questo oggi</button>') +
+      '</div>';
+  });
+  h += '<p class="fine">La scelta vale <strong>per oggi</strong>. Su un esercizio nuovo il carico riparte da zero: 40 kg di macchina e 14 kg per manubrio non sono la stessa scala, e confrontarli non vorrebbe dire niente.</p>';
+  return h + '</div>';
+}
+
+function vTogliExtra(ex){
+  return '<div class="cambia"><p class="fine">Aggiunto in fondo: non prende il posto di nessuno slot.</p>' +
+    '<button class="btn sm ghost" data-act="extraDel" data-id="' + ex.id + '">Togli dalla seduta di oggi</button></div>';
+}
+
 var avvisoSerie = null;  /* messaggio sotto i tasti delle serie, dura un ridisegno */
 function vPesi(){
   if(!S.start) return bannerStorage() + avvioMancante("una seduta di pesi");
@@ -3297,8 +3577,9 @@ function vPesi(){
       : '') +
     '</div>';
 
-  var lista = exOggi(d);
-  lista.forEach(function(ex, i){
+  var voci = vociOggi(d), lista = voci.map(function(v){ return v.ex; });
+  voci.forEach(function(voce, i){
+    var ex = voce.ex, sid = voce.sid;
     var sets = setsOf(d, ex.id);
     var last = lastSession(ex.id, d);
     var pr = proposta(ex.id, d), nEx = nSerie(d, ex.id);
@@ -3323,7 +3604,10 @@ function vPesi(){
       }
       h += '</div>';
     }
-    h += '<div class="set-head"><span>Serie</span><span>' + (ex.secs ? "—" : "Kg") + '</span><span>' + (ex.secs ? "Secondi" : "Rip.") + '</span><span></span></div>';
+    /* corpo:1 e' a corpo libero contando RIPETIZIONI: niente colonna dei chili
+       come il plank, ma la colonna a destra resta "Rip." e non "Secondi". */
+    var senzaKg = ex.secs || ex.corpo;
+    h += '<div class="set-head"><span>Serie</span><span>' + (senzaKg ? "—" : "Kg") + '</span><span>' + (ex.secs ? "Secondi" : "Rip.") + '</span><span></span></div>';
     sets.forEach(function(st, si){
       /* Campi vuoti = si mostra la proposta, in grigio. Diventa un dato vero
          solo quando spunti o quando modifichi: fino ad allora S resta intatto. */
@@ -3333,7 +3617,7 @@ function vPesi(){
       var vRp = st.reps != null ? st.reps : (prop ? pr.reps : "");
       h += '<div class="set" data-ex="' + ex.id + '" data-i="' + si + '" data-done="' + (st.done ? 1 : 0) + '" data-prop="' + prop + '">' +
         '<span class="sn">' + (si+1) + '</span>' +
-        (ex.secs
+        (senzaKg
           ? '<span style="text-align:center;color:var(--ink-3);font-family:var(--mono);font-size:12px">corpo</span>'
           : '<div class="stepper"><button type="button" data-act="st" data-f="kg" data-dl="-' + ex.step + '">−</button>' +
             '<input type="number" inputmode="decimal" step="' + ex.step + '" data-f="kg" value="' + vKg + '" aria-label="chili serie ' + (si+1) + '">' +
@@ -3353,12 +3637,15 @@ function vPesi(){
       /* Spostare l'esercizio. Sta qui accanto alle serie perche' e' la stessa
          famiglia di gesto: adattare la seduta di oggi a com'e' andata. */
       '<span class="ordina">' +
-        '<button type="button" class="btn sm" data-act="exSu" data-id="' + ex.id + '"' +
-          (i === 0 ? ' disabled' : '') + ' aria-label="sposta ' + esc(ex.n) + ' prima">↑</button>' +
-        '<button type="button" class="btn sm" data-act="exGiu" data-id="' + ex.id + '"' +
-          (i === lista.length - 1 ? ' disabled' : '') + ' aria-label="sposta ' + esc(ex.n) + ' dopo">↓</button>' +
+        '<button type="button" class="btn sm" data-act="exSu" data-id="' + esc(sid || "") + '"' +
+          (i === 0 || !sid ? ' disabled' : '') + ' aria-label="sposta ' + esc(ex.n) + ' prima">↑</button>' +
+        '<button type="button" class="btn sm" data-act="exGiu" data-id="' + esc(sid || "") + '"' +
+          (i === lista.length - 1 || !sid ? ' disabled' : '') + ' aria-label="sposta ' + esc(ex.n) + ' dopo">↓</button>' +
       '</span>' +
       '</div>' +
+      /* Il cambio di variante e il suo blocco. Sugli aggiuntivi non c'e':
+         non occupano uno slot, quindi non c'e' niente da sostituire. */
+      (sid ? vCambiaEx(d, sid, ex) : vTogliExtra(ex)) +
       (avvisoSerie && avvisoSerie.id === ex.id ? '<p class="fine avviso-serie">' + esc(avvisoSerie.t) + '</p>' : "");
     h += '</div>';
     h += '<div class="how" id="how-' + ex.id + '" hidden>' +
@@ -3634,7 +3921,10 @@ function vDati(){
   h += '</div>';
 
   /* pesi: storico carichi */
-  var storico = EX.map(function(ex){
+  /* Tutte le varianti, non solo le sette di oggi: se hai usato la panca coi
+     manubri il mese scorso, quel carico va ritrovato. Il filtro sotto tiene
+     solo quelle con uno storico vero. */
+  var storico = EXALL.map(function(ex){
     var l = lastSession(ex.id, "9999-99-99");
     return { ex:ex, l:l };
   }).filter(function(x){ return x.l; });
@@ -3748,7 +4038,7 @@ document.getElementById("view").addEventListener("click", function(e){
   if(a === "sesPiu30"){ rest.end += 30000; rest.done = false; tickRest(); return; }
   if(a === "sesTimer"){ restStart(+el.dataset.sec, "Tenuta"); return; }
   if(a === "sesHow"){
-    var exH = EX.filter(function(x){ return x.id === el.dataset.id; })[0];
+    var exH = exDi(el.dataset.id);
     var box = document.getElementById("sesPop");
     if(box){ box.remove(); return; }
     var corpo = schedaAttr(exH);
@@ -3856,14 +4146,37 @@ document.getElementById("view").addEventListener("click", function(e){
     save(); render(); return;
   }
   if(a === "exRimanda"){
-    var idRim = el.dataset.id, pos = ordineIds(d).indexOf(idRim);
-    if(!rimandaEx(d, idRim)) return;
-    var subentra = ordineIds(d)[pos];   /* chi ha preso il suo posto */
+    /* Dalla seduta arriva l'id dell'ESERCIZIO: l'ordine lavora sugli slot. */
+    var sidRim = (slotDiEx(el.dataset.id) || {}).id;
+    if(!sidRim) return;
+    var pos = ordineIds(d).indexOf(sidRim);
+    if(!rimandaEx(d, sidRim)) return;
+    var subentra = exDelloSlot(d, ordineIds(d)[pos]);   /* chi ha preso il suo posto */
     ses.steps = buildSteps(ses.kind);
     for(var k3 = 0; k3 < ses.steps.length; k3++){
-      if(ses.steps[k3].t === "intro" && ses.steps[k3].ex.id === subentra){ ses.i = k3; break; }
+      if(ses.steps[k3].t === "intro" && subentra && ses.steps[k3].ex.id === subentra.id){ ses.i = k3; break; }
     }
     verso = 1; buzz(25); render(); return;
+  }
+
+  /* ---- scelta della variante ---- */
+  if(a === "cambiaEx"){ cambioAperto = (cambioAperto === el.dataset.sid) ? null : el.dataset.sid; render(); return; }
+  if(a === "scegliEx"){
+    scegliVariante(d, el.dataset.sid, el.dataset.id);
+    cambioAperto = null; buzz(25); render(); return;
+  }
+  if(a === "extraAdd"){ aggiungiExtra(d, el.dataset.id); cambioAperto = null; buzz(25); render(); return; }
+  if(a === "extraDel"){ togliExtra(d, el.dataset.id); render(); return; }
+  if(a === "defSi"){
+    if(!S.default) S.default = {};
+    S.default[el.dataset.sid] = el.dataset.id; save(); render(); return;
+  }
+  if(a === "defNo"){
+    /* Si annota il rifiuto, altrimenti la domanda tornerebbe a ogni seduta:
+       una preferenza chiesta una volta e' un servizio, chiesta ogni volta
+       e' il rumore che fa smettere di usare queste app. */
+    if(!S.rifiutati) S.rifiutati = {};
+    S.rifiutati[el.dataset.sid] = el.dataset.id; save(); render(); return;
   }
 
   /* Tocca un giorno del calendario: si apre il dettaglio, ritoccalo e si chiude. */
@@ -3891,7 +4204,7 @@ document.getElementById("view").addEventListener("click", function(e){
   if(a === "done"){
     var row = el.closest(".set");
     var exId = row.dataset.ex, i = +row.dataset.i;
-    var ex = EX.filter(function(x){ return x.id === exId; })[0];
+    var ex = exDi(exId);
     var sets = setsOf(d, exId);
     sets[i].done = !sets[i].done;
     if(sets[i].done){
