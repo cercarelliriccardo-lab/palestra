@@ -646,6 +646,12 @@
      tempo, quindi deve stare nella stessa larghezza dello stepper. */
   /* Due sezioni sotto la stessa scheda. Non sono linguette di navigazione:
      stanno dentro la vista, quindi si distinguono dalla barra in basso. */
+  /* La traccia della corsa: nessun fondo e nessuna cornice, come le figure
+     dalla v1.9.2. Il percorso e' l'unica cosa disegnata. */
+  .trbox{margin:2px 0 8px}
+  .traccia{display:block;width:100%;height:auto;max-height:210px}
+  .gpsriga{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px}
+  .gpsriga .num{font-size:22px;font-weight:600;color:var(--accent)}
   .segm{display:flex;gap:6px;background:var(--surface-2);border:1px solid var(--line);
     border-radius:12px;padding:4px;margin-bottom:2px}
   .segm button{
@@ -1409,7 +1415,7 @@ copiaDelGiorno();
    4. NESSUN PULSANTE. Una riga in testa dice come sta, e non chiede niente.
    ============================================================ */
 
-var VERSIONE = "3.1";
+var VERSIONE = "3.2";
 var KEY_SY = "palestra-sync";
 
 function syncCfg(){
@@ -2257,6 +2263,156 @@ function tickRest(){
    Timer della corsa
    ============================================================ */
 
+/* ============================================================
+   LA TRACCIA DELLA CORSA
+   ============================================================
+   Perche' non c'e' una cartina. Disegnare le strade vuol dire chiedere le
+   tessere a un servizio esterno, e a ogni tocco quel servizio impara dove sei.
+   La traccia — la forma del percorso su fondo vuoto — dice quanto e dove sei
+   girato senza che la tua posizione esca dal telefono, e non introduce una
+   dipendenza in un file che non ne ha nessuna.
+
+   Il GPS non e' preciso: si scartano i punti con precisione peggiore di 35 m
+   e i salti che implicherebbero piu di 8 m/s, che a piedi non esistono e sono
+   il modo tipico in cui il GPS urbano inventa cento metri fermi al semaforo.
+
+   La traccia salvata e' potata a 120 punti e arrotondata a cinque decimali
+   (~1 m): finisce dentro stato.json, che viaggia in rete a ogni modifica, e
+   una corsa da mille punti la farebbe pesare piu di tutto il resto insieme.
+   ============================================================ */
+
+var gps = { on:false, id:0, pts:[], km:0, prec:null, errore:"", ultimo:null };
+
+function haversine(a, b){
+  var R = 6371, r = Math.PI / 180;
+  var dLat = (b[0] - a[0]) * r, dLon = (b[1] - a[1]) * r;
+  var s = Math.sin(dLat/2)*Math.sin(dLat/2) +
+          Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin(dLon/2)*Math.sin(dLon/2);
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
+}
+
+function gpsVia(){
+  if(!navigator.geolocation){ gps.errore = "Questo telefono non da la posizione."; render(); return; }
+  gps = { on:true, id:0, pts:[], km:0, prec:null, errore:"", ultimo:null };
+  gps.id = navigator.geolocation.watchPosition(function(p){
+    var c = p.coords;
+    gps.prec = Math.round(c.accuracy);
+    if(c.accuracy > 35) return;                       /* troppo incerto per fidarsi */
+    var q = [c.latitude, c.longitude], t = p.timestamp || Date.now();
+    if(gps.ultimo){
+      var dkm = haversine(gps.ultimo.q, q);
+      var dt = Math.max(1, (t - gps.ultimo.t) / 1000);
+      if(dkm * 1000 / dt > 8) return;                 /* 8 m/s a piedi non esistono */
+      if(dkm * 1000 < 3) return;                      /* fermo: non accumulare rumore */
+      gps.km += dkm;
+    }
+    gps.ultimo = { q:q, t:t };
+    gps.pts.push(q);
+    var el = document.getElementById("gpsKm");
+    if(el) el.textContent = gps.km.toFixed(2).replace(".", ",");
+    var tr = document.getElementById("gpsTr");
+    if(tr) tr.innerHTML = tracciaSVG(gps.pts);
+  }, function(e){
+    gps.errore = e.code === 1
+      ? "Permesso negato. Serve autorizzare la posizione per questa pagina."
+      : "La posizione non arriva. Sotto un tetto o fra i palazzi capita.";
+    render();
+  }, { enableHighAccuracy:true, maximumAge:2000, timeout:12000 });
+  render();
+}
+
+function gpsFerma(){
+  if(gps.id) navigator.geolocation.clearWatch(gps.id);
+  gps.on = false; gps.id = 0;
+}
+
+/* Potatura: si tengono 120 punti presi a passo costante. Non e' la
+   semplificazione piu furba possibile, ma e' prevedibile e non puo' storcere
+   la forma piu di quanto la storca il GPS stesso. */
+function potaTraccia(pts){
+  if(pts.length <= 120) return pts.map(function(p){
+    return [+p[0].toFixed(5), +p[1].toFixed(5)];
+  });
+  var out = [], passo = pts.length / 120;
+  for(var i = 0; i < 120; i++){
+    var p = pts[Math.floor(i * passo)];
+    out.push([+p[0].toFixed(5), +p[1].toFixed(5)]);
+  }
+  out.push([+pts[pts.length-1][0].toFixed(5), +pts[pts.length-1][1].toFixed(5)]);
+  return out;
+}
+
+function tracciaSVG(pts){
+  if(!pts || pts.length < 2) return '<p class="fine">In attesa del segnale…</p>';
+  var laMin = 90, laMax = -90, loMin = 180, loMax = -180;
+  pts.forEach(function(p){
+    if(p[0] < laMin) laMin = p[0]; if(p[0] > laMax) laMax = p[0];
+    if(p[1] < loMin) loMin = p[1]; if(p[1] > loMax) loMax = p[1];
+  });
+  /* La longitudine si accorcia con la latitudine: senza il coseno un percorso
+     nord-sud verrebbe schiacciato e uno est-ovest stirato. */
+  var kx = Math.cos((laMin + laMax) / 2 * Math.PI / 180);
+  var w = Math.max(1e-7, (loMax - loMin) * kx), hgt = Math.max(1e-7, laMax - laMin);
+  var scala = Math.min(280 / w, 160 / hgt);
+  var ox = (300 - w * scala) / 2, oy = (180 - hgt * scala) / 2;
+  var d = pts.map(function(p, i){
+    var x = ox + (p[1] - loMin) * kx * scala;
+    var y = 180 - oy - (p[0] - laMin) * scala;
+    return (i ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1);
+  }).join(" ");
+  var ult = pts[pts.length - 1];
+  var ux = ox + (ult[1] - loMin) * kx * scala, uy = 180 - oy - (ult[0] - laMin) * scala;
+  var pri = pts[0];
+  var px = ox + (pri[1] - loMin) * kx * scala, py = 180 - oy - (pri[0] - laMin) * scala;
+  return '<svg class="traccia" viewBox="0 0 300 180" role="img" aria-label="percorso della corsa">' +
+    '<path d="' + d + '" fill="none" stroke="var(--accent)" stroke-width="2.4" ' +
+    'stroke-linecap="round" stroke-linejoin="round"/>' +
+    '<circle cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="3.5" fill="var(--ink-3)"/>' +
+    '<circle cx="' + ux.toFixed(1) + '" cy="' + uy.toFixed(1) + '" r="4.5" fill="var(--accent)"/>' +
+    '</svg>';
+}
+
+/* ---------- da chilometri a passi, e a energia ----------
+   I PASSI NON SONO CONTATI, SONO DIVISI. Il telefono qui non conta i passi:
+   si divide la distanza per una falcata stimata sull'altezza. Il numero e'
+   onesto solo se detto cosi', ed e' scritto anche nell'app.
+   0,75 m sta fra la falcata di cammino a 160 cm (~0,66) e quella di corsa
+   (~0,95): una seduta a intervalli le alterna entrambe. */
+var FALCATA = 0.75;
+function passiDa(km){ return Math.round(km * 1000 / FALCATA); }
+
+/* Costo energetico: ~0,9 kcal per kg per km, valore intermedio fra corsa
+   (~1,03) e cammino (~0,5), perche' la seduta alterna le due. Moltiplicato
+   per il peso vero, se c'e'. */
+function pesoOra(){
+  var w = (S.weights || []).slice().sort(function(a,b){ return a.d < b.d ? -1 : 1; });
+  return w.length ? w[w.length-1].kg : 45;
+}
+function kcalDa(km){ return Math.round(km * pesoOra() * 0.9); }
+
+/* Quanta energia hai speso correndo, in quel giorno. Non e' un premio: alza
+   il bersaglio del piatto. Vedi targetKcal(). */
+function kcalCorse(d){
+  return (S.runs || []).reduce(function(a, r){
+    return a + ((r.d === d && r.kcal) ? r.kcal : 0);
+  }, 0);
+}
+/* IL PUNTO DI TUTTA LA FUNZIONE. A BMI 17,6 un contatore di calorie bruciate
+   e' un invito al conto sbagliato. Qui l'energia spesa NON viene mostrata
+   come risultato: viene sommata al bersaglio della giornata, cioe' diventa
+   cibo da rimettere. vincoli.md: ogni aumento di carico va accompagnato da un
+   aumento di cibo, mai il contrario. */
+function targetKcal(d){ return KCAL_MIN + kcalCorse(d); }
+/* L'etichetta della barra dice il bersaglio e, quando c'e', da dove viene
+   l'aumento: senza, un giorno il numero cambia e sembra un guasto. */
+function etichettaKcal(d){
+  var extra = kcalCorse(d);
+  var t = targetKcal(d);
+  return extra
+    ? (t + " · " + KCAL_MIN + " + " + extra + " di corsa")
+    : (KCAL_MIN + "-" + KCAL_MAX);
+}
+
 var run = { seq:[], i:0, end:0, playing:false, started:false };
 function buildSeq(week){
   var cfg = RUN_WEEKS[Math.max(0, Math.min(3, week - 1))];
@@ -2291,7 +2447,17 @@ function runFinish(){
   beep(3); buzz([300,120,300,120,300]);
   var rpe = prompt("Sessione finita. Sensazione da 1 a 5?\n1 = facile, potevo continuare · 3 = giusta · 5 = ho finito a fatica");
   var n = parseInt(rpe, 10);
-  S.runs.push({ d:oggiISO(), week:weekClamped(), kind:"corsa", rpe:(n >= 1 && n <= 5) ? n : null });
+  var voce = { d:oggiISO(), week:weekClamped(), kind:"corsa", rpe:(n >= 1 && n <= 5) ? n : null };
+  /* Se il GPS stava girando, la corsa si porta dietro distanza, traccia e
+     costo energetico. Senza GPS la voce resta com'era: la traccia e' un di
+     piu', non un requisito per registrare di aver corso. */
+  if(gps.km > 0.05){
+    voce.km = Math.round(gps.km * 100) / 100;
+    voce.kcal = kcalDa(gps.km);
+    voce.tr = potaTraccia(gps.pts);
+  }
+  gpsFerma();
+  S.runs.push(voce);
   save(); render();
 }
 function tickRun(){
@@ -3306,7 +3472,7 @@ function vGiorno(d){
   if(nStr) h += tile("stre", "Stretching", nStr + "/" + streOggi().length, "", "",
     stretchDone(d) ? "completo" : "parziale", stretchDone(d) ? "pieno" : "", stretchDone(d) ? "ok" : "warn");
   if(nCibo) h += tile("cibo", "Calorie", Math.round(ft.k), "kcal", "", Math.round(ft.p) + " g proteine · " + nCibo + " voci",
-    ft.k >= KCAL_MIN ? "in linea" : "sotto", ft.k >= KCAL_MIN ? "ok" : "warn");
+    ft.k >= targetKcal(d) ? "in linea" : "sotto", ft.k >= targetKcal(d) ? "ok" : "warn");
   if(pw) h += tile("peso", "Peso", String(pw.kg).replace(".", ","), "kg", "", "pesata del mattino", "", "");
   if(pf) h += tile("mob", "Dita-terra", String(pf.cm).replace(".", ","), "cm", "", "obiettivo " + FTF_META, "", "");
   h += '</div>';
@@ -3537,10 +3703,10 @@ function vOggi(){
     xs >= 5 ? "in linea" : "obiettivo 5", xs >= 5 ? "ok" : "warn");
 
   h += tile("cibo", "Calorie", '<span class="conta" data-ritardo="240" data-target="' + Math.round(ft.k) + '">0</span>', "kcal",
-    spark([0, ft.k * 0.35, ft.k * 0.7, ft.k], ft.k >= KCAL_MIN ? "var(--ok)" : "var(--warn)"),
+    spark([0, ft.k * 0.35, ft.k * 0.7, ft.k], ft.k >= targetKcal(d) ? "var(--ok)" : "var(--warn)"),
     Math.round(ft.p) + " g proteine",
-    ft.k >= KCAL_MIN ? "in linea" : "mancano " + Math.max(0, Math.round(KCAL_MIN - ft.k)),
-    ft.k >= KCAL_MIN ? "ok" : "warn");
+    ft.k >= targetKcal(d) ? "in linea" : "mancano " + Math.max(0, Math.round(targetKcal(d) - ft.k)),
+    ft.k >= targetKcal(d) ? "ok" : "warn");
 
   h += '</div>';
 
@@ -3555,7 +3721,7 @@ function vOggi(){
 
   h += '<div class="card riga"><div style="flex:1">' +
     '<div class="eyebrow">Cibo</div>' +
-    gauge(ft.k, KCAL_MAX + 400, KCAL_MIN, KCAL_MAX, "kcal", "2.400-2.500") +
+    gauge(ft.k, targetKcal(d) + 500, targetKcal(d), targetKcal(d) + 100, "kcal", etichettaKcal(d)) +
     gauge(ft.p, 140, PROT_MIN, PROT_MAX, "g proteine", "70-100") +
     '</div><button class="btn" data-act="go" data-to="cibo">Aggiungi</button></div>';
 
@@ -3830,6 +3996,25 @@ function vCorsa(){
     '</div>' +
     '</div>';
 
+  /* La traccia. Sta subito sotto il cronometro perche' e' l'unica cosa che si
+     guarda mentre si corre; tutto il resto sono numeri di fine sessione. */
+  h += '<div class="card"><div class="eyebrow">Percorso</div>';
+  if(gps.errore) h += '<div class="note warn">' + esc(gps.errore) + '</div>';
+  if(gps.on){
+    h += '<div id="gpsTr" class="trbox">' + tracciaSVG(gps.pts) + '</div>' +
+      '<div class="gpsriga">' +
+        '<span><span class="num" id="gpsKm">' + gps.km.toFixed(2).replace(".", ",") + '</span> km</span>' +
+        '<span class="fine">' + (gps.prec != null ? "precisione " + gps.prec + " m" : "cerco il segnale…") + '</span>' +
+      '</div>' +
+      '<p class="fine">Circa <strong>' + passiDa(gps.km).toLocaleString("it-IT") + ' passi</strong> e <strong>' + kcalDa(gps.km) + ' kcal</strong>. ' +
+      'I passi non sono contati: sono la distanza divisa per una falcata di 75 cm, stimata sulla tua altezza. È una divisione, non una misura.</p>' +
+      '<button class="btn ghost wide sm" data-act="gpsStop">Smetti di seguire il percorso</button>';
+  } else {
+    h += '<p class="fine">Se accendi la posizione, l\'app disegna il percorso e conta i chilometri. La traccia resta <strong>dentro il telefono</strong>: non c\'è nessuna cartina da scaricare e nessun servizio esterno che sappia dove sei.</p>' +
+      '<button class="btn wide" data-act="gpsVia">Segui il percorso</button>';
+  }
+  h += '</div>';
+
   h += '<div class="card">' +
     '<div class="eyebrow">Settimana ' + wk + ' · ' + totale + ' minuti in tutto</div>' +
     '<p class="fine">Ritmo facile: quello in cui riesci a dire una frase intera. <strong>Mai due giorni di fila.</strong></p>' +
@@ -4029,11 +4214,11 @@ function vCibo(){
 
   h += '<div class="card">' +
     '<div class="eyebrow">Oggi · grana grossa, non bilancia</div>' +
-    gauge(t.k, KCAL_MAX + 400, KCAL_MIN, KCAL_MAX, "kcal", "2.400-2.500") +
+    gauge(t.k, targetKcal(d) + 500, targetKcal(d), targetKcal(d) + 100, "kcal", etichettaKcal(d)) +
     gauge(t.p, 140, PROT_MIN, PROT_MAX, "g proteine", "70-100") +
     '<p class="fine">Le due barre dicono se sei sopra o sotto, non contano i grammi.</p>';
 
-  var manca = KCAL_MIN - t.k;
+  var manca = targetKcal(d) - t.k;
   if(lista.length && manca > 250){
     h += '<div class="note">Mancano <strong>' + Math.round(manca) + ' kcal</strong>. La leva più efficace quando il problema è l\'appetito sono le calorie liquide: un frullato da 690 non attiva la sazietà come lo stesso valore in forma solida. In alternativa due cucchiai d\'olio a crudo e 30 g di frutta secca fanno 370 senza riempirti.</div>';
   } else if(lista.length && t.p < PROT_MIN){
@@ -4566,6 +4751,13 @@ document.getElementById("view").addEventListener("click", function(e){
     var z = el.dataset.z, k = S.pain[d].indexOf(z);
     if(k >= 0) S.pain[d].splice(k, 1); else S.pain[d].push(z);
     save(); render(); return;
+  }
+
+  if(a === "gpsVia"){ gpsVia(); return; }
+  if(a === "gpsStop"){
+    /* Fermare il seguimento non butta via i chilometri: restano in gps.km e
+       finiscono nella corsa quando la chiudi. */
+    gpsFerma(); render(); return;
   }
 
   if(a === "runPlay"){ runStart(); render(); return; }
