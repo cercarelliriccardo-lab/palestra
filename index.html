@@ -644,6 +644,15 @@
      testo fuori. Nessuno sfondo e nessun bordo, come dalla v1.9.2. */
   /* Cronometro della tenuta: sta nella colonna dei chili degli esercizi a
      tempo, quindi deve stare nella stessa larghezza dello stepper. */
+  /* Due sezioni sotto la stessa scheda. Non sono linguette di navigazione:
+     stanno dentro la vista, quindi si distinguono dalla barra in basso. */
+  .segm{display:flex;gap:6px;background:var(--surface-2);border:1px solid var(--line);
+    border-radius:12px;padding:4px;margin-bottom:2px}
+  .segm button{
+    flex:1;min-height:40px;border:0;border-radius:9px;background:transparent;
+    color:var(--ink-2);font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;
+  }
+  .segm button.on{background:var(--accent);color:var(--accent-ink)}
   .crono{
     display:flex; align-items:center; justify-content:center;
     min-height:44px; width:100%; padding:0;
@@ -1219,7 +1228,7 @@ var FOODS = [
   { g:"Carboidrati",n:"Pane 100 g",             k:270, p:9 },
   { g:"Carboidrati",n:"Patate 300 g",           k:230, p:6 },
   { g:"Carboidrati",n:"Avena 60 g",             k:230, p:8 },
-  { g:"Densi",      n:"Frullato da massa",      k:650, p:25 },
+  { g:"Densi",      n:"Frullato da massa",      k:690, p:26 },
   { g:"Densi",      n:"Cucchiaio d'olio",       k:90,  p:0 },
   { g:"Densi",      n:"Frutta secca 30 g",      k:190, p:6 },
   { g:"Densi",      n:"Burro d'arachidi 20 g",  k:120, p:5 },
@@ -1228,7 +1237,22 @@ var FOODS = [
   { g:"Pasti",      n:"Pizza margherita",       k:800, p:30 },
   { g:"Pasti",      n:"Verdura condita",        k:100, p:2 },
   { g:"Pasti",      n:"Frutta",                 k:70,  p:1 },
-  { g:"Pasti",      n:"Banana",                 k:90,  p:1 }
+  { g:"Pasti",      n:"Banana",                 k:90,  p:1 },
+  /* I blocchi da 200 di output/spesa-e-pratica.md. Stanno qui e non in una
+     tabella da leggere perche il documento li descrive come uno STRUMENTO —
+     "invece di ragionare su pasti interi, aggiungi blocchi" — e uno strumento
+     si tocca. La regola per ricordarli: 30 g di grasso o frutta secca,
+     50 g di secco, oppure 300 ml di latte intero. */
+  { g:"Blocchi da 200", n:"Mandorle 33 g",          k:200, p:7 },
+  { g:"Blocchi da 200", n:"Noci 30 g",              k:195, p:4.5 },
+  { g:"Blocchi da 200", n:"Burro d'arachidi 33 g",  k:200, p:8 },
+  { g:"Blocchi da 200", n:"Olio a crudo, 2 cucchiai", k:180, p:0 },
+  { g:"Blocchi da 200", n:"Latte intero 300 ml",    k:190, p:10 },
+  { g:"Blocchi da 200", n:"Fiocchi d'avena 55 g",   k:205, p:7 },
+  { g:"Blocchi da 200", n:"Parmigiano 50 g",        k:196, p:16 },
+  { g:"Blocchi da 200", n:"Datteri 70 g",           k:195, p:1.5 },
+  { g:"Blocchi da 200", n:"Cioccolato fondente 35 g", k:190, p:2 },
+  { g:"Blocchi da 200", n:"Avocado intero",         k:200, p:2.5 }
 ];
 
 /* Rifatti sul peso vero il 07/08/2026. Erano calcolati su 50 kg, che non era
@@ -1385,7 +1409,7 @@ copiaDelGiorno();
    4. NESSUN PULSANTE. Una riga in testa dice come sta, e non chiede niente.
    ============================================================ */
 
-var VERSIONE = "3.0";
+var VERSIONE = "3.1";
 var KEY_SY = "palestra-sync";
 
 function syncCfg(){
@@ -2365,7 +2389,9 @@ var vistaPrec = null;
 
 function render(){
   var yPrima = window.scrollY || window.pageYOffset || 0;
-  var vista = ses.on ? "ses:" + ses.i : "tab:" + tab;
+  /* La sezione della scheda Cibo entra nell'identita della vista: passare fra
+     diario e spesa e' un ARRIVO, non un ridisegno — deve partire dall'alto. */
+  var vista = ses.on ? "ses:" + ses.i : "tab:" + tab + (tab === "cibo" ? ":" + sezCibo : "");
   var stessaVista = vista === vistaPrec;
   vistaPrec = vista;
   var w = weekNow();
@@ -3837,9 +3863,169 @@ function vCorsa(){
 }
 
 /* ---------- CIBO ---------- */
+/* ============================================================
+   SPESA E PRATICA
+   ============================================================
+   Trasposizione di output/spesa-e-pratica.md. Qui c'e' il COME, mentre
+   alimentazione-base.md ha i numeri e la scheda Oggi ha il diario.
+
+   Non e' il documento incollato: le due tabelle che si USANO — i blocchi da
+   200 e il frullato — sono diventate bottoni che scrivono nel diario, e la
+   prosa lunga sta dentro i richiudibili. Un elenco della spesa da leggere al
+   supermercato deve stare in uno schermo, non in quattro schermate.
+   ============================================================ */
+var sezCibo = "diario";
+
+var SPESA = [
+  { t:"I moltiplicatori invisibili", s:"aggiungono energia senza volume", v:[
+    ["Olio extravergine", "Il piu efficiente in assoluto. Prendine uno buono, ne userai tanto a crudo", "884"],
+    ["Burro di arachidi 100%", "Solo arachidi nell'etichetta: niente zuccheri, niente oli aggiunti", "~600"],
+    ["Mandorle, noci, anacardi", "Da tenere in vista, non nella credenza", "550-650"],
+    ["Burro", "Nel pure, sulla pasta, sul pane", "750"],
+    ["Avocado", "Se ti piace: 200 kcal a frutto", "160"]
+  ]},
+  { t:"Le calorie liquide", s:"la leva piu forte quando il problema e l'appetito", v:[
+    ["Latte intero", "Non parzialmente scremato. E il cambio piu semplice della lista", ""],
+    ["Fiocchi d'avena", "La base del frullato. Economici e densi", ""],
+    ["Banane", "Consistenza e potassio", ""],
+    ["Cacao amaro in polvere", "Rende il frullato buono, che e meta del problema", ""],
+    ["Miele", "Calorie facili, si scioglie in tutto", ""]
+  ]},
+  { t:"Le proteine", s:"70-100 g al giorno, ed e un pavimento", v:[
+    ["Cosce di pollo con pelle", "Piu caloriche e piu saporite del petto: nel tuo caso meglio", "215"],
+    ["Uova", "Il piu versatile", "78 l'uno"],
+    ["Tonno sott'olio", "Sgocciolato poco: l'olio e calorie", "190"],
+    ["Yogurt greco intero", "Non 0%", "130"],
+    ["Parmigiano", "Grattugiato su tutto", "392"],
+    ["Legumi secchi", "Economici", "340"],
+    ["Salmone", "Anche grassi buoni", "208"]
+  ]},
+  { t:"I carboidrati densi", s:"", v:[
+    ["Pasta, riso, pane, patate", "La base", ""],
+    ["Frutta secca disidratata", "Datteri, albicocche, uvetta: sta in tasca", "280-300"]
+  ]},
+  { t:"Le cose pronte", s:"per i giorni storti, che sono quelli che rovinano la media", v:[
+    ["Gallette e burro di arachidi", "Niente da accendere", ""],
+    ["Sacchetti di frutta secca gia porzionati", "Niente da pesare", ""],
+    ["Latte intero e cacao", "Due minuti", ""],
+    ["Formaggio stagionato", "Si taglia e basta", ""]
+  ]}
+];
+
+function vSpesa(){
+  var h = "";
+
+  /* 1. Il punto di partenza. E la cosa che cambia la percezione del compito:
+     600 kcal da aggiungere, non 1.400. */
+  h += '<div class="card"><div class="eyebrow">Il punto di partenza vero</div>' +
+    '<p class="fine">Se il peso e stabile a 45 kg stai gia mangiando <strong>intorno alle 1.800</strong>, non mille: il basale da solo e 1.320. Quello che manca al conto non sono le porzioni — sono l\'olio di cottura, il condimento, quello che mangi in piedi, il latte nel caffe.</p>' +
+    '<div class="scroll"><table><tbody>' +
+      '<tr><td>Da dove parti, stimato</td><td class="n">~1.800 kcal</td></tr>' +
+      '<tr><td>Dove devi arrivare</td><td class="n">2.400 kcal</td></tr>' +
+      '<tr><td><strong>Da aggiungere</strong></td><td class="n"><strong>600 kcal</strong></td></tr>' +
+      '<tr><td>Ritmo di crescita</td><td class="n">~225 g / settimana</td></tr>' +
+      '<tr><td><strong>Prima tappa</strong></td><td class="n"><strong>47,4 kg</strong></td></tr>' +
+    '</tbody></table></div>' +
+    '<p class="fine">47,4 kg e la soglia sopra la quale non sei piu sottopeso: sono <strong>2,4 kg, circa undici settimane</strong>. Molto piu vicino dei 53.</p></div>';
+
+  /* 2. La rampa. Senza questa si passa da 1.800 a 2.400 in un giorno e si
+     molla in tre. */
+  h += '<div class="card"><div class="eyebrow">La rampa · +200 a settimana</div>' +
+    '<p class="fine"><strong>Non passare da 1.800 a 2.400 in un giorno.</strong> Ti sentiresti gonfio e molleresti. Si sale a scalini.</p>' +
+    '<div class="scroll"><table><thead><tr><th>Settimana</th><th>Obiettivo</th><th>Cosa aggiungi</th></tr></thead><tbody>' +
+      '<tr><td>1</td><td class="n">~2.000</td><td>un blocco</td></tr>' +
+      '<tr><td>2</td><td class="n">~2.200</td><td>due blocchi</td></tr>' +
+      '<tr><td>3</td><td class="n">~2.400</td><td>tre blocchi, o il frullato che ne vale tre</td></tr>' +
+    '</tbody></table></div>' +
+    '<p class="fine">Lo stomaco si adatta e l\'appetito segue, ma con qualche settimana di ritardo: <strong>e normale mangiare senza fame vera all\'inizio</strong>. Non e un fallimento del piano, e il piano.</p></div>';
+
+  /* 3. I blocchi. Sono in FOODS, quindi si toccano dal diario. */
+  h += '<div class="card"><div class="eyebrow">I blocchi da 200</div>' +
+    '<p class="fine">Invece di ragionare su pasti interi, aggiungi <strong>blocchi</strong>. La regola per ricordarli: <strong>30 g di grasso o frutta secca, 50 g di secco, oppure 300 ml di latte intero</strong>.</p>' +
+    '<p class="fine">Li trovi tutti e dieci fra i cibi in <strong>Oggi</strong>, sotto <em>Blocchi da 200</em>: si toccano e si sommano da soli.</p>' +
+    '<div class="note">Il piu facile in assoluto e <strong>l\'olio</strong>. Due cucchiai a crudo sono 180 kcal che non ti riempiono e non cambiano il sapore. Su pranzo e cena sono <strong>360 delle 600</strong> senza un boccone in piu.</div>' +
+    '<button class="btn wide" data-act="sezCibo" data-s="diario">Vai ai cibi di oggi</button></div>';
+
+  /* 4. Il frullato: la singola cosa che risolve meta del problema. */
+  h += '<div class="card"><div class="eyebrow">Il frullato</div>' +
+    '<p class="fine">Vale <strong>tre blocchi in una volta</strong>, si beve in due minuti e non ti toglie fame per il pasto dopo. Si fa la sera prima e sta in frigo.</p>' +
+    '<div class="scroll"><table><thead><tr><th>Ingrediente</th><th>Quanto</th><th>kcal</th></tr></thead><tbody>' +
+      '<tr><td>Latte intero</td><td class="n">300 ml</td><td class="n">190</td></tr>' +
+      '<tr><td>Fiocchi d\'avena</td><td class="n">55 g</td><td class="n">205</td></tr>' +
+      '<tr><td>Burro di arachidi</td><td class="n">30 g</td><td class="n">180</td></tr>' +
+      '<tr><td>Banana</td><td class="n">1</td><td class="n">105</td></tr>' +
+      '<tr><td>Cacao amaro</td><td class="n">1 cucchiaino</td><td class="n">10</td></tr>' +
+      '<tr><td><strong>Totale</strong></td><td></td><td class="n"><strong>690</strong></td></tr>' +
+    '</tbody></table></div>' +
+    '<p class="fine">690 kcal e 26 g di proteine. Se tutte insieme sono troppe, meta a colazione e meta nel pomeriggio.</p></div>';
+
+  /* 5. La lista vera e propria, per funzione e non per reparto. */
+  h += '<div class="card"><div class="eyebrow">La lista della spesa</div>' +
+    '<p class="fine">Organizzata per <strong>funzione</strong>, non per reparto: ogni gruppo risolve un problema diverso.</p>';
+  SPESA.forEach(function(g){
+    h += '<details class="perche"><summary><span>' + esc(g.t) + (g.s ? ' — ' + esc(g.s) : '') + '</span></summary>' +
+      '<div class="scroll"><table><tbody>' +
+      g.v.map(function(r){
+        return '<tr><td><strong>' + esc(r[0]) + '</strong><br><span class="fine">' + esc(r[1]) + '</span></td>' +
+               '<td class="n">' + (r[2] ? esc(r[2]) + '<br><span class="fine">kcal/100 g</span>' : '') + '</td></tr>';
+      }).join("") +
+      '</tbody></table></div></details>';
+  });
+  h += '<div class="note"><strong>La regola trasversale</strong>: scegli sempre la versione piu calorica della stessa cosa. Latte intero invece di scremato, yogurt intero invece di magro, cosce invece di petto, tonno sott\'olio invece che al naturale. Sono <strong>trecento calorie al giorno</strong> prese senza mangiare niente in piu.</div>' +
+    '<div class="note warn"><strong>Cosa NON comprare.</strong> I gainer commerciali sono maltodestrine e zucchero a prezzo alto: le stesse calorie te le da il frullato di sopra, con piu proteine e meno soldi. Gli integratori in generale, per ora. Unica eccezione ragionevole le proteine in polvere, e solo se ti accorgi di non arrivare a 70 g col cibo.</div>' +
+    '</div>';
+
+  /* 6-7. Giornata tipo e abitudini: si leggono una volta, poi servono di rado. */
+  h += '<div class="card"><div class="eyebrow">Come si incastrano</div>' +
+    '<details class="perche"><summary><span>Una giornata tipo a 2.400</span></summary>' +
+      '<div class="scroll"><table><tbody>' +
+      '<tr><td>Colazione</td><td>Il frullato</td><td class="n">690</td></tr>' +
+      '<tr><td>Meta mattina</td><td>30 g mandorle + 2 datteri</td><td class="n">250</td></tr>' +
+      '<tr><td>Pranzo</td><td>100 g pasta + sugo + 2 cucchiai olio + 40 g parmigiano</td><td class="n">690</td></tr>' +
+      '<tr><td>Pomeriggio</td><td>Yogurt greco intero + miele</td><td class="n">280</td></tr>' +
+      '<tr><td>Cena</td><td>150 g pollo + 200 g patate + 2 cucchiai olio + pane</td><td class="n">680</td></tr>' +
+      '<tr><td colspan="2"><strong>Totale</strong></td><td class="n"><strong>~2.590</strong></td></tr>' +
+      '</tbody></table></div>' +
+      '<p class="fine">Nota quanto poco "mangiare di piu" ci sia. <strong>Le due porzioni di olio e i 40 g di parmigiano valgono da soli 340 kcal</strong>: un quarto del lavoro fatto senza aggiungere un boccone al piatto.</p>' +
+    '</details>' +
+    '<details class="perche"><summary><span>Le abitudini che fanno la differenza</span></summary>' +
+      '<ul class="cue">' +
+      '<li><strong>Mangia ogni 3-4 ore.</strong> Chi si riempie subito non fallisce sul totale della giornata, fallisce sul singolo pasto troppo grande</li>' +
+      '<li><strong>Non saltare la colazione.</strong> E il pasto che chi non ha fame salta per primo, ed e quello che costa di piu</li>' +
+      '<li><strong>Olio a fine cottura, non all\'inizio.</strong> A crudo il sapore c\'e e le calorie restano tutte</li>' +
+      '<li><strong>Frutta secca in vista</strong>, sul tavolo e non nella credenza. Quello che vedi lo mangi</li>' +
+      '<li><strong>Cucina in quantita doppia.</strong> Il giorno in cui non hai tempo e il giorno in cui salti</li>' +
+      '<li><strong>Non bere molto nei minuti prima dei pasti.</strong> Riempie senza dare energia</li>' +
+      '</ul>' +
+    '</details>' +
+    '<details class="perche"><summary><span>Passo zero: tre giorni misurati</span></summary>' +
+      '<p class="fine">Prima di comprare qualsiasi cosa, <strong>pesa tutto per tre giorni</strong> — olio, burro, condimenti e bevande compresi. Non serve contare per sempre: serve a scoprire da dove parti davvero. Finche il punto di partenza e "circa mille", ogni aggiustamento e a caso.</p>' +
+      '<p class="fine">Serve una bilancia da cucina digitale. <strong>E l\'unico acquisto obbligatorio</strong> di tutta la lista, e costa poco.</p>' +
+    '</details></div>';
+
+  /* 8. La riga che vale piu di tutte le altre messe insieme. */
+  h += '<div class="card"><div class="eyebrow">Se il peso scende</div>' +
+    '<div class="note alert"><strong>Si ferma tutto.</strong> Prima si sistema il cibo, poi si riprende con gli allenamenti. Con un BMI di 17,6 e cinque allenamenti a settimana il rischio principale non e meccanico ma <strong>energetico</strong>: il corpo che taglia ormoni, densita ossea e recupero perche l\'energia non basta per tutto. Il cibo viene prima dell\'allenamento, sempre, in questa direzione e non nell\'altra.</div>' +
+    '<p class="fine">Media ferma dopo due settimane → aggiungi 200 kcal. Sale piu di 400 g a settimana → togli 150. Guarda sempre la <strong>media</strong>, mai il singolo giorno.</p>' +
+    '<details class="perche"><summary><span>Una cosa che l\'app non puo fare</span></summary>' +
+      '<p class="fine">Con un BMI di 17,6 e la difficolta a mangiare che descrivi, <strong>parlarne col medico vale davvero la pena</strong> — ancora di piu se i 45 kg sono un calo recente rispetto ai 50 di cui parlavi. Non perche ci sia per forza qualcosa: perche un peso stabilmente sotto la fascia normale ha cause che si escludono con esami banali, e se ce n\'e una nessun piano alimentare la aggira.</p>' +
+    '</details></div>';
+
+  return h;
+}
+
 function vCibo(){
   var d = oggiISO(), t = foodTot(d), lista = foodDay(d);
   var h = bannerStorage();
+
+  /* Due sezioni sotto la stessa scheda: il diario di oggi e la guida alla
+     spesa. Non una sesta linguetta in basso — cinque e' gia' il massimo che
+     una barra da pollice regge, e la spesa non si consulta ogni giorno. */
+  h += '<div class="segm">' +
+    '<button class="' + (sezCibo === "diario" ? "on" : "") + '" data-act="sezCibo" data-s="diario">Oggi</button>' +
+    '<button class="' + (sezCibo === "spesa" ? "on" : "") + '" data-act="sezCibo" data-s="spesa">Spesa</button>' +
+    '</div>';
+  if(sezCibo === "spesa") return h + vSpesa();
 
   h += '<div class="card">' +
     '<div class="eyebrow">Oggi · grana grossa, non bilancia</div>' +
@@ -3849,9 +4035,11 @@ function vCibo(){
 
   var manca = KCAL_MIN - t.k;
   if(lista.length && manca > 250){
-    h += '<div class="note">Mancano <strong>' + Math.round(manca) + ' kcal</strong>. La leva più efficace quando il problema è l\'appetito sono le calorie liquide: un frullato da 650 non attiva la sazietà come lo stesso valore in forma solida. In alternativa due cucchiai d\'olio a crudo e 30 g di frutta secca fanno 370 senza riempirti.</div>';
+    h += '<div class="note">Mancano <strong>' + Math.round(manca) + ' kcal</strong>. La leva più efficace quando il problema è l\'appetito sono le calorie liquide: un frullato da 690 non attiva la sazietà come lo stesso valore in forma solida. In alternativa due cucchiai d\'olio a crudo e 30 g di frutta secca fanno 370 senza riempirti.</div>';
   } else if(lista.length && t.p < PROT_MIN){
-    h += '<div class="note">Sei a <strong>' + Math.round(t.p) + ' g di proteine</strong> contro un minimo di 80. L\'allenamento rompe, il recupero ricostruisce, le proteine sono il materiale: con tre sedute a settimana il cantiere è aperto quasi sempre.</div>';
+    /* Il minimo si legge dalla costante: scritto a mano era rimasto a 80
+       quando PROT_MIN e' sceso a 70 col peso vero. */
+    h += '<div class="note">Sei a <strong>' + Math.round(t.p) + ' g di proteine</strong> contro un minimo di ' + PROT_MIN + '. L\'allenamento rompe, il recupero ricostruisce, le proteine sono il materiale: con tre sedute a settimana il cantiere è aperto quasi sempre.</div>';
   }
   h += '</div>';
 
@@ -4190,6 +4378,8 @@ document.getElementById("view").addEventListener("click", function(e){
     return;
   }
   /* ---- scelta degli esercizi di stretching ---- */
+  if(a === "sezCibo"){ sezCibo = el.dataset.s; verso = el.dataset.s === "spesa" ? 1 : -1; render(); return; }
+
   if(a === "streApri"){ sceltaStreAperta = !sceltaStreAperta; avvisoStre = ""; render(); return; }
   if(a === "streMescola"){ mescolaStre(); avvisoStre = ""; sceltaStreAperta = true; buzz(25); render(); return; }
   if(a === "streTog"){
