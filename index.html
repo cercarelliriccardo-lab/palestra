@@ -609,6 +609,28 @@
      questo progetto dichiara di rispettare, e con le mani sudate si sbaglia. */
   .serie-piu .btn{min-height:44px}
   .avviso-serie{text-align:center;color:var(--warn);margin-top:6px}
+  /* ---------- scelta dello stretching ---------- */
+  .strescelta hr{border:0;border-top:1px solid var(--line);margin:12px 0 10px}
+  .strecat{margin-top:12px}
+  .strecat .kicker{display:block;margin-bottom:6px}
+  .strevoce{
+    display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+    background:var(--surface-2); border:1px solid var(--line); border-radius:10px;
+    padding:9px 11px; margin-bottom:6px; color:var(--ink); font:inherit;
+    min-height:44px; cursor:pointer;
+  }
+  .strevoce[data-on="1"]{border-color:var(--accent); background:var(--accent-soft)}
+  .strevoce[disabled]{cursor:default; opacity:.9}
+  .strevoce .sn{
+    flex:none; width:22px; height:22px; border-radius:50%; display:flex;
+    align-items:center; justify-content:center; font-family:var(--mono); font-size:12px;
+    background:var(--surface-3); color:var(--ink-3);
+  }
+  .strevoce[data-on="1"] .sn{background:var(--accent); color:var(--accent-ink)}
+  .strevoce .stt{flex:1; display:flex; flex-direction:column; gap:2px; min-width:0}
+  .strevoce .stt strong{font-size:13.5px; font-weight:600}
+  .strevoce .stt em{font-style:normal; font-size:11.5px; color:var(--ink-3); line-height:1.35}
+  .strevoce .std{flex:none; font-size:10.5px; color:var(--ink-3); text-align:right; max-width:88px}
   /* Cerca un video: il tasto e i segni che squalificano quello che trovi. */
   .video{margin:12px 0 4px;padding-top:10px;border-top:1px solid var(--line)}
   .video .btn{margin-bottom:8px}
@@ -962,13 +984,85 @@ var RUN_WEEKS = [
 ];
 var WARMUP = 300, COOLDOWN = 300;
 
-var STRETCH = [
-  { id:"gc",  n:"Gatto-cammello",      d:"10 ripetizioni" },
-  { id:"ns",  n:"Neural slider",        d:"10 lente per gamba" },
-  { id:"fem", n:"Femorali da seduto",   d:"30 sec × 2 per gamba", t:30 },
-  { id:"anc", n:"Flessori dell'anca",   d:"30 sec per lato",      t:30 },
-  { id:"pol", n:"Polpaccio al muro",    d:"30 sec per lato",      t:30 }
+/* ============================================================
+   STRETCHING — la libreria
+   ============================================================
+   Cinque categorie, ventuno esercizi. Fonte: output/varianti.md.
+
+   Due sono FISSI e non si tolgono: femorali da seduto e neural slider.
+   Servono all'obiettivo dita-terra, che e' un obiettivo dichiarato del
+   progetto, non una preferenza. Gli altri tre li sceglie l'utente.
+
+   Qui NON c'e' nessun blocco alle prime settimane, al contrario dei pesi:
+   sullo stretching la varieta' e' gratis, non c'e' nessuna progressione di
+   carico da proteggere.
+
+   I parametri non cambiano: tenute da 30 secondi, 5-7 giorni a settimana,
+   mai a freddo. Nei giorni di pesi si fa DOPO la seduta, mai prima.
+   ============================================================ */
+
+var STRE_CAT = [
+  { id:"cp",  n:"Catena posteriore", p:"l'obiettivo dita-terra" },
+  { id:"an",  n:"Anche",             p:"per l'accosciata" },
+  { id:"cav", n:"Caviglie",          p:"la dorsiflessione predice la profondità dello squat" },
+  { id:"ts",  n:"Torace e spalle",   p:"per le spinte sopra la testa" },
+  { id:"sc",  n:"Schiena",           p:"" }
 ];
+
+/* Gli id gc, ns, fem, anc e pol sono quelli di sempre: cambiarli spezzerebbe
+   lo storico gia' registrato in S.stretch. */
+var STRE_LIB = [
+  /* --- catena posteriore --- */
+  { id:"fem",   c:"cp", fisso:1, n:"Femorali da seduto",          d:"30 sec × 2 per gamba", t:30,
+    k:"Seduto, una gamba tesa, ti pieghi dall'anca col petto verso il ginocchio" },
+  { id:"ns",    c:"cp", fisso:1, n:"Neural slider",               d:"10 lente per gamba",
+    k:"Estendi il ginocchio e porti la testa indietro, poi pieghi e mento al petto. Simultanei e opposti" },
+  { id:"femg",  c:"cp", n:"Femorali al gradino",                  d:"30 sec per gamba", t:30,
+    k:"Tallone su un rialzo, gamba tesa, ti pieghi in avanti dall'anca" },
+  { id:"divar", c:"cp", n:"Piegamento a gambe divaricate",        d:"30 sec × 2", t:30,
+    k:"In piedi, gambe larghe, scendi in mezzo tenendo la schiena dritta" },
+  { id:"cane",  c:"cp", n:"Cane a testa in giù",                  d:"30 sec × 2", t:30,
+    k:"A V rovesciata, talloni verso terra" },
+  /* --- anche --- */
+  { id:"anc",     c:"an", n:"Flessori dell'anca",                 d:"30 sec per lato", t:30,
+    k:"In affondo, ginocchio dietro a terra, spingi il bacino avanti col busto dritto" },
+  { id:"affrot",  c:"an", n:"Affondo con rotazione",              d:"30 sec per lato", t:30,
+    k:"Come i flessori, poi ruoti il busto verso la gamba davanti" },
+  { id:"piri",    c:"an", n:"Piriforme (figura 4)",               d:"30 sec per lato", t:30,
+    k:"Sdraiato, caviglia sul ginocchio opposto, tiri la coscia verso di te" },
+  { id:"accprof", c:"an", n:"Accosciata profonda tenuta",         d:"30-60 sec", t:30,
+    k:"Ti accovacci fino in fondo e ci resti, gomiti dentro le ginocchia" },
+  { id:"n90",     c:"an", n:"90/90",                              d:"30 sec per lato", t:30,
+    k:"Seduto, una gamba a 90° davanti e una a 90° di lato, ti pieghi in avanti" },
+  /* --- caviglie --- */
+  { id:"ginmuro", c:"cav", n:"Ginocchio al muro",                 d:"10 spinte lente per lato",
+    k:"In affondo davanti a un muro, tocchi il muro col ginocchio senza staccare il tallone" },
+  { id:"pol",     c:"cav", n:"Polpaccio al muro",                 d:"30 sec per lato", t:30,
+    k:"Mani al muro, gamba dietro tesa, tallone a terra — allunga il gastrocnemio" },
+  { id:"soleo",   c:"cav", n:"Soleo a ginocchio piegato",         d:"30 sec per lato", t:30,
+    k:"Come il polpaccio ma col ginocchio dietro piegato — muscolo diverso" },
+  { id:"acctal",  c:"cav", n:"Accosciata coi talloni a terra",    d:"30 sec", t:30,
+    k:"Ti accovacci e cerchi di non staccare i talloni" },
+  /* --- torace e spalle --- */
+  { id:"apert", c:"ts", n:"Apertura toracica",                    d:"60 sec", t:60,
+    k:"Sdraiato su un asciugamano arrotolato lungo la colonna, braccia aperte a croce" },
+  { id:"rotor", c:"ts", n:"Rotazione toracica",                   d:"10 per lato",
+    k:"A quattro zampe, una mano dietro la nuca, ruoti il gomito verso l'alto" },
+  { id:"pett",  c:"ts", n:"Pettorali allo stipite",               d:"30 sec per lato", t:30,
+    k:"Avambraccio contro lo stipite della porta, ruoti il busto" },
+  { id:"circ",  c:"ts", n:"Circonduzioni con bastone",            d:"10 lente",
+    k:"Bastone o elastico a presa larga, lo porti da davanti a dietro a braccia tese" },
+  /* --- schiena --- */
+  { id:"gc",      c:"sc", n:"Gatto-cammello",                     d:"10 lente",
+    k:"A quattro zampe, alterni schiena arrotondata e inarcata" },
+  { id:"tors",    c:"sc", n:"Torsione sdraiata",                  d:"30 sec per lato", t:30,
+    k:"Sdraiato, ginocchia piegate che cadono da un lato, spalle a terra" },
+  { id:"bambino", c:"sc", n:"Posizione del bambino",              d:"60 sec", t:60,
+    k:"Seduto sui talloni, busto in avanti e braccia distese" }
+];
+
+var STRE_FISSI = ["fem", "ns"];
+var STRE_DIFETTO = ["anc", "pol", "gc"];   /* i tre di sempre, prima che tu scelga */
 
 var FOODS = [
   { g:"Proteine",   n:"Petto di pollo 100 g",  k:165, p:30 },
@@ -1029,16 +1123,24 @@ function fresh(){
     mieiCibi:[],              // cibi aggiunti da te, riusabili {n,k,p}
     serie:{},                 // ISO -> {esercizio: quante serie} se le hai cambiate
     ordine:{},                // ISO -> [id,...] se hai spostato gli esercizi quel giorno
-    ordineBase:[]             // il tuo ordine abituale, se ne hai fissato uno
+    ordineBase:[],            // il tuo ordine abituale, se ne hai fissato uno
+    streSel:STRE_DIFETTO.slice(), // i tre di stretching scelti da te, oltre ai due fissi
+    kw:[]                     // test ginocchio-muro {d, sx, dx} in cm
   };
 }
-var SCHEMA = 1;
+var SCHEMA = 2;
 var schemaFuturo = false;
 /* Riempie i campi che una versione piu vecchia non aveva e riallinea v.
    Non tocca mai i dati esistenti: aggiunge soltanto cio che manca. */
 function migra(o){
   var base = fresh();
   for(var k in base){ if(!(k in o) || o[k] == null) o[k] = base[k]; }
+  /* Da 1 a 2: i campi entrati dopo che SCHEMA era stato fissato — lastExport,
+     mieiCibi, serie, ordine, ordineBase, streSel, kw. Il ciclo qui sopra li
+     riempie gia' da fresh(), quindi il passaggio non richiede altro codice.
+     Il numero sale lo stesso, ed e' il punto: un campo nuovo nello stato e'
+     un incremento di SCHEMA, sempre, anche quando la migrazione e' banale.
+     Altrimenti il numero smette di significare qualcosa — ed era successo. */
   o.v = SCHEMA;
   return o;
 }
@@ -1135,7 +1237,7 @@ copiaDelGiorno();
    4. NESSUN PULSANTE. Una riga in testa dice come sta, e non chiede niente.
    ============================================================ */
 
-var VERSIONE = "2.4";
+var VERSIONE = "2.5";
 var KEY_SY = "palestra-sync";
 
 function syncCfg(){
@@ -1233,9 +1335,13 @@ function fondi(loc, rem){
   });
   o.weights  = fondiLista(o.weights,  r.weights,  function(x){ return x.d; });
   o.ftf      = fondiLista(o.ftf,      r.ftf,      function(x){ return x.d; });
+  o.kw       = fondiLista(o.kw,       r.kw,       function(x){ return x.d; });
   o.runs     = fondiLista(o.runs,     r.runs,     function(x){ return x.d + "|" + (x.kind || ""); });
   o.mieiCibi = fondiLista(o.mieiCibi, r.mieiCibi, function(x){ return String(x.n || "").toLowerCase(); });
   o.ordineBase = (o.ordineBase && o.ordineBase.length) ? o.ordineBase : (r.ordineBase || []);
+  /* Come l'ordine: e' una selezione, non un insieme. Fonderla darebbe quattro
+     o cinque esercizi al posto di tre. Vince il telefono su cui hai scelto. */
+  o.streSel = (o.streSel && o.streSel.length) ? o.streSel : (r.streSel || STRE_DIFETTO.slice());
   o.start = o.start || r.start;
   o.setup = {
     fermi:    !!((o.setup || {}).fermi    || (r.setup || {}).fermi),
@@ -1566,9 +1672,108 @@ function proposta(exId, beforeISO){
 }
 
 function stretchDay(d){ if(!S.stretch[d]) S.stretch[d] = { items:{} }; return S.stretch[d]; }
+
+function streDi(id){
+  var t = null;
+  STRE_LIB.forEach(function(x){ if(x.id === id) t = x; });
+  return t;
+}
+/* Quello che hai scelto davvero, e puo' essere meno di tre: mentre stai
+   scegliendo devi poterne togliere uno senza che l'app te lo rimetta subito.
+   Si scartano gli id spariti dalla libreria e quelli gia' fra i fissi. */
+function streScelti(){
+  var out = [];
+  (S.streSel || []).forEach(function(id){
+    if(out.length < 3 && out.indexOf(id) < 0 && STRE_FISSI.indexOf(id) < 0 && streDi(id)) out.push(id);
+  });
+  return out;
+}
+/* Completati coi tre di sempre. Serve solo alla seduta: una preferenza
+   lasciata a meta' non deve produrre uno stretching monco. */
+function strePieni(){
+  var out = streScelti();
+  STRE_DIFETTO.forEach(function(id){
+    if(out.length < 3 && out.indexOf(id) < 0) out.push(id);
+  });
+  return out;
+}
+/* I cinque di oggi: prima i due fissi, poi i tre. */
+function streOggi(){
+  return STRE_FISSI.concat(strePieni()).map(streDi).filter(Boolean);
+}
+/* Quanti ne hai spuntati in quel giorno. Si contano le spunte vere invece di
+   filtrare sulla selezione di oggi: la selezione cambia nel tempo, e un
+   giorno passato va letto con quello che avevi fatto allora. */
+function streFatti(d){
+  var it = (S.stretch[d] || {}).items || {};
+  return Object.keys(it).filter(function(k){ return it[k]; }).length;
+}
 function stretchDone(d){
-  var s = S.stretch[d]; if(!s) return false;
-  return STRETCH.every(function(x){ return s.items && s.items[x.id]; });
+  if(!S.stretch[d]) return false;
+  return streFatti(d) >= streOggi().length;
+}
+/* Si mescolano le CATEGORIE, non gli esercizi: pescare tre volte dalla stessa
+   darebbe varieta' apparente e stimolo ridondante — che e' esattamente cio
+   che Kassiano 2022 dice di evitare. */
+function mescolaStre(){
+  var cats = STRE_CAT.map(function(c){ return c.id; });
+  for(var i = cats.length - 1; i > 0; i--){
+    var j = Math.floor(Math.random() * (i + 1)), t = cats[i];
+    cats[i] = cats[j]; cats[j] = t;
+  }
+  var out = [];
+  cats.forEach(function(c){
+    if(out.length >= 3) return;
+    var pool = STRE_LIB.filter(function(x){ return x.c === c && !x.fisso; });
+    if(pool.length) out.push(pool[Math.floor(Math.random() * pool.length)].id);
+  });
+  S.streSel = out;
+  save();
+}
+/* Tre esercizi tutti dalla stessa categoria non sono un errore, ma vale la
+   pena dirlo: il documento suggerisce di mescolare, non lo impone. */
+function streMonotono(){
+  var c = streScelti().map(function(id){ return (streDi(id) || {}).c; });
+  return c.length === 3 && c[0] === c[1] && c[1] === c[2];
+}
+
+/* ---------- la schermata di scelta ---------- */
+var sceltaStreAperta = false;
+var avvisoStre = "";
+
+function vSceltaStre(){
+  var sel = streScelti();
+  var nomi = STRE_FISSI.concat(strePieni()).map(function(id){ return (streDi(id) || {}).n; });
+  var h = '<div class="strescelta"><hr>' +
+    '<p class="fine">' + esc(nomi.join(" · ")) + '</p>' +
+    '<div class="row">' +
+      '<button class="btn sm ghost" data-act="streApri">' + (sceltaStreAperta ? "Chiudi" : "Scegli i tuoi tre") + '</button>' +
+      '<button class="btn sm ghost" data-act="streMescola">Mescola</button>' +
+    '</div>';
+  if(!sceltaStreAperta) return h + '</div>';
+
+  if(avvisoStre) h += '<div class="note warn">' + esc(avvisoStre) + '</div>';
+  h += '<p class="fine">Due sono sempre gli stessi — <strong>femorali da seduto</strong> e <strong>neural slider</strong> — perché servono all\'obiettivo dita-terra. Gli altri tre li scegli tu.</p>';
+  if(streMonotono())
+    h += '<div class="note">I tuoi tre vengono tutti dalla stessa categoria. Non è un errore, ma mescolarle copre più cose.</div>';
+
+  STRE_CAT.forEach(function(c){
+    var lista = STRE_LIB.filter(function(x){ return x.c === c.id; });
+    if(!lista.length) return;
+    h += '<div class="strecat"><span class="kicker">' + esc(c.n) + (c.p ? ' — ' + esc(c.p) : '') + '</span>';
+    lista.forEach(function(x){
+      var fisso = !!x.fisso, scelto = sel.indexOf(x.id) >= 0;
+      h += '<button type="button" class="strevoce" data-on="' + (fisso || scelto ? 1 : 0) + '"' +
+        (fisso ? ' disabled aria-label="' + esc(x.n) + ', sempre attivo"'
+               : ' data-act="streTog" data-id="' + x.id + '" aria-pressed="' + (scelto ? "true" : "false") + '"') + '>' +
+        '<span class="sn">' + (fisso ? "★" : scelto ? "✓" : "+") + '</span>' +
+        '<span class="stt"><strong>' + esc(x.n) + '</strong><em>' + esc(x.k) + '</em></span>' +
+        '<span class="std num">' + esc(x.d) + '</span></button>';
+    });
+    h += '</div>';
+  });
+  h += '<p class="fine">La scelta resta finché non la cambi. Sullo stretching la varietà non costa niente: non c\'è nessun carico da far salire, quindi qui non c\'è nessun blocco alle prime settimane.</p>';
+  return h + '</div>';
 }
 function foodDay(d){ if(!S.food[d]) S.food[d] = []; return S.food[d]; }
 /* q = quantita, 1 se assente: le voci scritte prima della v1.8 non ce l hanno. */
@@ -2466,7 +2671,7 @@ var ses = { on:false, i:0, steps:[], kind:"pesi", avanzato:false };
 function buildSteps(kind){
   var out = [];
   if(kind === "stretch"){
-    STRETCH.forEach(function(st){ out.push({ t:"stre", st:st }); });
+    streOggi().forEach(function(st){ out.push({ t:"stre", st:st }); });
     out.push({ t:"sfine" });
     return out;
   }
@@ -2506,7 +2711,7 @@ function sesStart(kind){
      mangerebbe l'avvicinamento e l'introduzione del primo esercizio. */
   var iniziata = kind === "pesi"
     ? EX.some(function(e){ return (((S.sessions[d] || {})[e.id]) || []).some(function(x){ return x.done; }); })
-    : STRETCH.some(function(x){ return stretchDay(d).items[x.id]; });
+    : streOggi().some(function(x){ return stretchDay(d).items[x.id]; });
   if(iniziata) for(var k = 0; k < ses.steps.length; k++){
     var s = ses.steps[k];
     if(kind === "pesi" && s.t === "serie" && !(setsOf(d, s.ex.id)[s.si] || {}).done){ ses.i = k; break; }
@@ -2678,8 +2883,8 @@ function vSessione(){
   }
 
   else if(s.t === "sfine"){
-    var n2 = STRETCH.filter(function(x){ return (stretchDay(d).items || {})[x.id]; }).length;
-    h += '<span class="kicker">Stretching chiuso</span><h2>' + n2 + ' su ' + STRETCH.length + '</h2>' +
+    var n2 = streFatti(d);
+    h += '<span class="kicker">Stretching chiuso</span><h2>' + n2 + ' su ' + streOggi().length + '</h2>' +
       '<p class="fine2">Misura la distanza dita-terra ogni due settimane, sempre nelle stesse condizioni. È l\'unico modo per sapere se sta funzionando: sulle sensazioni non si decide niente.</p>';
     foot = '<button type="button" class="go" data-act="sesExit">Chiudi</button>';
   }
@@ -2752,7 +2957,7 @@ function vGiorno(d){
   });
   var corse = S.runs.filter(function(r){ return r.d === d; });
   var sd = S.stretch[d] || { items:{} };
-  var nStr = STRETCH.filter(function(x){ return sd.items[x.id]; }).length;
+  var nStr = streFatti(d);
   var ft = foodTot(d), nCibo = (S.food[d] || []).length;
   var pw = S.weights.filter(function(x){ return x.d === d; })[0];
   var pf = S.ftf.filter(function(x){ return x.d === d; })[0];
@@ -2774,8 +2979,8 @@ function vGiorno(d){
     corse[0].kind === "ellittica" ? "25" : RUN_WEEKS[Math.min(3, (corse[0].week || 1) - 1)].reps,
     corse[0].kind === "ellittica" ? "min" : "blocchi",
     "", corse[0].rpe ? "sensazione " + corse[0].rpe + " su 5" : "senza voto", "fatto", "ok");
-  if(nStr) h += tile("stre", "Stretching", nStr + "/" + STRETCH.length, "", "",
-    nStr === STRETCH.length ? "completo" : "parziale", nStr === STRETCH.length ? "pieno" : "", nStr === STRETCH.length ? "ok" : "warn");
+  if(nStr) h += tile("stre", "Stretching", nStr + "/" + streOggi().length, "", "",
+    stretchDone(d) ? "completo" : "parziale", stretchDone(d) ? "pieno" : "", stretchDone(d) ? "ok" : "warn");
   if(nCibo) h += tile("cibo", "Calorie", Math.round(ft.k), "kcal", "", Math.round(ft.p) + " g proteine · " + nCibo + " voci",
     ft.k >= KCAL_MIN ? "in linea" : "sotto", ft.k >= KCAL_MIN ? "ok" : "warn");
   if(pw) h += tile("peso", "Peso", String(pw.kg).replace(".", ","), "kg", "", "pesata del mattino", "", "");
@@ -2973,7 +3178,7 @@ function vOggi(){
 
   /* Quattro tessere: i numeri del progetto a colpo d'occhio, senza paragrafi. */
   var sd = stretchDay(d);
-  var fattiStr = STRETCH.filter(function(x){ return sd.items[x.id]; }).length;
+  var fattiStr = streFatti(d);
   var ft = foodTot(d);
   var ws = S.weights.slice().sort(function(a,b){ return a.d < b.d ? -1 : 1; });
   var fs = S.ftf.slice().sort(function(a,b){ return a.d < b.d ? -1 : 1; });
@@ -2996,7 +3201,7 @@ function vOggi(){
     "obiettivo " + FTF_META + " cm",
     fs.length >= 2 ? (fs[fs.length-1].cm - fs[0].cm) + " cm" : null, "ok");
 
-  h += tile("stre", "Stretching", fattiStr + "/" + STRETCH.length, "oggi",
+  h += tile("stre", "Stretching", fattiStr + "/" + streOggi().length, "oggi",
     barrette(sett), xs + " giorni su 7",
     xs >= 5 ? "in linea" : "obiettivo 5", xs >= 5 ? "ok" : "warn");
 
@@ -3008,13 +3213,14 @@ function vOggi(){
 
   h += '</div>';
 
-  h += '<div class="card riga"><div style="flex:1">' +
+  h += '<div class="card"><div class="riga"><div style="flex:1">' +
     '<div class="eyebrow">Stretching di oggi</div>' +
-    '<div class="pallini">' + STRETCH.map(function(x){
+    '<div class="pallini">' + streOggi().map(function(x){
       return '<i data-on="' + (sd.items[x.id] ? 1 : 0) + '"></i>';
-    }).join("") + '<span class="num">' + fattiStr + '/' + STRETCH.length + '</span></div>' +
+    }).join("") + '<span class="num">' + fattiStr + '/' + streOggi().length + '</span></div>' +
     (tipo === "pesi" ? '<p class="fine">Dopo i pesi, non prima.</p>' : "") +
-    '</div><button class="btn" data-act="sesStart" data-kind="stretch">Vai</button></div>';
+    '</div><button class="btn" data-act="sesStart" data-kind="stretch">Vai</button></div>' +
+    vSceltaStre() + '</div>';
 
   h += '<div class="card riga"><div style="flex:1">' +
     '<div class="eyebrow">Cibo</div>' +
@@ -3393,6 +3599,40 @@ function vDati(){
   }
   h += '</div>';
 
+  /* ginocchio-muro: la dorsiflessione della caviglia.
+     Entra fra le misure perche' e' associata in modo significativo alla
+     profondita' dell'accosciata, e gli studi raccomandano di allenarla per
+     migliorare lo squat. Si misurano entrambi i lati: l'asimmetria e' essa
+     stessa un'informazione. Nessun obiettivo precompilato — il primo valore
+     che inserisci diventa il riferimento. */
+  var kws = (S.kw || []).slice().sort(function(a,b){ return a.d < b.d ? -1 : 1; });
+  h += '<div class="card"><div class="eyebrow">Ginocchio-muro</div>' +
+    '<p class="fine">In piedi davanti a un muro, piede avanti: spingi il ginocchio a toccarlo <strong>senza staccare il tallone</strong>. Allontana il piede finché il ginocchio arriva appena a toccare, poi misura la distanza fra alluce e muro. <strong>Più grande, meglio è.</strong> Ogni due settimane, come il dita-terra.</p>' +
+    '<div class="row"><input type="date" id="kD" value="' + oggiISO() + '" style="flex:2;min-width:140px">' +
+    '<input type="number" id="kSx" inputmode="decimal" step="0.5" placeholder="sin. cm" style="flex:1;min-width:76px">' +
+    '<input type="number" id="kDx" inputmode="decimal" step="0.5" placeholder="des. cm" style="flex:1;min-width:76px"></div>' +
+    '<button class="btn wide" data-act="addKw">Registra la misura</button>';
+  if(kws.length){
+    var ult = kws[kws.length - 1], asim = Math.abs((ult.sx || 0) - (ult.dx || 0));
+    h += '<p class="fine">Ultima: <span class="num">' + String(ult.sx).replace(".", ",") + ' cm</span> a sinistra, ' +
+      '<span class="num">' + String(ult.dx).replace(".", ",") + ' cm</span> a destra' +
+      (asim >= 1.5 ? ' — <strong>' + String(asim).replace(".", ",") + ' cm di differenza</strong> fra i due lati.' : '. I due lati sono allineati.') + '</p>';
+    h += lineChart(kws.map(function(x, i){ return { x:i, y:x.sx, lab:x.sx + " cm" }; }),
+      { alt:"ginocchio-muro sinistra", color:"var(--accent)" });
+    h += '<p class="fine">Sinistra.</p>';
+    h += lineChart(kws.map(function(x, i){ return { x:i, y:x.dx, lab:x.dx + " cm" }; }),
+      { alt:"ginocchio-muro destra", color:"var(--ghisa)" });
+    h += '<p class="fine">Destra.</p>';
+    if(kws.length < 2)
+      h += '<p class="fine">Con una misura sola non c\'è ancora niente da leggere: questa diventa il tuo riferimento, e il confronto comincia dalla seconda.</p>';
+    h += '<details class="perche"><summary><span>Perché questo numero</span></summary>' +
+      '<p class="fine">La dorsiflessione della caviglia — portare la tibia avanti sopra il piede col tallone a terra — è associata in modo significativo alla profondità dell\'accosciata. È quello che predice se il goblet squat verrà bene, più delle proporzioni ossee. Se è bassa, la categoria <strong>Caviglie</strong> dello stretching serve proprio a quello.</p>' +
+      '</details>';
+  } else {
+    h += '<p class="fine">Nessuna misura ancora. La prima che registri diventa il riferimento: non c\'è un valore "giusto" da raggiungere, conta come si muove nel tempo.</p>';
+  }
+  h += '</div>';
+
   /* pesi: storico carichi */
   var storico = EX.map(function(ex){
     var l = lastSession(ex.id, "9999-99-99");
@@ -3549,10 +3789,29 @@ document.getElementById("view").addEventListener("click", function(e){
     sd.items[id] = !sd.items[id]; save();
     el.setAttribute("data-on", sd.items[id] ? "1" : "0");
     var box = el.closest(".card").querySelector(".eyebrow");
-    var n = STRETCH.filter(function(x){ return sd.items[x.id]; }).length;
-    box.textContent = "Stretching · ogni giorno · " + n + " di " + STRETCH.length;
+    var n = streFatti(d);
+    box.textContent = "Stretching · ogni giorno · " + n + " di " + streOggi().length;
     return;
   }
+  /* ---- scelta degli esercizi di stretching ---- */
+  if(a === "streApri"){ sceltaStreAperta = !sceltaStreAperta; avvisoStre = ""; render(); return; }
+  if(a === "streMescola"){ mescolaStre(); avvisoStre = ""; sceltaStreAperta = true; buzz(25); render(); return; }
+  if(a === "streTog"){
+    var sid = el.dataset.id, ssel = streScelti(), si2 = ssel.indexOf(sid);
+    if(si2 >= 0){
+      ssel.splice(si2, 1);
+      avvisoStre = "";
+    } else if(ssel.length >= 3){
+      /* Non si sostituisce a caso quale togliere: sceglierlo e' suo. */
+      avvisoStre = "Sono già tre. Togline uno, poi aggiungi questo.";
+      render(); return;
+    } else {
+      ssel.push(sid);
+      avvisoStre = "";
+    }
+    S.streSel = ssel; save(); render(); return;
+  }
+
   if(a === "timer30"){ e.stopPropagation(); restStart(+el.dataset.sec, el.dataset.label); return; }
 
   if(a === "setup"){ S.setup[el.dataset.id] = !S.setup[el.dataset.id]; save(); render(); return; }
@@ -3701,6 +3960,14 @@ document.getElementById("view").addEventListener("click", function(e){
     if(!wd || isNaN(wk2)) return;
     S.weights = S.weights.filter(function(x){ return x.d !== wd; });
     S.weights.push({ d:wd, kg:wk2 }); save(); render(); return;
+  }
+  if(a === "addKw"){
+    var kd = document.getElementById("kD").value;
+    var ksx = parseFloat(document.getElementById("kSx").value);
+    var kdx = parseFloat(document.getElementById("kDx").value);
+    if(!kd || isNaN(ksx) || isNaN(kdx)) return;   /* servono tutti e due i lati: l'asimmetria e' il dato */
+    S.kw = (S.kw || []).filter(function(x){ return x.d !== kd; });
+    S.kw.push({ d:kd, sx:ksx, dx:kdx }); save(); render(); return;
   }
   if(a === "addFtf"){
     var fd = document.getElementById("fD").value, fc = parseFloat(document.getElementById("fC").value);
