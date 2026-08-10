@@ -1,3 +1,4 @@
+<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -659,6 +660,15 @@
     color:var(--ink);background:rgba(10,13,16,.62);padding:1px 5px;border-radius:5px}
   /* Interruttore per le strade: e' l'unica scelta dell'app che manda fuori
      qualcosa, quindi sta a vista e non sepolta nelle impostazioni. */
+  /* I menu a tendina non prendevano lo stile dei campi di testo: restavano
+     alti 19 px, meno della meta della soglia che il progetto si impone.
+     Trovato misurando dopo aver aggiunto il doctype, non guardando. */
+  .campo select, select{
+    width:100%; min-height:44px; padding:0 10px;
+    background:var(--surface-2); color:var(--ink);
+    border:1px solid var(--line); border-radius:10px;
+    font:inherit; font-size:14px; appearance:none; -webkit-appearance:none;
+  }
   .swi{display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer}
   .swi input{width:22px;height:22px;accent-color:var(--accent);flex:none}
   .swi span{font-size:13.5px;font-weight:600}
@@ -1518,7 +1528,7 @@ copiaDelGiorno();
    4. NESSUN PULSANTE. Una riga in testa dice come sta, e non chiede niente.
    ============================================================ */
 
-var VERSIONE = "3.5";
+var VERSIONE = "3.6";
 var KEY_SY = "palestra-sync";
 
 function syncCfg(){
