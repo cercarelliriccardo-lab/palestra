@@ -701,10 +701,17 @@
     filter:grayscale(.55) brightness(.46) contrast(1.06)}
   .imm[data-fondo="1"] .imm-tess{opacity:0}
   .imm-traccia{position:absolute;inset:0;width:100%;height:100%}
-  .imm-omino{position:absolute;left:50%;top:42%;width:96px;height:96px;
-    margin:-48px 0 0 -48px;
-    background:radial-gradient(50% 50% at 50% 64%, rgba(10,13,16,.82), transparent 70%)}
-  .imm-omino svg{width:100%;height:100%}
+  /* Il segnalino "sei qui". Ha preso il posto della figura animata: ric la
+     voleva via per far spazio alla mappa, e in cambio sparisce l unica
+     animazione continua della schermata. La fase resta detta dalla parola e
+     dal colore dell occhiello, che erano gia due canali su tre. */
+  .imm-omino{position:absolute;left:50%;top:42%;width:26px;height:26px;
+    margin:-13px 0 0 -13px;border-radius:50%;
+    background:var(--accent);border:3px solid #0A0D10;
+    box-shadow:0 0 0 2px rgba(22,232,160,.35)}
+  .imm-omino::after{content:"";position:absolute;inset:-14px;border-radius:50%;
+    background:radial-gradient(50% 50% at 50% 50%, rgba(22,232,160,.22), transparent 70%)}
+  .imm[data-scena="b"] .imm-omino{width:16px;height:16px;margin:-8px 0 0 -8px;border-width:2px}
   /* Il velo: rende leggibile il testo sopra le tessere senza filtri animati.
      Nella fascia centrale non si scrive nulla, per costruzione. */
   .imm-mappa::after{content:"";position:absolute;inset:0;pointer-events:none;
@@ -714,6 +721,14 @@
 
   /* L'HUD non riceve tocchi: schermo acceso mezz'ora col telefono addosso. */
   .imm-hud{position:absolute;inset:0;pointer-events:none;padding:0 16px}
+  /* Gli unici comandi dell HUD che ricevono tocchi. Stanno a destra, in alto,
+     lontani dal piede dove sta Pausa: un tocco cieco non deve cambiare zoom. */
+  .imm-zoom{position:absolute;right:16px;top:96px;display:flex;flex-direction:column;gap:8px;
+    pointer-events:auto}
+  .imm-zoom button{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);
+    background:rgba(10,13,16,.82);color:var(--ink);font:inherit;font-size:19px;font-weight:600;
+    line-height:1;padding:0}
+  .imm-zoom button[disabled]{opacity:.35}
   .imm-hud .occhiello{position:absolute;left:16px;right:16px;top:476px;
     font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
   .imm-hud .occhiello[data-f="run"]{color:var(--accent)}
@@ -785,6 +800,9 @@
   .swi{display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer}
   .swi input{width:22px;height:22px;accent-color:var(--accent);flex:none}
   .swi span{font-size:13.5px;font-weight:600}
+  .perc{margin-bottom:14px}
+  .perc:last-child{margin-bottom:0}
+  .perc .fine{margin-top:4px}
   .trbox{margin:2px 0 8px}
   .traccia{display:block;width:100%;height:auto;max-height:210px}
   .gpsriga{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px}
@@ -1545,6 +1563,7 @@ function fresh(){
     },
     passi:{},                 // ISO -> passi del giorno, riportati a mano da Salute
     tessere:true,             // strade sotto la traccia: l'unica cosa che esce dal telefono
+    immZoom:15,               // quanto e aperta la mappa nell immersiva (13-17)
     scelta:{},                // ISO -> {slot: idEsercizio} la variante di quel giorno
     "default":{},             // slot -> idEsercizio, la tua variante abituale
     extra:{},                 // ISO -> [idEsercizio] gli aggiuntivi, in fondo alla seduta
@@ -1660,7 +1679,7 @@ copiaDelGiorno();
    4. NESSUN PULSANTE. Una riga in testa dice come sta, e non chiede niente.
    ============================================================ */
 
-var VERSIONE = "4.0";
+var VERSIONE = "4.1";
 var KEY_SY = "palestra-sync";
 
 function syncCfg(){
@@ -2871,7 +2890,14 @@ var run = { seq:[], i:0, end:0, playing:false, started:false };
    manuale dice se lo scorrimento ha scavalcato il cambio automatico, e si
    azzera al cambio di fase successivo. */
 var imm = { on:false, p:0, manuale:false, scena:"a", raf:0, tessOk:0, tessKo:0, fondo:false };
-var immG = null, immNodi = {}, immCentro = null, immZ = 16;
+var immG = null, immNodi = {}, immCentro = null;
+/* Lo zoom era fisso a 16 e si vedevano ~660 m di lato: su una corsa da tre
+   chilometri e' una finestrella. Ora si sceglie e resta scelto per la
+   sessione — cambiarlo e un ricalcolo, cioe esattamente quello che succede
+   gia ogni 128 px di deriva, non un costo nuovo.
+   15 di partenza: ~1,3 km di lato, dove un giro si riconosce. */
+function immZoom(){ var z = S.immZoom; return (z >= 13 && z <= 17) ? z : 15; }
+Object.defineProperty(window, "immZ", { get: immZoom });
 function buildSeq(week){
   var cfg = RUN_WEEKS[Math.max(0, Math.min(3, week - 1))];
   var seq = [{ k:"warm", n:"Riscaldamento", s:WARMUP }];
@@ -3035,6 +3061,10 @@ function immHudHTML(){
       return '<i data-s="' + x.k + '" data-p="' + (run.started && i <= run.i ? 1 : 0) + '"></i>';
     }).join("") + '</div>' +
     (S.tessere !== false && !imm.fondo && gps.pts.length > 1 ? '<span class="attrib">© OpenStreetMap</span>' : "") +
+    '<div class="imm-zoom">' +
+      '<button data-act="immZoomPiu"' + (immZ >= 17 ? " disabled" : "") + ' aria-label="avvicina">+</button>' +
+      '<button data-act="immZoomMeno"' + (immZ <= 13 ? " disabled" : "") + ' aria-label="allontana">−</button>' +
+    '</div>' +
     '<div class="occhiello" data-f="' + esc(ph.k || "") + '">' + esc(occhio) + '</div>' +
     '<div class="grande" id="immBig">' + mmss(immResta()) + '</div>' +
     '<div class="pan">' +
@@ -3145,10 +3175,8 @@ function immP(p){
   immPiazza(p);
   var d = document.getElementById("immD");
   if(d) d.setAttribute("stroke-width", p > 0.5 ? "3" : "6");
-  /* La figura si spegne quando e' troppo piccola per dire qualcosa: e' la
-     sola animazione continua della schermata, e a 41 px non comunica nulla. */
-  if(p >= 0.62 && anim.id) animaOff();
-  else if(p < 0.62 && !anim.id && !pocoMoto) animaOn(immFase().k === "run" ? "corre" : "cammina");
+  /* Niente da accendere: nell immersiva non c e piu una figura animata, solo
+     un punto fermo. La mappa scorre sotto di lui. */
 }
 
 function immEntra(){
@@ -3159,6 +3187,11 @@ function immEntra(){
      stecco immobile e il difetto sembra della modalita nuova. */
   var vecchia = document.querySelector("#view .figcorsa");
   if(vecchia) vecchia.innerHTML = "";
+  /* Svuotare il contenitore NON ferma il motore: il ciclo continuerebbe a
+     girare contro un nodo che non c e piu, per tutta la seduta. Nell
+     immersiva non c e nessuna figura da animare, quindi si spegne. E proprio
+     la batteria che togliere l omino doveva far risparmiare. */
+  animaOff();
 
   imm.on = true; imm.manuale = false; imm.tessOk = 0; imm.tessKo = 0; imm.fondo = false;
   immG = immGeo(); immNodi = {}; immBase = null;
@@ -3174,7 +3207,6 @@ function immEntra(){
 
   var sv = document.getElementById("immSvg");
   sv.setAttribute("viewBox", "0 0 " + immG.W + " " + immG.H);
-  document.getElementById("immOmino").innerHTML = figuraSVG(immFase().k === "run" ? "corre" : "cammina");
   document.getElementById("immS1").style.height = immG.H + "px";
   document.getElementById("immFoglio").style.height = immG.H + "px";
   document.getElementById("immHud").innerHTML = immHudHTML();
@@ -3190,7 +3222,6 @@ function immEntra(){
   document.getElementById("immScroll").scrollTop = scena === "b" ? immG.H : 0;
   imm.scena = scena;
   el.setAttribute("data-scena", scena);
-  if(!pocoMoto && imm.p < 0.62) animaOn(immFase().k === "run" ? "corre" : "cammina");
   syncWake();
 }
 
@@ -3255,8 +3286,6 @@ function runNext(){
        quaranta secondi e peggio che non cambiare. */
     var restaA = kk.k === "run" || (kk.k === "walk" && kk.s < 60);
     immVai(restaA ? "a" : "b");
-    document.getElementById("immOmino").innerHTML = figuraSVG(kk.k === "run" ? "corre" : "cammina");
-    if(!pocoMoto && imm.p < 0.62) animaOn(kk.k === "run" ? "corre" : "cammina");
     document.getElementById("immHud").innerHTML = immHudHTML();
     if(imm.scena === "b") document.getElementById("immFoglio").innerHTML = immFoglioHTML();
   }
@@ -4321,6 +4350,15 @@ function vGiorno(d){
     corse[0].kind === "ellittica" ? "25" : RUN_WEEKS[Math.min(3, (corse[0].week || 1) - 1)].reps,
     corse[0].kind === "ellittica" ? "min" : "blocchi",
     "", corse[0].rpe ? "sensazione " + corse[0].rpe + " su 5" : "senza voto", "fatto", "ok");
+  /* Il percorso di quel giorno. La traccia era gia salvata dalla v3.2 e non
+     si rivedeva da nessuna parte: il dato c'era, mancava la finestra. */
+  var cr = corse.filter(function(r){ return r.tr && r.tr.length > 1; })[0];
+  if(cr){
+    h += '<div class="card"><div class="eyebrow">Percorso</div>' + mappaHTML(cr.tr) +
+      '<p class="fine">' + (cr.km != null ? '<span class="num">' + String(cr.km).replace(".", ",") + '</span> km' : '') +
+      (cr.passo ? ' · <span class="num">' + esc(cr.passo) + '</span> al km' : '') +
+      (cr.kcal ? ' · ' + cr.kcal + ' kcal rimesse nel piatto' : '') + '</p></div>';
+  }
   if(nStr) h += tile("stre", "Stretching", nStr + "/" + streOggi().length, "", "",
     stretchDone(d) ? "completo" : "parziale", stretchDone(d) ? "pieno" : "", stretchDone(d) ? "ok" : "warn");
   if(nCibo) h += tile("cibo", "Calorie", Math.round(ft.k), "kcal", "", Math.round(ft.p) + " g proteine · " + nCibo + " voci",
@@ -5449,6 +5487,25 @@ function vDati(){
   }
   h += '<p class="fine">I passi <strong>non alzano</strong> il bersaglio delle calorie: camminare è movimento di fondo, già dentro la stima del mantenimento. Solo la corsa lo alza, perché è in più.</p></div>';
 
+  /* I percorsi memorizzati. Le tracce c'erano dalla v3.2 ma vivevano solo
+     dentro S.runs: qui si rivedono. Al massimo le ultime sei — ognuna e' una
+     mappa con le sue tessere, e venti mappe in una schermata sono venti volte
+     il traffico verso OpenStreetMap per una cosa che si guarda di rado. */
+  var perc = (S.runs || []).filter(function(r){ return r.tr && r.tr.length > 1; })
+    .sort(function(a, b){ return a.d < b.d ? 1 : -1; }).slice(0, 6);
+  if(perc.length){
+    h += '<div class="card"><div class="eyebrow">I tuoi percorsi</div>' +
+      '<p class="fine">Le ultime ' + (perc.length === 1 ? "corsa registrata" : perc.length + " corse registrate") + ' col percorso acceso.</p>';
+    perc.forEach(function(r){
+      h += '<div class="perc">' + mappaHTML(r.tr) +
+        '<p class="fine"><strong>' + esc(dataLunga(parseISO(r.d))) + '</strong> — ' +
+        (r.km != null ? '<span class="num">' + String(r.km).replace(".", ",") + '</span> km' : "senza distanza") +
+        (r.passo ? ' · <span class="num">' + esc(r.passo) + '</span> al km' : '') +
+        (r.rpe ? ' · sensazione ' + r.rpe : '') + '</p></div>';
+    });
+    h += '</div>';
+  }
+
   /* pesi: storico carichi */
   /* Tutte le varianti, non solo le sette di oggi: se hai usato la panca coi
      manubri il mese scorso, quel carico va ritrovato. Il filtro sotto tiene
@@ -5974,6 +6031,17 @@ document.getElementById("imm").addEventListener("click", function(e){
     runNext(); return;
   }
   if(a === "immEsci"){ immEsci(); return; }
+  if(a === "immZoomPiu" || a === "immZoomMeno"){
+    var z = immZ + (a === "immZoomPiu" ? 1 : -1);
+    if(z < 13 || z > 17) return;
+    S.immZoom = z; save();
+    /* Cambiare zoom e un ricalcolo, cioe la stessa cosa che succede gia ogni
+       128 px di deriva. Non e un costo nuovo. */
+    immNodi = {}; document.getElementById("immTess").innerHTML = ""; immBase = null;
+    if(gps.pts.length > 1){ immRicalcola(); immTraccia(); }
+    document.getElementById("immHud").innerHTML = immHudHTML();
+    return;
+  }
   if(a === "gpsVia"){ gpsVia(); document.getElementById("immFoglio").innerHTML = immFoglioHTML(); return; }
   if(a === "tessere"){
     S.tessere = !!el.checked; save();
