@@ -669,6 +669,119 @@
     border:1px solid var(--line); border-radius:10px;
     font:inherit; font-size:14px; appearance:none; -webkit-appearance:none;
   }
+  /* ============================================================
+     MODALITA IMMERSIVA DELLA CORSA
+     ============================================================
+     Una mappa sola nel documento. Lo stato A (schermo pieno) e lo stato B
+     (quadranti, mappa piccola) sono lo STESSO nodo con un transform diverso:
+     niente dissolvenza fra due set di tessere, niente seconda figura, niente
+     offset in pixel cablati su uno schermo preciso.
+     Si animano solo transform e opacity. Nessun filter, nessun drop-shadow,
+     nessuna prospettiva: il progetto ha gia rifiutato WebGL per il consumo
+     durante una seduta di mezz'ora a schermo acceso, e un piano inclinato con
+     le tessere dentro costa quanto quello senza esserlo.
+     ============================================================ */
+  .imm{position:fixed;inset:0;z-index:60;background:var(--bg);overflow:hidden}
+  .imm[hidden]{display:none}
+  body.in-imm{overflow:hidden}
+  body.in-imm .tabs{display:none}
+  body.in-imm .fondo{display:none}   /* una griglia sola in scena */
+
+  .imm-mappa{position:absolute;left:0;top:0;width:100%;height:100%;
+    transform-origin:0 0;overflow:hidden;border-radius:0;background:var(--bg)}
+  .imm[data-scena="b"] .imm-mappa{border-radius:14px}
+  /* Il pavimento sta SEMPRE sotto le tessere: se non caricano, sotto c'e' una
+     cosa disegnata invece di un buco nero. */
+  .imm-griglia{position:absolute;inset:0;opacity:.55;
+    background:
+      repeating-linear-gradient(0deg, transparent 0 39px, var(--rete) 39px 40px),
+      repeating-linear-gradient(90deg, transparent 0 39px, var(--rete) 39px 40px)}
+  .imm-tess{position:absolute;inset:0}
+  .imm-tess img{position:absolute;width:256px;height:256px;
+    filter:grayscale(.55) brightness(.46) contrast(1.06)}
+  .imm[data-fondo="1"] .imm-tess{opacity:0}
+  .imm-traccia{position:absolute;inset:0;width:100%;height:100%}
+  .imm-omino{position:absolute;left:50%;top:42%;width:96px;height:96px;
+    margin:-48px 0 0 -48px;
+    background:radial-gradient(50% 50% at 50% 64%, rgba(10,13,16,.82), transparent 70%)}
+  .imm-omino svg{width:100%;height:100%}
+  /* Il velo: rende leggibile il testo sopra le tessere senza filtri animati.
+     Nella fascia centrale non si scrive nulla, per costruzione. */
+  .imm-mappa::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(180deg,
+      rgba(10,13,16,.90) 0, rgba(10,13,16,.86) 14%, rgba(10,13,16,.30) 26%,
+      rgba(10,13,16,.32) 54%, rgba(10,13,16,.88) 58%, rgba(10,13,16,.94) 100%)}
+
+  /* L'HUD non riceve tocchi: schermo acceso mezz'ora col telefono addosso. */
+  .imm-hud{position:absolute;inset:0;pointer-events:none;padding:0 16px}
+  .imm-hud .occhiello{position:absolute;left:16px;right:16px;top:476px;
+    font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+  .imm-hud .occhiello[data-f="run"]{color:var(--accent)}
+  .imm-hud .grande{position:absolute;left:16px;right:16px;top:500px;
+    font-family:var(--mono);font-weight:600;font-size:96px;line-height:.98;
+    letter-spacing:-.045em;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .imm-hud .pan{position:absolute;left:16px;right:16px;top:606px;
+    display:flex;gap:10px;background:rgba(10,13,16,.90);border:1px solid var(--line);
+    border-radius:14px;padding:11px 13px}
+  .imm-hud .pan>div{flex:1;min-width:0}
+  .imm-hud .pan .k{font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-3)}
+  .imm-hud .pan .v{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--ink)}
+  .imm-hud .pan .v[data-s="dentro"]{color:var(--accent)}
+  .imm-hud .pan .v[data-s="veloce"]{color:var(--warn)}
+  .imm-hud .pan .g{font-size:12px;color:var(--ink-2);line-height:1.3;margin-top:2px}
+  .imm-hud .attrib{position:absolute;right:16px;top:70px;font-size:9px;color:var(--ink);
+    background:rgba(10,13,16,.78);padding:1px 5px;border-radius:5px}
+  .imm-hud .track{position:absolute;left:16px;right:16px;top:57px}
+
+  /* Lo scorrimento e' nativo, con aggancio. Niente gesto scritto a mano:
+     soglie da tarare sul telefono, e sbagliate rompono tutto. */
+  .imm-scroll{position:absolute;inset:0;z-index:2;overflow-y:scroll;
+    scroll-snap-type:y mandatory;overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .imm-scroll::-webkit-scrollbar{display:none}
+  .imm-s1,.imm-s2{display:block;scroll-snap-align:start;scroll-snap-stop:always}
+  .imm-s1{pointer-events:none}          /* la pista: trasparente, e' lo stato A */
+  .imm-s2{padding:0 16px 40px;opacity:0}
+  .imm-maniglia{height:44px;display:flex;align-items:center;justify-content:center}
+  .imm-maniglia i{width:36px;height:4px;border-radius:2px;background:var(--line-2)}
+  .imm-griglia2{display:grid;grid-template-columns:160px 1fr;gap:12px}
+  .imm-col{display:flex;flex-direction:column;gap:12px}
+  .imm-t{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px}
+  .imm-t .k{font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-3)}
+  .imm-t .v{font-family:var(--mono);font-size:40px;font-weight:600;line-height:1.05;
+    letter-spacing:-.03em;color:var(--ink);font-variant-numeric:tabular-nums}
+  .imm-t .s{font-size:11px;color:var(--ink-3);margin-top:2px}
+  .imm-passo{margin-top:12px}
+  .imm-passo .v{font-size:64px}
+  .imm-passo .v[data-s="dentro"]{color:var(--accent)}
+  .imm-passo .v[data-s="veloce"]{color:var(--warn)}
+  .imm-passo .g{font-size:14px;color:var(--ink-2);margin-top:4px;line-height:1.35}
+  .imm-banda{position:relative;height:26px;margin-top:10px;border-radius:6px;
+    background:var(--surface-3);overflow:hidden}
+  .imm-banda i{position:absolute;top:0;bottom:0;background:var(--accent-soft)}
+  .imm-banda b{position:absolute;top:0;bottom:0;width:2px;background:var(--ink)}
+
+  /* Il piede e' FISSO e fuori dallo scroller: nessuno scorrimento accidentale
+     puo togliere di vista l'unico numero su cui si agisce, e premere i tasti
+     non fa scorrere niente. */
+  .imm-foot{position:absolute;left:0;right:0;bottom:0;z-index:3;height:84px;
+    display:flex;align-items:center;gap:12px;padding:0 16px 12px;
+    background:linear-gradient(180deg, transparent, rgba(10,13,16,.92) 42%)}
+  .imm-foot .tempo{flex:1;font-family:var(--mono);color:var(--ink)}
+  .imm-foot .tempo b{display:block;font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+  .imm-foot .tempo span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+  .imm-foot button{flex:none;min-height:44px;border-radius:14px;border:1px solid var(--line);
+    background:var(--surface-3);color:var(--ink);font:inherit;font-size:14px;font-weight:600;padding:0 16px}
+  .imm-foot button.tondo{width:64px;height:64px;border-radius:50%;padding:0;
+    background:var(--accent);color:var(--accent-ink);border:0;font-size:13px}
+  .imm-msg{font-size:12px;color:var(--ink-3);margin-top:8px}
+
+  @media (prefers-reduced-motion: reduce){
+    .imm-scroll{scroll-behavior:auto}
+  }
+
   .swi{display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer}
   .swi input{width:22px;height:22px;accent-color:var(--accent);flex:none}
   .swi span{font-size:13.5px;font-weight:600}
@@ -908,6 +1021,25 @@
   <span class="w" id="restW"></span>
   <button type="button" data-act="rest-add">+30s</button>
   <button type="button" data-act="rest-stop">Stop</button>
+</div>
+
+<!-- Modalita immersiva della corsa. Fuori da #view di proposito: e' un
+     pannello fisso della stessa famiglia di .ses, non una sua vista. -->
+<div class="imm" id="imm" hidden>
+  <div class="imm-mappa" id="immMappa">
+    <i class="imm-griglia"></i>
+    <div class="imm-tess" id="immTess"></div>
+    <svg class="imm-traccia" id="immSvg" viewBox="0 0 375 812" preserveAspectRatio="none" aria-hidden="true">
+      <path id="immD" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+    <div class="imm-omino" id="immOmino"></div>
+  </div>
+  <div class="imm-hud" id="immHud"></div>
+  <div class="imm-scroll" id="immScroll">
+    <i class="imm-s1" id="immS1"></i>
+    <div class="imm-s2" id="immFoglio"></div>
+  </div>
+  <div class="imm-foot" id="immFoot"></div>
 </div>
 
 <nav class="tabs" id="tabs">
@@ -1419,7 +1551,7 @@ function fresh(){
     rifiutati:{}              // slot -> idEsercizio per cui hai gia' detto no al predefinito
   };
 }
-var SCHEMA = 5;
+var SCHEMA = 6;
 var schemaFuturo = false;
 /* Riempie i campi che una versione piu vecchia non aveva e riallinea v.
    Non tocca mai i dati esistenti: aggiunge soltanto cio che manca. */
@@ -1528,7 +1660,7 @@ copiaDelGiorno();
    4. NESSUN PULSANTE. Una riga in testa dice come sta, e non chiede niente.
    ============================================================ */
 
-var VERSIONE = "3.6";
+var VERSIONE = "4.0";
 var KEY_SY = "palestra-sync";
 
 function syncCfg(){
@@ -2301,7 +2433,7 @@ function buzz(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
    Nessun conteggio di chi lo ha chiesto: syncWake() ricalcola dallo stato. */
 var wake = null, wakeWanted = false;
 function wakeNeeded(){
-  return ses.on || tab === "pesi" || tab === "corsa" || rest.on || run.playing;
+  return imm.on || ses.on || tab === "pesi" || tab === "corsa" || rest.on || run.playing;
 }
 function syncWake(){
   wakeWanted = wakeNeeded();
@@ -2440,13 +2572,77 @@ var gps = { on:false, id:0, pts:[], km:0, prec:null, errore:"", ultimo:null, t0:
    corsa in cui l'istruzione e' "ritmo facile, quello in cui riesci a dire una
    frase intera", sapere che stai andando a 7'30" invece che a 6'00" e' l'unica
    informazione che cambia qualcosa mentre corri. */
-function passoAlKm(km, ms){
+function secKm(km, ms){
   if(!km || km < 0.08 || !ms) return null;
   var sec = (ms / 1000) / km;
-  if(sec > 1800) return null;                    /* oltre mezz'ora al km e' fermo */
+  return sec > 1800 ? null : sec;                /* oltre mezz'ora al km e' fermo */
+}
+function mmSec(sec){
+  if(sec == null) return null;
   var m = Math.floor(sec / 60), s = Math.round(sec % 60);
   if(s === 60){ m++; s = 0; }
   return m + "'" + (s < 10 ? "0" : "") + s + '"';
+}
+function passoAlKm(km, ms){ return mmSec(secKm(km, ms)); }
+
+/* ---------- IL PASSO DEL BLOCCO ----------
+   Il passo cumulativo e' SBAGLIATO per una seduta a intervalli: mescola otto
+   blocchi di corsa con sette di cammino, quindi mentre corri dice sempre un
+   numero piu lento del vero e non ti fa correggere niente. Difetto della v3.3,
+   trovato dal confronto fra le quattro direzioni.
+
+   Ogni punto GPS porta con se l'indice della fase in cui e' stato preso, e
+   qui si guarda solo quella. Sotto 120 metri non si dice niente: due fix e
+   un'incertezza di 15 metri darebbero un passo inventato. */
+function passoBlocco(idx){
+  if(idx == null || idx < 0) return null;
+  var p = [], i;
+  for(i = 0; i < gps.pts.length; i++) if(gps.pts[i][3] === idx) p.push(gps.pts[i]);
+  if(p.length < 2) return null;
+  var km = 0;
+  for(i = 1; i < p.length; i++) km += haversine(p[i-1], p[i]);
+  if(km < 0.12) return null;
+  var ms = p[p.length-1][2] - p[0][2];
+  var sec = secKm(km, ms);
+  return sec == null ? null : { km:km, sec:sec, testo:mmSec(sec), fermoDa:Date.now() - p[p.length-1][2] };
+}
+/* L'ultimo blocco di corsa gia chiuso, per avere qualcosa da dire nei primi
+   120 metri del blocco in corso. */
+function passoBloccoPrec(idx){
+  for(var k = idx - 1; k >= 0; k--){
+    if((run.seq[k] || {}).k !== "run") continue;
+    var p = passoBlocco(k);
+    if(p) return { p:p, i:k };
+  }
+  return null;
+}
+
+/* Il riferimento: mediana dei passi delle corse passate andate BENE, cioe a
+   sensazione 3 o meno. Sotto tre corse non esiste, e un quadrante senza
+   taratura non deve fingere di averla. */
+function rifPasso(){
+  var v = [];
+  (S.runs || []).forEach(function(r){
+    if(r.pc && r.rpe != null && r.rpe <= 3) v.push(r.pc);
+  });
+  if(v.length < 3) return null;
+  v.sort(function(a, b){ return a - b; });
+  return v[Math.floor(v.length / 2)];
+}
+/* La banda: ±20 secondi al chilometro attorno al riferimento.
+   ATTENZIONE: quei 20 secondi sono un GIUDIZIO, non una fonte. Nessuno studio
+   dice che venti secondi siano la soglia giusta. Se qualcuno li cita come
+   evidenza, sta sbagliando. */
+var BANDA = 20;
+/* Asimmetrico di proposito: si accende solo il lato "stai andando troppo
+   forte". Piu lento del riferimento e' grigio e mai ambra — il facile e' il
+   bersaglio, non il minimo, e questa e' la regola del programma. */
+function giudizioPasso(sec){
+  var r = rifPasso();
+  if(r == null || sec == null) return { st:"neutro", t:"" };
+  if(sec < r - BANDA) return { st:"veloce", t:"Rallenta finché non riesci a dire una frase intera" };
+  if(sec > r + BANDA) return { st:"lento",  t:"Va bene: il facile è il bersaglio, non il minimo" };
+  return { st:"dentro", t:"Dentro il tuo ritmo facile" };
 }
 
 function haversine(a, b){
@@ -2475,15 +2671,21 @@ function gpsVia(){
     if(!gps.t0) gps.t0 = t;
     gps.tUlt = t;
     gps.ultimo = { q:q, t:t };
-    gps.pts.push(q);
+    /* Quarto elemento: l indice della fase. Serve al passo del blocco, e non
+       rompe niente — haversine, proiez, zoomPer, tracciaSVG e mappaHTML
+       leggono solo [0] e [1], e potaTraccia ricostruisce coppie a due. */
+    gps.pts.push([q[0], q[1], t, run.started ? run.i : -1]);
     var el = document.getElementById("gpsKm");
     if(el) el.textContent = gps.km.toFixed(2).replace(".", ",");
     var pa = document.getElementById("gpsPasso");
     if(pa) pa.textContent = passoAlKm(gps.km, gps.tUlt - gps.t0) || "—";
     /* La mappa si ridisegna ogni cinque punti, non a ogni fix: rifare le
        tessere venti volte al minuto e' traffico e batteria per niente. */
-    var tr = document.getElementById("gpsTr");
-    if(tr && gps.pts.length % 5 === 0) tr.innerHTML = mappaHTML(gps.pts);
+    if(imm.on){ immFix(); }
+    else {
+      var tr = document.getElementById("gpsTr");
+      if(tr && gps.pts.length % 5 === 0) tr.innerHTML = mappaHTML(gps.pts);
+    }
   }, function(e){
     gps.errore = e.code === 1
       ? "Permesso negato. Serve autorizzare la posizione per questa pagina."
@@ -2664,6 +2866,12 @@ function etichettaKcal(d){
 }
 
 var run = { seq:[], i:0, end:0, playing:false, started:false };
+
+/* Lo stato della modalita immersiva. p va da 0 (mappa piena) a 1 (quadranti);
+   manuale dice se lo scorrimento ha scavalcato il cambio automatico, e si
+   azzera al cambio di fase successivo. */
+var imm = { on:false, p:0, manuale:false, scena:"a", raf:0, tessOk:0, tessKo:0, fondo:false };
+var immG = null, immNodi = {}, immCentro = null, immZ = 16;
 function buildSeq(week){
   var cfg = RUN_WEEKS[Math.max(0, Math.min(3, week - 1))];
   var seq = [{ k:"warm", n:"Riscaldamento", s:WARMUP }];
@@ -2674,6 +2882,354 @@ function buildSeq(week){
   seq.push({ k:"cool", n:"Defaticamento", s:COOLDOWN });
   return seq;
 }
+/* ============================================================
+   MODALITA IMMERSIVA — motore
+   ============================================================ */
+
+var LATO_I = 16, MANIGLIA_I = 44, PADT_I = 14;
+var immBase = null;                 /* pixel mondo dell'angolo alto-sinistro */
+
+/* Una formula, non dei numeri: la finestra piccola dello stato B ha la stessa
+   proporzione dello schermo, quindi A -> B e' solo translate + scale e regge
+   ogni schermo e la rotazione. */
+function immGeo(){
+  var W = innerWidth, H = innerHeight;
+  var w = Math.round((W - LATO_I*2 - 12) * 0.485);
+  return { W:W, H:H, bx:LATO_I, by:MANIGLIA_I + PADT_I, s:w / W };
+}
+function immPiazza(p){
+  var g = immG || (immG = immGeo());
+  var s = 1 + (g.s - 1) * p;
+  var m = document.getElementById("immMappa");
+  if(m) m.style.transform = "translate3d(" + (g.bx*p).toFixed(1) + "px," +
+    (g.by*p).toFixed(1) + "px,0) scale(" + s.toFixed(4) + ")";
+  var hud = document.getElementById("immHud");
+  if(hud) hud.style.opacity = String(Math.max(0, 1 - Math.min(1, p*1.7)));
+  var f = document.getElementById("immFoglio");
+  if(f) f.style.opacity = String(Math.max(0, Math.min(1, (p - 0.45) / 0.35)));
+  var mp = document.getElementById("immMappa");
+  if(mp) mp.style.setProperty("--p", String(p));
+}
+
+/* ---------- il gestore delle tessere ----------
+   Chiave z/x/y -> nodo. Si aggiungono solo le tessere nuove al bordo; la
+   traccia si aggiorna con un solo setAttribute. Il set si ricalcola solo dopo
+   128 px di deriva (~113 m). E' l'unico pezzo di tutta la modalita che
+   consuma MENO di quello che c'era prima, dove ogni cinque fix si buttava via
+   e si ricreava l'intero innerHTML. */
+function immRicalcola(){
+  var g = immG || (immG = immGeo());
+  var u = gps.pts[gps.pts.length - 1];
+  if(!u) return;
+  var c = proiez(u[0], u[1], immZ);
+  immBase = [ c[0] - g.W/2, c[1] - g.H*0.42 ];
+  immCentro = c;
+  var box = document.getElementById("immTess");
+  if(!box) return;
+  box.style.transform = "translate3d(0,0,0)";
+  document.getElementById("immSvg").style.transform = "translate3d(0,0,0)";
+  if(S.tessere === false){ box.innerHTML = ""; immNodi = {}; return; }
+
+  var max = Math.pow(2, immZ), voluti = {};
+  var tx0 = Math.floor(immBase[0]/256) - 1, tx1 = Math.floor((immBase[0]+g.W)/256) + 1;
+  var ty0 = Math.floor(immBase[1]/256) - 1, ty1 = Math.floor((immBase[1]+g.H)/256) + 1;
+  for(var tx = tx0; tx <= tx1; tx++){
+    for(var ty = ty0; ty <= ty1; ty++){
+      if(ty < 0 || ty >= max) continue;
+      var wx = ((tx % max) + max) % max, k = immZ + "/" + wx + "/" + ty;
+      voluti[k] = 1;
+      var n = immNodi[k];
+      if(!n){
+        n = document.createElement("img");
+        n.alt = ""; n.loading = "lazy";
+        n.onload  = function(){ imm.tessOk++; };
+        n.onerror = function(){ imm.tessKo++; this.style.visibility = "hidden"; immFondo(); };
+        n.src = TESSERE + k + ".png";
+        immNodi[k] = n; box.appendChild(n);
+      }
+      n.style.left = (tx*256 - immBase[0]) + "px";
+      n.style.top  = (ty*256 - immBase[1]) + "px";
+    }
+  }
+  Object.keys(immNodi).forEach(function(k){
+    if(!voluti[k]){ var n = immNodi[k]; if(n && n.parentNode) n.parentNode.removeChild(n); delete immNodi[k]; }
+  });
+  /* Se piu di meta delle tessere non arriva, si resta sul pavimento. Non e un
+     allarme: e una condizione, e S.tessere non si spegne mai da sola. */
+  setTimeout(immFondo, 6000);
+}
+function immFondo(){
+  var tot = imm.tessOk + imm.tessKo;
+  var giu = tot >= 4 && imm.tessKo / tot > 0.5;
+  if(giu === imm.fondo) return;
+  imm.fondo = giu;
+  var el = document.getElementById("imm");
+  if(el) el.setAttribute("data-fondo", giu ? "1" : "0");
+}
+
+function immTraccia(){
+  var g = immG || (immG = immGeo());
+  var d = "";
+  if(immBase && gps.pts.length > 1){
+    for(var i = 0; i < gps.pts.length; i++){
+      var q = proiez(gps.pts[i][0], gps.pts[i][1], immZ);
+      d += (i ? "L" : "M") + (q[0]-immBase[0]).toFixed(1) + " " + (q[1]-immBase[1]).toFixed(1);
+    }
+  }
+  var p = document.getElementById("immD");
+  if(p && p.getAttribute("d") !== d) p.setAttribute("d", d);
+}
+
+/* Un fix: due transform e un path. Niente innerHTML, niente lettura di
+   layout, niente ricostruzione di nodi. */
+function immFix(){
+  var g = immG || (immG = immGeo());
+  var u = gps.pts[gps.pts.length - 1];
+  if(!u) return;
+  if(!immBase){ immRicalcola(); immTraccia(); tickImm(); return; }
+  var c = proiez(u[0], u[1], immZ);
+  var dx = (c[0] - g.W/2) - immBase[0], dy = (c[1] - g.H*0.42) - immBase[1];
+  if(Math.abs(dx) > 128 || Math.abs(dy) > 128){ immRicalcola(); immTraccia(); tickImm(); return; }
+  var t = "translate3d(" + (-dx).toFixed(1) + "px," + (-dy).toFixed(1) + "px,0)";
+  var box = document.getElementById("immTess"), sv = document.getElementById("immSvg");
+  if(box) box.style.transform = t;
+  if(sv) sv.style.transform = t;
+  immTraccia();
+  tickImm();
+}
+
+/* ---------- cosa si scrive, e dove ---------- */
+
+function immFase(){ return run.started ? (run.seq[run.i] || {}) : { k:"warm", n:"Riscaldamento", s:WARMUP }; }
+function immResta(){
+  var ph = immFase();
+  if(!run.started) return ph.s;
+  return run.playing ? Math.max(0, (run.end - Date.now()) / 1000) : ph.s;
+}
+function immKm(){ return gps.pts.length > 1 ? gps.km : null; }
+
+/* Il pannello del passo, che e' l'unico numero su cui puoi agire correndo.
+   Precedenze: segnale cattivo > fermo > blocco in corso > ultimo chiuso. */
+function immPasso(){
+  if(!gps.on) return { v:"—", st:"neutro", g:"Senza posizione non c'è passo. Il timer funziona lo stesso." };
+  if(gps.prec != null && gps.prec > 20 && gps.pts.length < 2)
+    return { v:"—", st:"neutro", g:"Segnale a " + gps.prec + " m — non mi fiderei" };
+  var idx = run.started && immFase().k === "run" ? run.i : -1;
+  var pb = idx >= 0 ? passoBlocco(idx) : null;
+  if(pb && pb.fermoDa > 20000)
+    return { v:pb.testo, st:"neutro", g:"fermo da " + Math.round(pb.fermoDa/1000) + "″" };
+  if(pb){ var gj = giudizioPasso(pb.sec); return { v:pb.testo, sec:pb.sec, st:gj.st, g:gj.t }; }
+  var pp = run.started ? passoBloccoPrec(run.i) : null;
+  if(pp) return { v:pp.p.testo, sec:pp.p.sec, st:"neutro", g:"ultimo blocco chiuso" };
+  return { v:"—", st:"neutro", g:gps.pts.length < 2 ? "Cerco il segnale…" : "" };
+}
+
+function immHudHTML(){
+  var ph = immFase(), km = immKm(), pa = immPasso();
+  var seq = run.started ? run.seq : buildSeq(weekClamped());
+  var blocchi = seq.filter(function(x){ return x.k === "run"; }).length;
+  var occhio = ph.k === "run" && ph.b
+    ? "Corsa · blocco " + ph.b + " di " + (ph.tot || blocchi)
+    : (ph.n || "Pronto");
+  return '<div class="track">' + seq.map(function(x, i){
+      return '<i data-s="' + x.k + '" data-p="' + (run.started && i <= run.i ? 1 : 0) + '"></i>';
+    }).join("") + '</div>' +
+    (S.tessere !== false && !imm.fondo && gps.pts.length > 1 ? '<span class="attrib">© OpenStreetMap</span>' : "") +
+    '<div class="occhiello" data-f="' + esc(ph.k || "") + '">' + esc(occhio) + '</div>' +
+    '<div class="grande" id="immBig">' + mmss(immResta()) + '</div>' +
+    '<div class="pan">' +
+      '<div><div class="k">km</div><div class="v" id="immKm">' + (km == null ? "—" : km.toFixed(2).replace(".", ",")) + '</div></div>' +
+      '<div><div class="k">passo</div><div class="v" data-s="' + pa.st + '" id="immPa">' + esc(pa.v) + '</div>' +
+        (pa.g ? '<div class="g">' + esc(pa.g) + '</div>' : '') + '</div>' +
+    '</div>';
+}
+
+function immFoglioHTML(){
+  var ph = immFase(), km = immKm(), pa = immPasso(), r = rifPasso();
+  var seq = run.started ? run.seq : buildSeq(weekClamped());
+  var blocchi = seq.filter(function(x){ return x.k === "run"; }).length;
+  var restaMin = Math.round(seq.slice(run.started ? run.i : 0).reduce(function(a,x){ return a+x.s; }, 0) / 60);
+  var conMappa = gps.on && gps.pts.length > 1;
+  var tile = function(k, v, s){ return '<div class="imm-t"><div class="k">' + k + '</div><div class="v">' + v + '</div>' + (s ? '<div class="s">' + s + '</div>' : '') + '</div>'; };
+
+  var h = '<div class="imm-maniglia"><i></i></div>';
+  h += '<div class="imm-griglia2" style="' + (conMappa ? '' : 'grid-template-columns:1fr 1fr') + '">';
+  if(conMappa) h += '<div></div>';   /* la colonna della mappa: la riempie il transform */
+  h += '<div class="imm-col">' +
+      tile(esc((ph.n || "Pronto")) + " · resta", mmss(immResta())) +
+      tile("Blocchi", (run.started ? (ph.b || "—") : 0) + "/" + blocchi, "restano " + restaMin + " min") +
+      (conMappa ? tile("Distanza", km.toFixed(2).replace(".", ",") + " km") : "") +
+    '</div></div>';
+
+  h += '<div class="imm-t imm-passo"><div class="k">Passo del blocco</div>' +
+    '<div class="v" data-s="' + pa.st + '">' + esc(pa.v) + '</div>' +
+    (pa.g ? '<div class="g">' + esc(pa.g) + '</div>' : '');
+  if(r != null && pa.v !== "—"){
+    var lo = r - BANDA, hi = r + BANDA, min = lo - 60, span = (hi + 60) - min;
+    /* Il cursore sta dove sta il tuo passo. Piu a sinistra = piu veloce. */
+    var cur = pa.sec != null ? Math.max(0, Math.min(99, (pa.sec - min) / span * 100)) : null;
+    h += '<div class="imm-banda"><i style="left:' + ((lo-min)/span*100).toFixed(1) + '%;width:' + ((hi-lo)/span*100).toFixed(1) + '%"></i>' +
+      (cur == null ? '' : '<b style="left:' + cur.toFixed(1) + '%"></b>') + '</div>' +
+      '<div class="s">Riferimento ' + mmSec(r) + ' al km, dalle tue corse a sensazione 3 o meno. La fascia è ±' + BANDA + '″ — è un giudizio, non una misura.</div>';
+  } else {
+    h += '<div class="s">Nessun riferimento ancora: servono tre corse a sensazione 3 o meno col percorso acceso.</div>';
+  }
+  h += '</div>';
+
+  if(conMappa){
+    h += '<div class="imm-griglia2" style="grid-template-columns:1fr 1fr;margin-top:12px">' +
+      tile("+" + kcalDa(gps.km) + " kcal", "", "nel piatto di oggi") +
+      tile("Passi", passiDa(gps.km).toLocaleString("it-IT"), "stimati, non contati") +
+      '</div>' +
+      '<p class="imm-msg">' + (gps.prec != null ? "Precisione " + gps.prec + " m" : "") +
+      (S.tessere !== false && !imm.fondo ? " · © OpenStreetMap" : "") + '</p>';
+  }
+  if(imm.fondo) h += '<p class="imm-msg">Strade non caricate — resta la traccia.</p>';
+  if(!gps.on) h += '<div class="row"><button class="btn wide" data-act="gpsVia">Segui il percorso</button></div>';
+  if(gps.errore) h += '<p class="imm-msg">' + esc(gps.errore) + '</p>';
+
+  h += '<hr style="border:0;border-top:1px solid var(--line);margin:16px 0">' +
+    '<label class="swi"><input type="checkbox" data-act="tessere"' + (S.tessere !== false ? " checked" : "") + '>' +
+    '<span>Strade sotto la traccia</span></label>' +
+    '<p class="imm-msg">' + (S.tessere !== false
+      ? "Le tessere arrivano da OpenStreetMap: per disegnare quella giusta il servizio deve sapere dove sei. È l'unica cosa che esce dal telefono."
+      : "Solo la traccia. Niente esce dal telefono.") + '</p>' +
+    '<details class="perche"><summary><span>E i passi?</span></summary>' +
+    '<p class="fine">Non sono contati: sono la distanza divisa per una falcata di 75 cm stimata sulla tua altezza. È una divisione, non una misura. Quelli veri li conta il telefono in Salute.</p></details>' +
+    '<div class="row"><button class="btn ghost wide" data-act="immEsci">Chiudi la modalità</button></div>' +
+    '<p class="imm-msg">Chiudere non ferma il cronometro.</p>';
+  return h;
+}
+
+function immFootHTML(){
+  var ph = immFase();
+  return '<div class="tempo"><b id="immFt">' + mmss(immResta()) + '</b><span>' + esc(ph.n || "Pronto") + '</span></div>' +
+    (!run.started
+      ? '<button class="tondo" data-act="runPlay">Avvia</button>'
+      : run.playing
+        ? '<button class="tondo" data-act="runPause">Pausa</button>'
+        : '<button class="tondo" data-act="runPlay">Vai</button>') +
+    (imm.scena === "b" ? '<button data-act="runSkip">Salta fase</button>' : "");
+}
+
+/* Scrive in posto, e solo se la stringa e cambiata. Mai innerHTML del
+   pannello: azzererebbe lo scorrimento e ricreerebbe tutte le tessere. */
+function tickImm(){
+  if(!imm.on) return;
+  var t = mmss(immResta());
+  var a = document.getElementById("immBig"); if(a && a.textContent !== t) a.textContent = t;
+  var b = document.getElementById("immFt");  if(b && b.textContent !== t) b.textContent = t;
+  var km = immKm(), ks = km == null ? "—" : km.toFixed(2).replace(".", ",");
+  var c = document.getElementById("immKm"); if(c && c.textContent !== ks) c.textContent = ks;
+  var pa = immPasso();
+  var d = document.getElementById("immPa");
+  if(d && d.textContent !== pa.v){ d.textContent = pa.v; d.setAttribute("data-s", pa.st); }
+  if(run.playing && run.started && (run.end - Date.now()) <= 0) runNext();
+}
+
+function immVai(scena){
+  if(!imm.on) return;
+  imm.scena = scena;
+  var sc = document.getElementById("immScroll");
+  var el = document.getElementById("imm");
+  if(el) el.setAttribute("data-scena", scena);
+  var y = scena === "b" ? innerHeight : 0;
+  if(sc){
+    if(pocoMoto){ sc.scrollTop = y; immP(scena === "b" ? 1 : 0); }
+    else sc.scrollTo({ top:y, behavior:"smooth" });
+  }
+  document.getElementById("immFoot").innerHTML = immFootHTML();
+}
+function immP(p){
+  imm.p = p;
+  immPiazza(p);
+  var d = document.getElementById("immD");
+  if(d) d.setAttribute("stroke-width", p > 0.5 ? "3" : "6");
+  /* La figura si spegne quando e' troppo piccola per dire qualcosa: e' la
+     sola animazione continua della schermata, e a 41 px non comunica nulla. */
+  if(p >= 0.62 && anim.id) animaOff();
+  else if(p < 0.62 && !anim.id && !pocoMoto) animaOn(immFase().k === "run" ? "corre" : "cammina");
+}
+
+function immEntra(){
+  /* TRAPPOLA NUMERO UNO. disegna() scrive su #fgT, #fgG, #fgB: sono ID,
+     quindi si anima sempre e solo la PRIMA figura del documento. Entrando da
+     vCorsa, #view non viene svuotato — e' solo coperto — e dentro c'e' gia un
+     figuraSVG completo. Senza questa riga l'omino dell'immersiva resta uno
+     stecco immobile e il difetto sembra della modalita nuova. */
+  var vecchia = document.querySelector("#view .figcorsa");
+  if(vecchia) vecchia.innerHTML = "";
+
+  imm.on = true; imm.manuale = false; imm.tessOk = 0; imm.tessKo = 0; imm.fondo = false;
+  immG = immGeo(); immNodi = {}; immBase = null;
+  /* Svuotare la mappa delle chiavi NON basta: i nodi restano nel documento e
+     ogni ingresso ne lascia dentro un altro set. Trovato in collaudo — 48 img
+     con 24 chiavi — ed e proprio il consumo che questo gestore doveva
+     evitare. */
+  var boxT = document.getElementById("immTess");
+  if(boxT) boxT.innerHTML = "";
+  var el = document.getElementById("imm");
+  el.hidden = false;
+  document.body.classList.add("in-imm");
+
+  var sv = document.getElementById("immSvg");
+  sv.setAttribute("viewBox", "0 0 " + immG.W + " " + immG.H);
+  document.getElementById("immOmino").innerHTML = figuraSVG(immFase().k === "run" ? "corre" : "cammina");
+  document.getElementById("immS1").style.height = immG.H + "px";
+  document.getElementById("immFoglio").style.height = immG.H + "px";
+  document.getElementById("immHud").innerHTML = immHudHTML();
+  document.getElementById("immFoglio").innerHTML = immFoglioHTML();
+  document.getElementById("immFoot").innerHTML = immFootHTML();
+
+  if(gps.pts.length > 1){ immRicalcola(); immTraccia(); }
+  /* Non avviata: si apre sui quadranti. La modalita immersiva non ha senso
+     prima di partire. */
+  var scena = (run.started && immFase().k === "run") ? "a" : "b";
+  imm.p = scena === "b" ? 1 : 0;
+  immPiazza(imm.p);
+  document.getElementById("immScroll").scrollTop = scena === "b" ? immG.H : 0;
+  imm.scena = scena;
+  el.setAttribute("data-scena", scena);
+  if(!pocoMoto && imm.p < 0.62) animaOn(immFase().k === "run" ? "corre" : "cammina");
+  syncWake();
+}
+
+function immEsci(){
+  imm.on = false;
+  animaOff();
+  document.getElementById("imm").hidden = true;
+  document.body.classList.remove("in-imm");
+  var boxU = document.getElementById("immTess");
+  if(boxU) boxU.innerHTML = "";
+  immNodi = {}; immBase = null;
+  syncWake();
+  render();   /* ricostruisce #view, figura della corsa compresa */
+}
+
+/* Lo scorrimento: nativo, letto in rAF, una scrittura per fotogramma. */
+var immRafOn = 0;
+function immScrolla(){
+  if(!imm.on) return;
+  if(immRafOn) return;
+  immRafOn = requestAnimationFrame(function(){
+    immRafOn = 0;
+    var sc = document.getElementById("immScroll");
+    if(!sc) return;
+    var p = Math.max(0, Math.min(1, sc.scrollTop / Math.max(1, immG.H)));
+    if(Math.abs(p - imm.p) < 0.004) return;
+    imm.manuale = true;
+    immP(p);
+    /* Isteresi asimmetrica: scroll-snap-stop non e' ovunque. */
+    var nuova = p >= 0.65 ? "b" : p <= 0.35 ? "a" : imm.scena;
+    if(nuova !== imm.scena){
+      imm.scena = nuova;
+      document.getElementById("imm").setAttribute("data-scena", nuova);
+      document.getElementById("immFoot").innerHTML = immFootHTML();
+      if(nuova === "b") document.getElementById("immFoglio").innerHTML = immFoglioHTML();
+    }
+  });
+}
+
 function runStart(){
   if(!run.started){ run.seq = buildSeq(weekClamped()); run.i = 0; run.started = true; }
   run.end = Date.now() + run.seq[run.i].s * 1000;
@@ -2688,6 +3244,22 @@ function runNext(){
   run.i++;
   if(run.i >= run.seq.length){ runFinish(); return; }
   run.end = Date.now() + run.seq[run.i].s * 1000;
+  /* NON e il dito a cambiare stato: e il cambio di fase. Correndo non si
+     scorre — lo schermo lo guardi un secondo, di sbieco, col braccio che si
+     muove. Corsa -> mappa piena, tutto il resto -> quadranti. Lo scorrimento
+     resta come scavalcamento, e si azzera qui. */
+  if(imm.on){
+    imm.manuale = false;
+    var kk = run.seq[run.i];
+    /* Cammini brevissimi restano a schermo pieno: cambiare due volte in
+       quaranta secondi e peggio che non cambiare. */
+    var restaA = kk.k === "run" || (kk.k === "walk" && kk.s < 60);
+    immVai(restaA ? "a" : "b");
+    document.getElementById("immOmino").innerHTML = figuraSVG(kk.k === "run" ? "corre" : "cammina");
+    if(!pocoMoto && imm.p < 0.62) animaOn(kk.k === "run" ? "corre" : "cammina");
+    document.getElementById("immHud").innerHTML = immHudHTML();
+    if(imm.scena === "b") document.getElementById("immFoglio").innerHTML = immFoglioHTML();
+  }
   var k = run.seq[run.i].k;
   beep(k === "run" ? 2 : 1);
   buzz(k === "run" ? [200,90,200] : [220]);
@@ -2707,12 +3279,26 @@ function runFinish(){
     voce.tr = potaTraccia(gps.pts);
     voce.ms = gps.tUlt - gps.t0;
     voce.passo = passoAlKm(gps.km, voce.ms);
+    /* pc = passo mediano dei soli blocchi di CORSA, in secondi al km. E il
+       numero che alimenta rifPasso() nelle sedute successive. */
+    var pcv = [];
+    (run.seq || []).forEach(function(f, k){
+      if(f.k !== "run") return;
+      var pb = passoBlocco(k);
+      if(pb) pcv.push(pb.sec);
+    });
+    if(pcv.length){
+      pcv.sort(function(a,b){ return a-b; });
+      voce.pc = Math.round(pcv[Math.floor(pcv.length/2)]);
+    }
   }
   gpsFerma();
+  if(imm.on) immEsci();
   S.runs.push(voce);
   save(); render();
 }
 function tickRun(){
+  if(imm.on){ tickImm(); return; }
   if(!run.started) return;
   var box = document.getElementById("runner");
   if(!box) return;
@@ -2810,6 +3396,10 @@ function render(){
      recente, quindi non puo esistere uno stato in cui il peso e cambiato e
      le calorie no. */
   ricalcola();
+  /* TRAPPOLA NUMERO DUE. render() finisce con animaOn/animaOff sulla figura
+     trovata in #view: a immersiva aperta congelerebbe l omino. E capita
+     davvero, perche gpsVia() chiama render() dal suo callback d errore. */
+  if(imm.on){ syncWake(); return; }
   var yPrima = window.scrollY || window.pageYOffset || 0;
   /* La sezione della scheda Cibo entra nell'identita della vista: passare fra
      diario e spesa e' un ARRIVO, non un ridisegno — deve partire dall'alto. */
@@ -5247,7 +5837,14 @@ document.getElementById("view").addEventListener("click", function(e){
     gpsFerma(); render(); return;
   }
 
-  if(a === "runPlay"){ runStart(); render(); return; }
+  if(a === "runPlay"){
+    runStart();
+    /* Si entra da qui, non toccando la linguetta: la scheda Corsa serve anche
+       a guardare la tabella, spegnere le tessere e leggere i perche, e se
+       toccarla buttasse a schermo pieno quelle cose non si raggiungerebbero. */
+    if(!imm.on) immEntra(); else immVai(immFase().k === "run" ? "a" : "b");
+    render(); return;
+  }
   if(a === "runPause"){ runPause(); render(); return; }
   if(a === "runSkip"){ if(!run.started){ run.seq = buildSeq(weekClamped()); run.i = 0; run.started = true; } runNext(); render(); return; }
   if(a === "runStop"){ run.started = false; run.playing = false; syncWake(); render(); return; }
@@ -5358,6 +5955,48 @@ document.getElementById("view").addEventListener("click", function(e){
     }catch(err){ alert("Il testo incollato non è un backup valido. Deve iniziare con una graffa e contenere tutti i dati del file esportato."); }
     return;
   }
+});
+
+/* QUARTO ascoltatore. I data-act sono agganciati a #tabs, #rest e #view: il
+   pannello immersivo sta FUORI da #view, quindi li dentro nessun comando
+   funzionerebbe — inclusi runPlay e runPause, che sembrano riusati e invece
+   non arriverebbero mai. Sei azioni, non serve estrarre il gestore grande. */
+document.getElementById("imm").addEventListener("click", function(e){
+  var el = e.target.closest("[data-act]"); if(!el) return;
+  var a = el.dataset.act;
+  if(a === "runPlay"){ runStart(); immVai(immFase().k === "run" ? "a" : "b");
+    document.getElementById("immFoot").innerHTML = immFootHTML();
+    document.getElementById("immHud").innerHTML = immHudHTML(); return; }
+  if(a === "runPause"){ runPause();
+    document.getElementById("immFoot").innerHTML = immFootHTML(); return; }
+  if(a === "runSkip"){
+    if(!run.started){ run.seq = buildSeq(weekClamped()); run.i = 0; run.started = true; }
+    runNext(); return;
+  }
+  if(a === "immEsci"){ immEsci(); return; }
+  if(a === "gpsVia"){ gpsVia(); document.getElementById("immFoglio").innerHTML = immFoglioHTML(); return; }
+  if(a === "tessere"){
+    S.tessere = !!el.checked; save();
+    immNodi = {}; document.getElementById("immTess").innerHTML = "";
+    immBase = null;
+    if(gps.pts.length > 1){ immRicalcola(); immTraccia(); }
+    document.getElementById("immFoglio").innerHTML = immFoglioHTML();
+    return;
+  }
+});
+document.getElementById("immScroll").addEventListener("scroll", immScrolla, { passive:true });
+window.addEventListener("resize", function(){
+  if(!imm.on) return;
+  clearTimeout(imm.rz);
+  imm.rz = setTimeout(function(){
+    immG = immGeo();
+    document.getElementById("immS1").style.height = immG.H + "px";
+    document.getElementById("immFoglio").style.height = immG.H + "px";
+    document.getElementById("immSvg").setAttribute("viewBox", "0 0 " + immG.W + " " + immG.H);
+    immBase = null;
+    if(gps.pts.length > 1){ immRicalcola(); immTraccia(); }
+    immPiazza(imm.p);
+  }, 300);
 });
 
 document.getElementById("view").addEventListener("change", function(e){
