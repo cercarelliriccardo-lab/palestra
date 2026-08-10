@@ -666,6 +666,18 @@
   .traccia{display:block;width:100%;height:auto;max-height:210px}
   .gpsriga{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px}
   .gpsriga .num{font-size:22px;font-weight:600;color:var(--accent)}
+  /* Volume settimanale: numero, barretta con la fascia di riferimento
+     disegnata sul fondo, e lo stato detto dal colore — non dalla decorazione. */
+  .volr{display:flex;align-items:center;gap:9px;margin-bottom:7px;min-height:26px}
+  .volr .vn{flex:none;width:88px;font-size:12.5px;color:var(--ink-2)}
+  .volr .vb{position:relative;flex:1;height:9px;border-radius:5px;background:var(--surface-3);overflow:hidden}
+  .volr .vb .fascia{position:absolute;top:0;bottom:0;background:rgba(255,255,255,.10)}
+  .volr .vb .riemp{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--ink-3)}
+  .volr .vb .riemp[data-s="dentro"]{background:var(--accent)}
+  .volr .vb .riemp[data-s="tanto"]{background:var(--warn)}
+  .volr .vv{flex:none;width:34px;text-align:right;font-size:13px;color:var(--ink-2)}
+  .volr .vv[data-s="dentro"]{color:var(--accent)}
+  .volr .vv[data-s="tanto"]{color:var(--warn)}
   .segm{display:flex;gap:6px;background:var(--surface-2);border:1px solid var(--line);
     border-radius:12px;padding:4px;margin-bottom:2px}
   .segm button{
@@ -1506,7 +1518,7 @@ copiaDelGiorno();
    4. NESSUN PULSANTE. Una riga in testa dice come sta, e non chiede niente.
    ============================================================ */
 
-var VERSIONE = "3.4";
+var VERSIONE = "3.5";
 var KEY_SY = "palestra-sync";
 
 function syncCfg(){
@@ -1655,6 +1667,21 @@ function ghErr(r){
   if(r.status === 409 || r.status === 422) return { t:"conflitto", s:r.status };
   return { t:"rete", s:r.status };
 }
+/* Il repository dei dati DEVE essere privato: dentro stato.json finiscono
+   peso, misure e le zone dove hai male. Si chiede una volta sola per sessione
+   e si urla se e pubblico — un backup che espone i tuoi dati sanitari e
+   peggio di nessun backup, perche non lo sai. */
+function ghControllaPrivato(c){
+  if(sy.privChk) return;
+  sy.privChk = true;
+  fetch("https://api.github.com/repos/" + encodeURIComponent(c.owner) + "/" + encodeURIComponent(c.repo),
+        { headers: ghHead(c), cache: "no-store" })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(j){
+      if(j && j.private === false){ sy.pubblico = true; render(); }
+    })
+    .catch(function(){});
+}
 function ghLeggi(c){
   /* no-store piu' un parametro buttato dentro: il telefono mette in cache
      anche le risposte dell'API, e fondere con una versione vecchia sarebbe
@@ -1685,7 +1712,7 @@ function ghScrivi(c, testo, sha){
 
 /* ---------- lo stato, e la riga che lo dice ---------- */
 
-var sy = { s:"off", quando:null, msg:"", sha:null, inCorso:false, ancora:false, timer:null, tentativi:0 };
+var sy = { s:"off", quando:null, msg:"", sha:null, inCorso:false, ancora:false, timer:null, tentativi:0, privChk:false, pubblico:false };
 /* Errore del collegamento, mostrato dentro la pagina e non con alert(): sul
    telefono le finestre di sistema a volte non compaiono affatto — imparato
    nella v1.9.5, dove un messaggio importante non si vedeva mai. */
@@ -1727,6 +1754,7 @@ function syncOra(){
   if(navigator.onLine === false){ syncStato("offline"); return Promise.resolve(); }
   sy.inCorso = true;
   syncStato("lavoro");
+  ghControllaPrivato(c);
   return ghLeggi(c).then(function(r){
     var unito = r.dati ? fondi(S, r.dati) : S;
     var prima = JSON.stringify(S);
@@ -3560,6 +3588,12 @@ function vSessione(){
 
   else if(s.t === "fine"){
     var fatte = 0, righe = "";
+    /* Il volume della settimana, come FATTO e non come pungolo: nessun
+       confronto con la settimana scorsa, nessuna soglia da centrare. */
+    var volFine = volumeSettimana(d);
+    var volRighe = Object.keys(volFine).sort(function(a,b){ return volFine[b]-volFine[a]; })
+      .map(function(g){ var v = volFine[g];
+        return esc(g) + " " + (v % 1 ? String(v).replace(".", ",") : v); }).join(" · ");
     exOggi(d).forEach(function(ex){
       var arr = (S.sessions[d] || {})[ex.id] || [];
       var ok = arr.filter(function(x){ return x.done; });
@@ -4516,6 +4550,112 @@ function vCibo(){
   return h;
 }
 
+/* ============================================================
+   VOLUME SETTIMANALE PER GRUPPO MUSCOLARE
+   ============================================================
+   L'app contava serie, carichi, calorie, peso e stretching, ma non l'unica
+   variabile che decide se il muscolo cresce.
+
+   AGGANCIATO ALLO SLOT, NON ALLA VARIANTE. Lo slot e' il pattern di movimento,
+   e il pattern determina i muscoli: sostituendo il rematore col rematore
+   australiano la schiena prende comunque le sue serie. Le due varianti
+   aggiuntive non occupano uno slot e hanno una voce loro.
+
+   MEZZO PESO AL LAVORO INDIRETTO. Non e' un numero inventato: la letteratura
+   sul volume delle braccia raccomanda di sottrarre 3-5 serie di stimolo gia
+   ricevuto dai multiarticolari, e contare meta e' il modo piu semplice di
+   farlo. [Da verificare se sia raccomandazione con supporto sperimentale o
+   prassi consolidata: vedi vincoli.md.]
+
+   COSA QUESTA TESSERA NON DEVE DIVENTARE. Un obiettivo da inseguire. Serve a
+   VEDERE la settimana, non a gareggiare con se stessi: niente "ti mancano
+   quattro serie", niente spunte verdi a 20, nessun confronto con la settimana
+   scorsa. A BMI 17,6 una funzione che invita ad allenarsi di piu senza
+   mangiare di piu viola la regola centrale del progetto — vincoli.md 1-octies.
+   ============================================================ */
+
+var MUSC = {
+  acc:   { d:["Quadricipiti","Glutei"],  i:[] },
+  cern:  { d:["Femorali","Glutei"],      i:["Lombari"] },
+  spo:   { d:["Petto"],                  i:["Tricipiti"] },
+  tvert: { d:["Dorsali"],                i:["Bicipiti"] },
+  toriz: { d:["Dorsali"],                i:["Bicipiti"] },
+  svert: { d:["Spalle"],                 i:["Tricipiti"] },
+  core:  { d:["Core"],                   i:[] }
+};
+/* Gli aggiuntivi: non occupano uno slot, quindi il loro contributo va detto
+   a parte o sparirebbe dal conto. */
+var MUSC_EX = {
+  legcurl: { d:["Femorali"], i:[] },
+  alzate:  { d:["Spalle"],   i:[] }
+};
+var VOL_MIN = 10, VOL_MAX = 20, VOL_POCO = 5;
+
+/* Da lunedi a domenica, non "ultimi sette giorni": la settimana si azzera il
+   lunedi, altrimenti il numero scivolerebbe insieme all'ultima seduta. */
+function settimanaDi(d){
+  var lun = mondayOf(parseISO(d)), out = [];
+  for(var i = 0; i < 7; i++){
+    var g = new Date(lun); g.setDate(lun.getDate() + i);
+    out.push(iso(g));
+  }
+  return out;
+}
+
+function volumeSettimana(d){
+  var tot = {};
+  function metti(m, q){ tot[m] = (tot[m] || 0) + q; }
+  settimanaDi(d).forEach(function(g){
+    var sess = S.sessions[g] || {};
+    Object.keys(sess).forEach(function(exId){
+      /* Solo le serie SPUNTATE. Le righe create al volo da setsOf() e la serie
+         di avvicinamento non sono lavoro e non entrano. */
+      var n = (sess[exId] || []).filter(function(x){ return x.done; }).length;
+      if(!n) return;
+      var m = MUSC_EX[exId];
+      if(!m){
+        var sl = slotDiEx(exId);
+        m = sl ? MUSC[sl.id] : null;
+      }
+      if(!m) return;
+      m.d.forEach(function(x){ metti(x, n); });
+      m.i.forEach(function(x){ metti(x, n / 2); });
+    });
+  });
+  return tot;
+}
+
+function statoVol(v){ return v < VOL_POCO ? "poco" : v > VOL_MAX ? "tanto" : "dentro"; }
+
+function vVolume(d){
+  var tot = volumeSettimana(d);
+  var gruppi = Object.keys(tot).sort(function(a, b){ return tot[b] - tot[a]; });
+  if(!gruppi.length){
+    return '<div class="card"><div class="eyebrow">Volume di questa settimana</div>' +
+      '<p class="fine">Nessuna serie spuntata questa settimana. Il conteggio parte da lunedì.</p></div>';
+  }
+  var h = '<div class="card"><div class="eyebrow">Volume di questa settimana</div>' +
+    '<p class="fine">Serie per gruppo muscolare, da lunedì. La fascia scura è <strong>' +
+    VOL_MIN + '-' + VOL_MAX + '</strong>, il riferimento per la crescita; da principiante si cresce già con ' + VOL_POCO + '-' + VOL_MIN + '.</p>';
+  gruppi.forEach(function(g){
+    var v = tot[g], st = statoVol(v);
+    var pc = Math.min(100, v / 26 * 100);
+    h += '<div class="volr">' +
+      '<span class="vn">' + esc(g) + '</span>' +
+      '<span class="vb"><i class="fascia" style="left:' + (VOL_MIN/26*100) + '%;width:' + ((VOL_MAX-VOL_MIN)/26*100) + '%"></i>' +
+        '<i class="riemp" data-s="' + st + '" style="width:' + pc + '%"></i></span>' +
+      '<span class="vv num" data-s="' + st + '">' + (v % 1 ? String(v).replace(".", ",") : v) + '</span>' +
+      '</div>';
+  });
+  /* Una frase sola, e dice un FATTO, non un incoraggiamento. */
+  var dor = tot["Dorsali"] || 0, qua = tot["Quadricipiti"] || 0;
+  if(dor >= qua * 2 && qua > 0)
+    h += '<p class="fine">I dorsali prendono il doppio delle gambe perché lat machine e rematore lavorano gli stessi muscoli.</p>';
+  h += '<p class="fine">Le mezze serie sono lavoro <strong>indiretto</strong>: i tricipiti prendono metà serie da ogni spinta, i bicipiti da ogni trazione.</p>' +
+    '</div>';
+  return h;
+}
+
 /* ---------- IL PROFILO ----------
    Da qui vengono tutti i bersagli. Mostra i numeri che produce mentre li
    cambi: un modulo che non fa vedere l'effetto di quello che scrivi e' un
@@ -4592,6 +4732,10 @@ function vSincronia(){
   var nota = sy.msg
     ? '<div class="note ' + (sy.s === "auth" || sy.s === "errore" ? "alert" : "warn") + '">' + esc(sy.msg) + '</div>'
     : "";
+  if(sy.pubblico) nota = '<div class="note alert"><strong>Questo repository è PUBBLICO.</strong> ' +
+    'Dentro ci sono peso, misure e le zone dove hai male, e chiunque può leggerle. ' +
+    'Su GitHub: Settings del repository, in fondo, <span class="num">Change visibility → Private</span>. ' +
+    'Fallo adesso, non dopo.</div>' + nota;
   return '<div class="card"><div class="eyebrow">Sincronia</div>' + nota +
     '<p class="fine">Collegato a <span class="num">' + esc(c.owner + "/" + c.repo) + '</span>. ' +
     (sy.s === "ok" && sy.quando
@@ -4607,6 +4751,7 @@ function vSincronia(){
 function vDati(){
   var h = bannerStorage();
   h += vProfilo();
+  h += vVolume(oggiISO());
 
   /* peso */
   var ws = S.weights.slice().sort(function(a,b){ return a.d < b.d ? -1 : 1; });
