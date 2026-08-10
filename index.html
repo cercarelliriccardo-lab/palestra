@@ -648,6 +648,20 @@
      stanno dentro la vista, quindi si distinguono dalla barra in basso. */
   /* La traccia della corsa: nessun fondo e nessuna cornice, come le figure
      dalla v1.9.2. Il percorso e' l'unica cosa disegnata. */
+  /* La mappa: tessere in un riquadro con ritaglio, traccia sopra. Le tessere
+     sono posizionate in pixel assoluti, quindi il contenitore non scorre. */
+  .mappa{position:relative;overflow:hidden;border-radius:12px;border:1px solid var(--line);
+    background:var(--surface-2);margin:2px 0 8px}
+  .mappa .tess{position:absolute;width:256px;height:256px;
+    filter:grayscale(.35) brightness(.72) contrast(1.05)}
+  .mappa .sopra{position:absolute;inset:0;width:100%;height:100%}
+  .mappa .attrib{position:absolute;right:5px;bottom:4px;font-size:9px;
+    color:var(--ink);background:rgba(10,13,16,.62);padding:1px 5px;border-radius:5px}
+  /* Interruttore per le strade: e' l'unica scelta dell'app che manda fuori
+     qualcosa, quindi sta a vista e non sepolta nelle impostazioni. */
+  .swi{display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer}
+  .swi input{width:22px;height:22px;accent-color:var(--accent);flex:none}
+  .swi span{font-size:13.5px;font-weight:600}
   .trbox{margin:2px 0 8px}
   .traccia{display:block;width:100%;height:auto;max-height:210px}
   .gpsriga{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px}
@@ -1300,13 +1314,15 @@ function fresh(){
     ordineBase:[],            // il tuo ordine abituale, se ne hai fissato uno
     streSel:STRE_DIFETTO.slice(), // i tre di stretching scelti da te, oltre ai due fissi
     kw:[],                    // test ginocchio-muro {d, sx, dx} in cm
+    passi:{},                 // ISO -> passi del giorno, riportati a mano da Salute
+    tessere:true,             // strade sotto la traccia: l'unica cosa che esce dal telefono
     scelta:{},                // ISO -> {slot: idEsercizio} la variante di quel giorno
     "default":{},             // slot -> idEsercizio, la tua variante abituale
     extra:{},                 // ISO -> [idEsercizio] gli aggiuntivi, in fondo alla seduta
     rifiutati:{}              // slot -> idEsercizio per cui hai gia' detto no al predefinito
   };
 }
-var SCHEMA = 3;
+var SCHEMA = 4;
 var schemaFuturo = false;
 /* Riempie i campi che una versione piu vecchia non aveva e riallinea v.
    Non tocca mai i dati esistenti: aggiunge soltanto cio che manca. */
@@ -1415,7 +1431,7 @@ copiaDelGiorno();
    4. NESSUN PULSANTE. Una riga in testa dice come sta, e non chiede niente.
    ============================================================ */
 
-var VERSIONE = "3.2";
+var VERSIONE = "3.3";
 var KEY_SY = "palestra-sync";
 
 function syncCfg(){
@@ -1511,6 +1527,10 @@ function fondi(loc, rem){
   o.extra    = fondiMappa(o.extra,    r.extra,    function(a, b){ return (a && a.length) ? a : b; });
   o["default"]  = fondiMappa(o["default"],  r["default"],  function(a, b){ return a || b; });
   o.rifiutati   = fondiMappa(o.rifiutati,   r.rifiutati,   function(a, b){ return a || b; });
+  /* I passi sono un dato del giorno, come il peso: vince il piu recente
+     scritto a mano, cioe il locale. */
+  o.passi    = fondiMappa(o.passi,    r.passi,    function(a, b){ return a != null ? a : b; });
+  o.tessere  = (o.tessere !== undefined) ? o.tessere : r.tessere;
   /* Le regolazioni sono testo scritto da te: vince quello che c'e', non il
      piu' lungo — "foro 3" non deve perdere contro una frase vecchia. */
   o.regol = fondiMappa(o.regol, r.regol, function(a, b){
@@ -2281,7 +2301,21 @@ function tickRest(){
    una corsa da mille punti la farebbe pesare piu di tutto il resto insieme.
    ============================================================ */
 
-var gps = { on:false, id:0, pts:[], km:0, prec:null, errore:"", ultimo:null };
+var gps = { on:false, id:0, pts:[], km:0, prec:null, errore:"", ultimo:null, t0:0, tUlt:0 };
+
+/* Il passo al chilometro: minuti e secondi per km, da distanza e tempo che ho
+   gia' tutti e due. E' un numero MISURATO, al contrario dei passi — e per una
+   corsa in cui l'istruzione e' "ritmo facile, quello in cui riesci a dire una
+   frase intera", sapere che stai andando a 7'30" invece che a 6'00" e' l'unica
+   informazione che cambia qualcosa mentre corri. */
+function passoAlKm(km, ms){
+  if(!km || km < 0.08 || !ms) return null;
+  var sec = (ms / 1000) / km;
+  if(sec > 1800) return null;                    /* oltre mezz'ora al km e' fermo */
+  var m = Math.floor(sec / 60), s = Math.round(sec % 60);
+  if(s === 60){ m++; s = 0; }
+  return m + "'" + (s < 10 ? "0" : "") + s + '"';
+}
 
 function haversine(a, b){
   var R = 6371, r = Math.PI / 180;
@@ -2293,7 +2327,7 @@ function haversine(a, b){
 
 function gpsVia(){
   if(!navigator.geolocation){ gps.errore = "Questo telefono non da la posizione."; render(); return; }
-  gps = { on:true, id:0, pts:[], km:0, prec:null, errore:"", ultimo:null };
+  gps = { on:true, id:0, pts:[], km:0, prec:null, errore:"", ultimo:null, t0:0, tUlt:0 };
   gps.id = navigator.geolocation.watchPosition(function(p){
     var c = p.coords;
     gps.prec = Math.round(c.accuracy);
@@ -2306,12 +2340,18 @@ function gpsVia(){
       if(dkm * 1000 < 3) return;                      /* fermo: non accumulare rumore */
       gps.km += dkm;
     }
+    if(!gps.t0) gps.t0 = t;
+    gps.tUlt = t;
     gps.ultimo = { q:q, t:t };
     gps.pts.push(q);
     var el = document.getElementById("gpsKm");
     if(el) el.textContent = gps.km.toFixed(2).replace(".", ",");
+    var pa = document.getElementById("gpsPasso");
+    if(pa) pa.textContent = passoAlKm(gps.km, gps.tUlt - gps.t0) || "—";
+    /* La mappa si ridisegna ogni cinque punti, non a ogni fix: rifare le
+       tessere venti volte al minuto e' traffico e batteria per niente. */
     var tr = document.getElementById("gpsTr");
-    if(tr) tr.innerHTML = tracciaSVG(gps.pts);
+    if(tr && gps.pts.length % 5 === 0) tr.innerHTML = mappaHTML(gps.pts);
   }, function(e){
     gps.errore = e.code === 1
       ? "Permesso negato. Serve autorizzare la posizione per questa pagina."
@@ -2340,6 +2380,84 @@ function potaTraccia(pts){
   }
   out.push([+pts[pts.length-1][0].toFixed(5), +pts[pts.length-1][1].toFixed(5)]);
   return out;
+}
+
+/* ---------- le strade sotto la traccia ----------
+   Tessere di OpenStreetMap, e sono LA PRIMA DIPENDENZA ESTERNA di questa app.
+   Due cose cambiano rispetto alla sola traccia, e vanno sapute:
+   1. se il servizio e' lento, cambia regole o sparisce, la mappa si rompe.
+      Per questo l'errore di caricamento non fa danni: si resta sulla traccia
+      su fondo vuoto, che funziona sempre.
+   2. per disegnare la tessera giusta il server deve sapere dove sei. Il
+      commutatore in fondo alla schermata la spegne, e allora non esce niente.
+   L'attribuzione non e' cortesia: e' la licenza dei dati e va mostrata. */
+
+var TESSERE = "https://tile.openstreetmap.org/";
+
+/* Web Mercator: da gradi a pixel del mondo allo zoom z, tessere da 256. */
+function proiez(lat, lon, z){
+  var n = 256 * Math.pow(2, z);
+  var s = Math.max(-0.9999, Math.min(0.9999, Math.sin(lat * Math.PI / 180)));
+  return [ (lon + 180) / 360 * n,
+           (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * n ];
+}
+
+/* Lo zoom piu stretto in cui il percorso ci sta ancora tutto. Sotto 11 non si
+   scende: piu lontano di cosi non si riconosce piu niente. */
+function zoomPer(pts, W, H){
+  var laMin=90,laMax=-90,loMin=180,loMax=-180;
+  pts.forEach(function(p){
+    if(p[0]<laMin)laMin=p[0]; if(p[0]>laMax)laMax=p[0];
+    if(p[1]<loMin)loMin=p[1]; if(p[1]>loMax)loMax=p[1];
+  });
+  for(var z = 18; z >= 11; z--){
+    var a = proiez(laMax, loMin, z), b = proiez(laMin, loMax, z);
+    if((b[0]-a[0]) <= W - 24 && (b[1]-a[1]) <= H - 24) return z;
+  }
+  return 11;
+}
+
+function mappaHTML(pts){
+  if(!pts || pts.length < 2) return '<p class="fine">In attesa del segnale…</p>';
+  if(!(S.tessere !== false)) return '<div class="trbox">' + tracciaSVG(pts) + '</div>';
+
+  var W = 300, H = 200;
+  var z = zoomPer(pts, W, H);
+  var px = pts.map(function(p){ return proiez(p[0], p[1], z); });
+  var xMin=Infinity,xMax=-Infinity,yMin=Infinity,yMax=-Infinity;
+  px.forEach(function(p){
+    if(p[0]<xMin)xMin=p[0]; if(p[0]>xMax)xMax=p[0];
+    if(p[1]<yMin)yMin=p[1]; if(p[1]>yMax)yMax=p[1];
+  });
+  /* Il riquadro si centra sul percorso, non sul primo punto. */
+  var cx = (xMin+xMax)/2, cy = (yMin+yMax)/2;
+  var x0 = cx - W/2, y0 = cy - H/2;
+
+  var tx0 = Math.floor(x0/256), tx1 = Math.floor((x0+W)/256);
+  var ty0 = Math.floor(y0/256), ty1 = Math.floor((y0+H)/256);
+  var max = Math.pow(2, z), img = "";
+  for(var tx = tx0; tx <= tx1; tx++){
+    for(var ty = ty0; ty <= ty1; ty++){
+      if(ty < 0 || ty >= max) continue;
+      var wx = ((tx % max) + max) % max;
+      img += '<img class="tess" alt="" loading="lazy" ' +
+        'style="left:' + (tx*256 - x0) + 'px;top:' + (ty*256 - y0) + 'px" ' +
+        'src="' + TESSERE + z + '/' + wx + '/' + ty + '.png" ' +
+        'onerror="this.style.visibility=\'hidden\'">';
+    }
+  }
+  var d = px.map(function(p,i){
+    return (i?"L":"M") + (p[0]-x0).toFixed(1) + " " + (p[1]-y0).toFixed(1);
+  }).join(" ");
+  var u = px[px.length-1], f = px[0];
+  return '<div class="mappa" style="height:' + H + 'px">' + img +
+    '<svg class="sopra" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="percorso della corsa sulla mappa">' +
+      '<path d="' + d + '" fill="none" stroke="#0A0D10" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" opacity=".45"/>' +
+      '<path d="' + d + '" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<circle cx="' + (f[0]-x0).toFixed(1) + '" cy="' + (f[1]-y0).toFixed(1) + '" r="4" fill="#0A0D10" stroke="#fff" stroke-width="1.5"/>' +
+      '<circle cx="' + (u[0]-x0).toFixed(1) + '" cy="' + (u[1]-y0).toFixed(1) + '" r="5" fill="var(--accent)" stroke="#0A0D10" stroke-width="1.5"/>' +
+    '</svg>' +
+    '<span class="attrib">© OpenStreetMap</span></div>';
 }
 
 function tracciaSVG(pts){
@@ -2455,6 +2573,8 @@ function runFinish(){
     voce.km = Math.round(gps.km * 100) / 100;
     voce.kcal = kcalDa(gps.km);
     voce.tr = potaTraccia(gps.pts);
+    voce.ms = gps.tUlt - gps.t0;
+    voce.passo = passoAlKm(gps.km, voce.ms);
   }
   gpsFerma();
   S.runs.push(voce);
@@ -4001,18 +4121,27 @@ function vCorsa(){
   h += '<div class="card"><div class="eyebrow">Percorso</div>';
   if(gps.errore) h += '<div class="note warn">' + esc(gps.errore) + '</div>';
   if(gps.on){
-    h += '<div id="gpsTr" class="trbox">' + tracciaSVG(gps.pts) + '</div>' +
+    h += '<div id="gpsTr">' + mappaHTML(gps.pts) + '</div>' +
       '<div class="gpsriga">' +
         '<span><span class="num" id="gpsKm">' + gps.km.toFixed(2).replace(".", ",") + '</span> km</span>' +
-        '<span class="fine">' + (gps.prec != null ? "precisione " + gps.prec + " m" : "cerco il segnale…") + '</span>' +
+        '<span><span class="num" id="gpsPasso">' + (passoAlKm(gps.km, gps.tUlt - gps.t0) || "—") + '</span> al km</span>' +
       '</div>' +
-      '<p class="fine">Circa <strong>' + passiDa(gps.km).toLocaleString("it-IT") + ' passi</strong> e <strong>' + kcalDa(gps.km) + ' kcal</strong>. ' +
-      'I passi non sono contati: sono la distanza divisa per una falcata di 75 cm, stimata sulla tua altezza. È una divisione, non una misura.</p>' +
+      '<p class="fine">' + (gps.prec != null ? "Precisione " + gps.prec + " m." : "Cerco il segnale…") +
+      ' Costo stimato <strong>' + kcalDa(gps.km) + ' kcal</strong>, che si aggiungono al bersaglio del piatto di oggi.</p>' +
+      '<details class="perche"><summary><span>E i passi?</span></summary>' +
+      '<p class="fine">Circa <strong>' + passiDa(gps.km).toLocaleString("it-IT") + '</strong>, ma <strong>non sono contati</strong>: sono la distanza divisa per una falcata di 75 cm stimata sulla tua altezza. È una divisione, non una misura. Quelli veri li conta il telefono in <strong>Salute</strong>, e li puoi riportare in Dati.</p></details>' +
       '<button class="btn ghost wide sm" data-act="gpsStop">Smetti di seguire il percorso</button>';
   } else {
-    h += '<p class="fine">Se accendi la posizione, l\'app disegna il percorso e conta i chilometri. La traccia resta <strong>dentro il telefono</strong>: non c\'è nessuna cartina da scaricare e nessun servizio esterno che sappia dove sei.</p>' +
+    h += '<p class="fine">Accendendo la posizione l\'app disegna il percorso, conta i chilometri e calcola il passo al chilometro.</p>' +
       '<button class="btn wide" data-act="gpsVia">Segui il percorso</button>';
   }
+  /* L'interruttore delle strade sta qui e non sepolto in Dati: e' il posto in
+     cui si decide, ed e' la sola cosa dell'app che manda qualcosa fuori. */
+  h += '<hr><label class="swi"><input type="checkbox" data-act="tessere"' +
+    (S.tessere !== false ? " checked" : "") + '><span>Strade sotto la traccia</span></label>' +
+    '<p class="fine">' + (S.tessere !== false
+      ? 'Le tessere della mappa arrivano da <strong>OpenStreetMap</strong>: per disegnare quella giusta, quel servizio deve sapere dove sei. È l\'unica cosa dell\'app che esce dal telefono. Togli la spunta e resta solo la traccia su fondo vuoto.'
+      : 'Solo la traccia, su fondo vuoto. <strong>Niente esce dal telefono.</strong>') + '</p>';
   h += '</div>';
 
   h += '<div class="card">' +
@@ -4399,6 +4528,24 @@ function vDati(){
   }
   h += '</div>';
 
+  /* passi del giorno, riportati da Salute.
+     NON alzano il bersaglio calorico, al contrario della corsa: camminare e'
+     movimento di fondo, ed e' gia' dentro la stima del mantenimento. Sommarlo
+     due volte gonfierebbe il target di qualche centinaio di kcal fantasma. */
+  var psd = (S.passi || {}), psGg = Object.keys(psd).sort();
+  h += '<div class="card"><div class="eyebrow">Passi</div>' +
+    '<p class="fine">Questi <strong>non li conta l\'app</strong>: li conta il telefono, sempre e bene, in <strong>Salute</strong>. Qui li riporti a mano quando ti va, per averli accanto al resto.</p>' +
+    '<div class="row"><input type="date" id="psD" value="' + oggiISO() + '" style="flex:2;min-width:140px">' +
+    '<input type="number" id="psN" inputmode="numeric" placeholder="passi" style="flex:1;min-width:90px"></div>' +
+    '<button class="btn wide" data-act="addPassi">Registra i passi</button>';
+  if(psGg.length){
+    var ps = psGg.map(function(g, i){ return { x:i, y:psd[g], lab:psd[g] + " passi" }; });
+    h += lineChart(ps, { alt:"passi al giorno", color:"var(--ghisa)" });
+    var ultimo = psd[psGg[psGg.length-1]];
+    h += '<p class="fine">Ultimo giorno registrato: <span class="num">' + ultimo.toLocaleString("it-IT") + '</span> passi.</p>';
+  }
+  h += '<p class="fine">I passi <strong>non alzano</strong> il bersaglio delle calorie: camminare è movimento di fondo, già dentro la stima del mantenimento. Solo la corsa lo alza, perché è in più.</p></div>';
+
   /* pesi: storico carichi */
   /* Tutte le varianti, non solo le sette di oggi: se hai usato la panca coi
      manubri il mese scorso, quel carico va ritrovato. Il filtro sotto tiene
@@ -4753,6 +4900,14 @@ document.getElementById("view").addEventListener("click", function(e){
     save(); render(); return;
   }
 
+  if(a === "tessere"){ S.tessere = !!el.checked; save(); render(); return; }
+  if(a === "addPassi"){
+    var pv = parseInt(document.getElementById("psN").value, 10);
+    var pd = document.getElementById("psD").value;
+    if(!pd || isNaN(pv) || pv < 0) return;
+    if(!S.passi) S.passi = {};
+    S.passi[pd] = pv; save(); render(); return;
+  }
   if(a === "gpsVia"){ gpsVia(); return; }
   if(a === "gpsStop"){
     /* Fermare il seguimento non butta via i chilometri: restano in gps.km e
