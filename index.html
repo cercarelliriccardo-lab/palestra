@@ -1279,8 +1279,78 @@ var FOODS = [
    mai stato misurato: la prima pesata dice 45. Fonte: output/alimentazione-base.md
    v3. Le calorie non cambiano — a 45 kg il mantenimento a regime e' ~2.050 e
    il target resta 2.400 — cambiano le proteine, che sono 1,6-2,2 g per kg. */
-var KCAL_MIN = 2400, KCAL_MAX = 2500, KCAL_MANT = 2050;
-var PROT_MIN = 70, PROT_MAX = 100;
+/* ============================================================
+   IL PROFILO — da qui in giu' i numeri sono CALCOLATI, non scritti
+   ============================================================
+   Fino alla v3.3 questi cinque valori erano costanti scritte a mano, tarate
+   su una persona sola. Ogni volta che il peso cambiava andavano riallineate
+   a mano in cinque file, e due volte in due giorni un numero scritto nel
+   testo e' sopravvissuto al cambio della costante che doveva rispecchiare.
+
+   Ora vengono da ricalcola(), che legge il profilo e il peso piu recente.
+   Verificato che con il profilo attuale (uomo, 27 anni, 160 cm, 45 kg) le
+   formule restituiscano ESATTAMENTE i valori di prima: 1320 / 2050 / 2400 /
+   2500 / 70 / 100. Il refactor non sposta nessun numero, li rende derivati.
+
+   ricalcola() gira in cima a render(): costa cinque moltiplicazioni e
+   garantisce che non esista mai uno stato in cui il peso e' cambiato ma i
+   bersagli no.
+   ============================================================ */
+
+var KCAL_MIN, KCAL_MAX, KCAL_MANT, PROT_MIN, PROT_MAX, BASALE;
+
+function basale(){
+  var p = (S && S.profilo) || {}, kg = pesoOra();
+  var eta = p.eta || 27, alt = p.altezza || 160;
+  /* Mifflin-St Jeor. Il termine finale e' l'unica differenza fra i sessi. */
+  return Math.round(10*kg + 6.25*alt - 5*eta + (p.sesso === "f" ? -161 : 5));
+}
+function ricalcola(){
+  BASALE = basale();
+  var kg = pesoOra();
+  /* 1,55 = cinque allenamenti a settimana. Arrotondamenti a 50 kcal e a 5 g:
+     una precisione maggiore sarebbe finta, visto che l'equazione stessa e'
+     una stima e il numero vero emerge dalla media del peso. */
+  KCAL_MANT = Math.round(BASALE * 1.55 / 50) * 50;
+  KCAL_MIN  = Math.round((Math.round(BASALE * 1.55) + 350) / 50) * 50;
+  KCAL_MAX  = KCAL_MIN + 100;
+  PROT_MIN  = Math.round(kg * 1.6 / 5) * 5;
+  PROT_MAX  = Math.round(kg * 2.2 / 5) * 5;
+}
+
+/* ---------- gli attrezzi, e cosa serve a ogni esercizio ----------
+   La mappa sta separata dalle definizioni degli esercizi di proposito:
+   toccare trentadue oggetti letterali per aggiungere un campo e' il modo
+   piu facile di rompere qualcosa che gia funziona. */
+var ATTREZZI = [
+  { id:"kb",     n:"Kettlebell" },
+  { id:"db",     n:"Manubri" },
+  { id:"bar",    n:"Bilanciere e dischi" },
+  { id:"rack",   n:"Rack con i fermi di sicurezza" },
+  { id:"panca",  n:"Panca piana" },
+  { id:"panreg", n:"Panca regolabile" },
+  { id:"chest",  n:"Chest press" },
+  { id:"lat",    n:"Lat machine" },
+  { id:"tower",  n:"Power tower — trazioni e dip" },
+  { id:"bande",  n:"Bande elastiche" }
+];
+var REQ = {
+  goblet:["kb"], rdl:["db"], chest:["chest"], lat:["lat"],
+  row:["db","panca"], ohp:["db","panreg"], plank:[],
+  squatbb:["bar","rack"], affondi:["db"], bulgaro:["db","panca"], legpress:["chest"],
+  rdlbb:["bar"], ponte:["db"], goodm:["bar"], legcurl:["chest"],
+  pancadb:["db","panca"], pancainc:["db","panreg"], pieg:[], dip:["tower"],
+  traz:["tower"], latstretta:["lat"], latinv:["lat"],
+  rowbb:["bar"], rowaus:["tower"], pulley:["lat"],
+  military:["bar","rack"], arnold:["db"], alzate:["db"],
+  planklat:[], deadbug:[], legraise:["tower"], hollow:[]
+};
+function haiAttrezzi(exId){
+  var r = REQ[exId];
+  if(!r) return true;                       /* non mappato: non si nasconde */
+  var mie = (S.profilo && S.profilo.attrezzi) || [];
+  return r.every(function(a){ return mie.indexOf(a) >= 0; });
+}
 var PESO_TARGET_SETT = 0.25, PESO_META = 53, FTF_META = 15;
 
 var GIORNI = ["Domenica","Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato"];
@@ -1314,6 +1384,11 @@ function fresh(){
     ordineBase:[],            // il tuo ordine abituale, se ne hai fissato uno
     streSel:STRE_DIFETTO.slice(), // i tre di stretching scelti da te, oltre ai due fissi
     kw:[],                    // test ginocchio-muro {d, sx, dx} in cm
+    profilo:{                 // chi sei: da qui vengono TUTTI i bersagli
+      sesso:"m", eta:27, altezza:160,
+      attrezzi:["kb","db","bar","rack","panca","panreg","chest","lat","tower","bande"],
+      fatto:false             // finche e false l app chiede di confermare i dati
+    },
     passi:{},                 // ISO -> passi del giorno, riportati a mano da Salute
     tessere:true,             // strade sotto la traccia: l'unica cosa che esce dal telefono
     scelta:{},                // ISO -> {slot: idEsercizio} la variante di quel giorno
@@ -1322,7 +1397,7 @@ function fresh(){
     rifiutati:{}              // slot -> idEsercizio per cui hai gia' detto no al predefinito
   };
 }
-var SCHEMA = 4;
+var SCHEMA = 5;
 var schemaFuturo = false;
 /* Riempie i campi che una versione piu vecchia non aveva e riallinea v.
    Non tocca mai i dati esistenti: aggiunge soltanto cio che manca. */
@@ -1431,7 +1506,7 @@ copiaDelGiorno();
    4. NESSUN PULSANTE. Una riga in testa dice come sta, e non chiede niente.
    ============================================================ */
 
-var VERSIONE = "3.3";
+var VERSIONE = "3.4";
 var KEY_SY = "palestra-sync";
 
 function syncCfg(){
@@ -1531,6 +1606,10 @@ function fondi(loc, rem){
      scritto a mano, cioe il locale. */
   o.passi    = fondiMappa(o.passi,    r.passi,    function(a, b){ return a != null ? a : b; });
   o.tessere  = (o.tessere !== undefined) ? o.tessere : r.tessere;
+  /* Il profilo e uno: vince quello locale se e stato confermato, altrimenti
+     arriva dalla rete. Fonderlo campo per campo darebbe una persona che non
+     esiste. */
+  o.profilo  = (o.profilo && o.profilo.fatto) ? o.profilo : (r.profilo || o.profilo);
   /* Le regolazioni sono testo scritto da te: vince quello che c'e', non il
      piu' lungo — "foro 3" non deve perdere contro una frase vecchia. */
   o.regol = fondiMappa(o.regol, r.regol, function(a, b){
@@ -1772,7 +1851,13 @@ function slotDiEx(exId){
   SLOT.forEach(function(s){ if(s.def === exId || s.alt.indexOf(exId) >= 0) t = s; });
   return t;
 }
-function variantiSlot(s){ return [s.def].concat(s.alt).map(exDi).filter(Boolean); }
+function variantiSlot(s){
+  return [s.def].concat(s.alt).map(exDi)
+    .filter(Boolean).filter(function(v){ return haiAttrezzi(v.id); });
+}
+/* Tutte, anche quelle che non puoi fare: serve alla schermata di scelta per
+   dire "questa ci sarebbe, ma ti manca l attrezzo" invece di nasconderla. */
+function variantiTutte(s){ return [s.def].concat(s.alt).map(exDi).filter(Boolean); }
 
 /* Le varianti si aprono dalla settimana 5, e non e' prudenza generica: lo
    studio che le autorizza (Baz-Valle 2019) e' su uomini GIA' ALLENATI. Al
@@ -1789,7 +1874,16 @@ function exDelloSlot(d, sid){
   var s = slotDi(sid); if(!s) return null;
   var scelta = (S.scelta && S.scelta[d] && S.scelta[d][sid]) || null;
   var pref = variantiAperte() ? ((S.default && S.default[sid]) || null) : null;
-  return exDi(scelta || pref || s.def) || exDi(s.def);
+  var id = scelta || pref || s.def;
+  /* Se non hai l attrezzo del predefinito, si scende alla prima variante che
+     puoi davvero fare. Se non ce n e nessuna lo slot resta vuoto e la seduta
+     lo salta: meglio un pattern mancante e detto che un esercizio che non
+     puoi eseguire. */
+  if(!haiAttrezzi(id)){
+    var d1 = variantiSlot(s)[0];
+    return d1 || null;
+  }
+  return exDi(id) || exDi(s.def);
 }
 
 function ordineIds(d){
@@ -2674,6 +2768,10 @@ var verso = 0;
 var vistaPrec = null;
 
 function render(){
+  /* Prima di ogni altra cosa: i bersagli vengono dal profilo e dal peso piu
+     recente, quindi non puo esistere uno stato in cui il peso e cambiato e
+     le calorie no. */
+  ricalcola();
   var yPrima = window.scrollY || window.pageYOffset || 0;
   /* La sezione della scheda Cibo entra nell'identita della vista: passare fra
      diario e spesa e' un ARRIVO, non un ridisegno — deve partire dall'alto. */
@@ -3842,7 +3940,7 @@ function vOggi(){
   h += '<div class="card riga"><div style="flex:1">' +
     '<div class="eyebrow">Cibo</div>' +
     gauge(ft.k, targetKcal(d) + 500, targetKcal(d), targetKcal(d) + 100, "kcal", etichettaKcal(d)) +
-    gauge(ft.p, 140, PROT_MIN, PROT_MAX, "g proteine", "70-100") +
+    gauge(ft.p, PROT_MAX + 40, PROT_MIN, PROT_MAX, "g proteine", PROT_MIN + "-" + PROT_MAX) +
     '</div><button class="btn" data-act="go" data-to="cibo">Aggiungi</button></div>';
 
   /* le due cose che restano da fare una volta sola */
@@ -4344,7 +4442,7 @@ function vCibo(){
   h += '<div class="card">' +
     '<div class="eyebrow">Oggi · grana grossa, non bilancia</div>' +
     gauge(t.k, targetKcal(d) + 500, targetKcal(d), targetKcal(d) + 100, "kcal", etichettaKcal(d)) +
-    gauge(t.p, 140, PROT_MIN, PROT_MAX, "g proteine", "70-100") +
+    gauge(t.p, PROT_MAX + 40, PROT_MIN, PROT_MAX, "g proteine", PROT_MIN + "-" + PROT_MAX) +
     '<p class="fine">Le due barre dicono se sei sopra o sotto, non contano i grammi.</p>';
 
   var manca = targetKcal(d) - t.k;
@@ -4418,6 +4516,65 @@ function vCibo(){
   return h;
 }
 
+/* ---------- IL PROFILO ----------
+   Da qui vengono tutti i bersagli. Mostra i numeri che produce mentre li
+   cambi: un modulo che non fa vedere l'effetto di quello che scrivi e' un
+   modulo di cui non ti puoi fidare. */
+function vProfilo(){
+  var p = S.profilo || {};
+  var mie = p.attrezzi || [];
+  var h = '<div class="card"><div class="eyebrow">Chi sei</div>';
+
+  if(!p.fatto){
+    h += '<div class="note"><strong>Conferma i tuoi dati.</strong> Da questi vengono il bersaglio calorico, le proteine e il ritmo di crescita. Finché non li confermi l\'app usa dei valori di partenza che potrebbero non essere i tuoi.</div>';
+  }
+
+  h += '<div class="row">' +
+      '<label class="campo" style="flex:1"><span class="fine">Età</span>' +
+        '<input type="number" id="pfEta" inputmode="numeric" value="' + (p.eta || 27) + '"></label>' +
+      '<label class="campo" style="flex:1"><span class="fine">Altezza cm</span>' +
+        '<input type="number" id="pfAlt" inputmode="numeric" value="' + (p.altezza || 160) + '"></label>' +
+    '</div>' +
+    '<div class="row">' +
+      '<label class="campo" style="flex:1"><span class="fine">Sesso</span>' +
+        '<select id="pfSex"><option value="m"' + (p.sesso !== "f" ? " selected" : "") + '>uomo</option>' +
+        '<option value="f"' + (p.sesso === "f" ? " selected" : "") + '>donna</option></select></label>' +
+    '</div>' +
+    '<p class="fine">Il peso non si scrive qui: viene dall\'ultima pesata registrata più sotto. Oggi è <strong>' + String(pesoOra()).replace(".", ",") + ' kg</strong>.</p>';
+
+  /* I numeri che ne escono, in chiaro. */
+  h += '<div class="scroll"><table><tbody>' +
+    '<tr><td>Metabolismo basale</td><td class="n">' + BASALE + ' kcal</td></tr>' +
+    '<tr><td>Mantenimento stimato</td><td class="n">' + KCAL_MANT + ' kcal</td></tr>' +
+    '<tr><td><strong>Bersaglio</strong></td><td class="n"><strong>' + KCAL_MIN + '-' + KCAL_MAX + ' kcal</strong></td></tr>' +
+    '<tr><td>Proteine</td><td class="n">' + PROT_MIN + '-' + PROT_MAX + ' g</td></tr>' +
+    '</tbody></table></div>' +
+    '<p class="fine">Mifflin-St Jeor sul peso più recente, per cinque allenamenti a settimana, più un surplus di ~350 kcal.</p>';
+
+  /* L'inventario. E' la parte che decide quali esercizi esistono. */
+  h += '<hr><div class="eyebrow">Cosa hai per allenarti</div>' +
+    '<p class="fine">Le varianti degli esercizi si filtrano su questo: quello che non hai non ti viene proposto.</p>';
+  ATTREZZI.forEach(function(a){
+    h += '<label class="swi"><input type="checkbox" data-act="attrTog" data-id="' + a.id + '"' +
+      (mie.indexOf(a.id) >= 0 ? " checked" : "") + '><span>' + esc(a.n) + '</span></label>';
+  });
+
+  /* Se un pattern resta senza nessuna variante eseguibile va detto, non
+     nascosto: e' un buco nella settimana, e il catalogo attuale e' costruito
+     su una sala precisa. */
+  var vuoti = SLOT.filter(function(s){ return variantiSlot(s).length === 0; });
+  if(vuoti.length){
+    h += '<div class="note warn"><strong>Con questi attrezzi ' +
+      (vuoti.length === 1 ? 'un pattern resta scoperto' : vuoti.length + ' pattern restano scoperti') + ':</strong> ' +
+      vuoti.map(function(s){ return esc(s.n.toLowerCase()); }).join(", ") + '. ' +
+      'La seduta li salta. Il catalogo degli esercizi è stato scritto su una sala precisa: se ti manca qualcosa, serve aggiungere varianti al documento del programma — non le invento qui.</div>';
+  }
+
+  h += '<div class="row"><button class="btn primary wide" data-act="profSalva">' +
+    (p.fatto ? "Salva" : "Conferma i miei dati") + '</button></div></div>';
+  return h;
+}
+
 /* ---------- SINCRONIA ---------- */
 function vSincronia(){
   var c = syncCfg();
@@ -4449,6 +4606,7 @@ function vSincronia(){
 /* ---------- DATI ---------- */
 function vDati(){
   var h = bannerStorage();
+  h += vProfilo();
 
   /* peso */
   var ws = S.weights.slice().sort(function(a,b){ return a.d < b.d ? -1 : 1; });
@@ -4901,6 +5059,25 @@ document.getElementById("view").addEventListener("click", function(e){
   }
 
   if(a === "tessere"){ S.tessere = !!el.checked; save(); render(); return; }
+  if(a === "attrTog"){
+    if(!S.profilo) S.profilo = {};
+    var at = S.profilo.attrezzi || [], ai = at.indexOf(el.dataset.id);
+    if(el.checked && ai < 0) at.push(el.dataset.id);
+    if(!el.checked && ai >= 0) at.splice(ai, 1);
+    S.profilo.attrezzi = at; save(); render(); return;
+  }
+  if(a === "profSalva"){
+    if(!S.profilo) S.profilo = {};
+    var pe = parseInt(document.getElementById("pfEta").value, 10);
+    var pa = parseInt(document.getElementById("pfAlt").value, 10);
+    /* Limiti larghi ma non assurdi: servono a non far esplodere le formule,
+       non a giudicare chi li inserisce. */
+    if(pe >= 14 && pe <= 100) S.profilo.eta = pe;
+    if(pa >= 120 && pa <= 230) S.profilo.altezza = pa;
+    S.profilo.sesso = document.getElementById("pfSex").value === "f" ? "f" : "m";
+    S.profilo.fatto = true;
+    save(); buzz(30); render(); return;
+  }
   if(a === "addPassi"){
     var pv = parseInt(document.getElementById("psN").value, 10);
     var pd = document.getElementById("psD").value;
